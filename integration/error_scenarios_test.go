@@ -341,8 +341,8 @@ func TestErrorScenarios_InvalidCoordinates(t *testing.T) {
 				"applications/-",
 				desktopInputTarget(),
 				&pb.InputAction{
-					InputType: &pb.InputAction_MoveMouse{
-						MoveMouse: &pb.MouseMove{
+					InputType: &pb.InputAction_MouseMove{
+						MouseMove: &pb.MouseMove{
 							Position: &pbtype.Point{X: tc.x, Y: tc.y},
 						},
 					},

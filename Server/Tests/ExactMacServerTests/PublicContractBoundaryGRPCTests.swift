@@ -162,10 +162,13 @@ struct PublicContractBoundaryGRPCTests {
     }
 
     @Test
-    func `collections with retained page-size binding reject cross-size token reuse`() async throws {
+    func `collections honor changed page size on continuation`() async throws {
         let composition = ExactMacServiceComposition(
             system: MockSystemOperations(cgWindowList: []),
             legacyPIDResourceNamesForTests: true,
+            elementDiscoveryExecutor: { _, _, _ in
+                AccessibilityTraversalSnapshot(appName: "Pagination fixture")
+            },
         )
         let selector = Exactmac_Type_ElementSelector.with { $0.role = "AXButton" }
         let region = Exactmac_Type_Region.with {
@@ -174,13 +177,14 @@ struct PublicContractBoundaryGRPCTests {
         }
 
         try await withPublicContractClient(composition) { client in
-            try await assertPublicPageSizeBinding(
+            try await assertPublicPageSizeContinuation(
                 client: client,
                 descriptor: Exactmac_V1_ExactMac.Method.ListApplicationBundles.descriptor,
                 queryBinding: ParsingHelpers.pageTokenQuery(
                     method: "ListApplicationBundles",
                     parameters: [
-                        ("order_by", ""), ("filter", ""), ("view", "0"), ("page_size", "1"),
+                        ("order_by", ""), ("filter", ""), ("view", "0"),
+
                     ],
                 ),
                 responseType: Exactmac_V1_ListApplicationBundlesResponse.self,
@@ -191,13 +195,14 @@ struct PublicContractBoundaryGRPCTests {
                     $0.pageToken = token
                 }
             }
-            try await assertPublicPageSizeBinding(
+            try await assertPublicPageSizeContinuation(
                 client: client,
                 descriptor: Exactmac_V1_ExactMac.Method.ListApplications.descriptor,
                 queryBinding: ParsingHelpers.pageTokenQuery(
                     method: "ListApplications",
                     parameters: [
-                        ("order_by", ""), ("filter", ""), ("view", "0"), ("page_size", "1"),
+                        ("order_by", ""), ("filter", ""), ("view", "0"),
+
                     ],
                 ),
                 responseType: Exactmac_V1_ListApplicationsResponse.self,
@@ -208,13 +213,14 @@ struct PublicContractBoundaryGRPCTests {
                     $0.pageToken = token
                 }
             }
-            try await assertPublicPageSizeBinding(
+            try await assertPublicPageSizeContinuation(
                 client: client,
                 descriptor: Exactmac_V1_ExactMac.Method.ListInputs.descriptor,
                 queryBinding: ParsingHelpers.pageTokenQuery(
                     method: "ListInputs",
                     parameters: [
-                        ("parent", "applications/-"), ("filter_state", ""), ("page_size", "1"),
+                        ("parent", "applications/-"), ("filter_state", ""),
+
                     ],
                 ),
                 responseType: Exactmac_V1_ListInputsResponse.self,
@@ -226,17 +232,17 @@ struct PublicContractBoundaryGRPCTests {
                     $0.pageToken = token
                 }
             }
-            try await assertPublicPageSizeBinding(
+            try await assertPublicPageSizeContinuation(
                 client: client,
                 descriptor: Exactmac_V1_ExactMac.Method.FindElements.descriptor,
                 queryBinding: ParsingHelpers.pageTokenQuery(
                     method: "FindElements",
                     parameters: [
                         ("parent", "applications/1"),
-                        ("selector", selector.serializedData().base64EncodedString()),
+                        ("selector", ParsingHelpers.selectorQueryIdentity(selector)),
                         ("visible_only", "false"),
-                        ("force_refresh", "false"),
-                        ("page_size", "1"),
+                        ("cache_bypass", "false"),
+
                     ],
                 ),
                 responseType: Exactmac_V1_FindElementsResponse.self,
@@ -249,7 +255,7 @@ struct PublicContractBoundaryGRPCTests {
                     $0.pageToken = token
                 }
             }
-            try await assertPublicPageSizeBinding(
+            try await assertPublicPageSizeContinuation(
                 client: client,
                 descriptor: Exactmac_V1_ExactMac.Method.FindRegionElements.descriptor,
                 queryBinding: ParsingHelpers.pageTokenQuery(
@@ -258,8 +264,8 @@ struct PublicContractBoundaryGRPCTests {
                         ("parent", "applications/1"),
                         ("region", region.serializedData().base64EncodedString()),
                         ("selector", ""),
-                        ("force_refresh", "false"),
-                        ("page_size", "1"),
+                        ("cache_bypass", "false"),
+
                     ],
                 ),
                 responseType: Exactmac_V1_FindRegionElementsResponse.self,
@@ -272,12 +278,12 @@ struct PublicContractBoundaryGRPCTests {
                     $0.pageToken = token
                 }
             }
-            try await assertPublicPageSizeBinding(
+            try await assertPublicPageSizeContinuation(
                 client: client,
                 descriptor: Exactmac_V1_ExactMac.Method.ListElements.descriptor,
                 queryBinding: ParsingHelpers.pageTokenQuery(
                     method: "ListElements",
-                    parameters: [("parent", "applications/1"), ("page_size", "1")],
+                    parameters: [("parent", "applications/1")],
                 ),
                 responseType: Exactmac_V1_ListElementsResponse.self,
                 label: "ListElements",
@@ -288,12 +294,12 @@ struct PublicContractBoundaryGRPCTests {
                     $0.pageToken = token
                 }
             }
-            try await assertPublicPageSizeBinding(
+            try await assertPublicPageSizeContinuation(
                 client: client,
                 descriptor: Exactmac_V1_ExactMac.Method.ListObservations.descriptor,
                 queryBinding: ParsingHelpers.pageTokenQuery(
                     method: "ListObservations",
-                    parameters: [("parent", "applications/1"), ("page_size", "1")],
+                    parameters: [("parent", "applications/1")],
                 ),
                 responseType: Exactmac_V1_ListObservationsResponse.self,
                 label: "ListObservations",
@@ -304,12 +310,12 @@ struct PublicContractBoundaryGRPCTests {
                     $0.pageToken = token
                 }
             }
-            try await assertPublicPageSizeBinding(
+            try await assertPublicPageSizeContinuation(
                 client: client,
                 descriptor: Exactmac_V1_ExactMac.Method.ListSessions.descriptor,
                 queryBinding: ParsingHelpers.pageTokenQuery(
                     method: "ListSessions",
-                    parameters: [("page_size", "1")],
+                    parameters: [],
                 ),
                 responseType: Exactmac_V1_ListSessionsResponse.self,
                 label: "ListSessions",
@@ -319,12 +325,12 @@ struct PublicContractBoundaryGRPCTests {
                     $0.pageToken = token
                 }
             }
-            try await assertPublicPageSizeBinding(
+            try await assertPublicPageSizeContinuation(
                 client: client,
                 descriptor: Exactmac_V1_ExactMac.Method.ListMacros.descriptor,
                 queryBinding: ParsingHelpers.pageTokenQuery(
                     method: "ListMacros",
-                    parameters: [("page_size", "1")],
+                    parameters: [],
                 ),
                 responseType: Exactmac_V1_ListMacrosResponse.self,
                 label: "ListMacros",
@@ -334,12 +340,12 @@ struct PublicContractBoundaryGRPCTests {
                     $0.pageToken = token
                 }
             }
-            try await assertPublicPageSizeBinding(
+            try await assertPublicPageSizeContinuation(
                 client: client,
                 descriptor: Exactmac_V1_ExactMac.Method.ListDisplays.descriptor,
                 queryBinding: ParsingHelpers.pageTokenQuery(
                     method: "ListDisplays",
-                    parameters: [("page_size", "1")],
+                    parameters: [],
                 ),
                 responseType: Exactmac_V1_ListDisplaysResponse.self,
                 label: "ListDisplays",
@@ -349,7 +355,7 @@ struct PublicContractBoundaryGRPCTests {
                     $0.pageToken = token
                 }
             }
-            try await assertPublicPageSizeBinding(
+            try await assertPublicPageSizeContinuation(
                 client: client,
                 descriptor: Google_Longrunning_Operations.Method.ListOperations.descriptor,
                 queryBinding: ParsingHelpers.pageTokenQuery(
@@ -358,7 +364,7 @@ struct PublicContractBoundaryGRPCTests {
                         ("name", ""),
                         ("done", ""),
                         ("return_partial_success", "false"),
-                        ("page_size", "1"),
+
                     ],
                 ),
                 responseType: Google_Longrunning_ListOperationsResponse.self,
@@ -611,8 +617,8 @@ struct PublicContractBoundaryGRPCTests {
                     $0.inputID = "output-only-\(suffix)"
                     $0.input.state = .completed
                     $0.input.target.desktop = true
-                    $0.input.action.moveMouse.position.x = 1
-                    $0.input.action.moveMouse.position.y = 1
+                    $0.input.action.mouseMove.position.x = 1
+                    $0.input.action.mouseMove.position.y = 1
                 },
                 descriptor: Exactmac_V1_ExactMac.Method.CreateInput.descriptor,
                 responseType: Exactmac_V1_Input.self,
@@ -878,7 +884,7 @@ struct PublicContractBoundaryGRPCTests {
         await composition.exactMacService.stateStore.seedInputForTesting(
             Exactmac_V1_Input.with {
                 $0.name = malformedName
-                $0.action.moveMouse.position = Exactmac_Type_Point.with {
+                $0.action.mouseMove.position = Exactmac_Type_Point.with {
                     $0.x = 10
                     $0.y = 20
                 }
@@ -893,7 +899,7 @@ struct PublicContractBoundaryGRPCTests {
                     $0.parent = "applications/-"
                     $0.inputID = inputID
                     $0.input.target.desktop = true
-                    $0.input.action.moveMouse.position = Exactmac_Type_Point.with {
+                    $0.input.action.mouseMove.position = Exactmac_Type_Point.with {
                         $0.x = 10
                         $0.y = 20
                     }
@@ -1160,8 +1166,8 @@ private actor PublicBoundaryOperationProbe {
 
 private func assignmentAction() -> Exactmac_V1_MacroAction {
     Exactmac_V1_MacroAction.with {
-        $0.assign.variable = "value"
-        $0.assign.literal = "must reject"
+        $0.assignment.variable = "value"
+        $0.assignment.literal = "must reject"
     }
 }
 
@@ -1223,7 +1229,7 @@ private func publicUnary<
     }
 }
 
-private func assertPublicPageSizeBinding<
+private func assertPublicPageSizeContinuation<
     Response: SwiftProtobuf.Message & Sendable,
 >(
     client: GRPCClient<InProcessTransport.Client>,
@@ -1240,18 +1246,8 @@ private func assertPublicPageSizeBinding<
             request: request(1, token),
             descriptor: descriptor,
         )
-    } catch let error as RPCError {
-        if let errorInfo = try? publicContractErrorInfo(error) {
-            #expect(
-                errorInfo.reason != "INVALID_PAGE_TOKEN",
-                Comment(rawValue: "\(label) rejects its canonical page_size=1 token: \(error)"),
-            )
-        } else {
-            #expect(
-                error.code != .invalidArgument || !error.message.lowercased().contains("page token"),
-                Comment(rawValue: "\(label) rejects its canonical page_size=1 token: \(error)"),
-            )
-        }
+    } catch {
+        Issue.record("\(label) rejected its canonical page_size=1 continuation: \(error)")
     }
 
     do {
@@ -1260,12 +1256,8 @@ private func assertPublicPageSizeBinding<
             request: request(2, token),
             descriptor: descriptor,
         )
-        Issue.record("\(label) accepted a page_size=1 token with page_size=2")
-    } catch let error as RPCError {
-        #expect(error.code == .invalidArgument, Comment(rawValue: "\(label): \(error)"))
-        let errorInfo = try publicContractErrorInfo(error)
-        #expect(errorInfo.reason == "INVALID_PAGE_TOKEN", Comment(rawValue: label))
-        #expect(errorInfo.metadata["field"] == "page_token", Comment(rawValue: label))
+    } catch {
+        Issue.record("\(label) rejected a changed page_size=2 continuation: \(error)")
     }
 }
 

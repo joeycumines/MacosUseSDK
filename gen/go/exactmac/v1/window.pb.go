@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/v1/window.proto
 
-package exactmacv1
+package exactmacpb
 
 import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -75,18 +75,18 @@ type Window struct {
 	//   - Use ListWindows for fast enumeration and UI rendering
 	//   - Use GetWindow for authoritative visibility after mutations
 	//   - Use GetWindowState for expensive AX state details (modal, focused, etc.)
-	Visible bool `protobuf:"varint,5,opt,name=visible,proto3" json:"visible,omitempty"`
+	Visible bool `protobuf:"varint,4,opt,name=visible,proto3" json:"visible,omitempty"`
 	// Bundle identifier of the application that owns this window.
 	//
 	// Data Source (Registry Authority): Resolved via NSRunningApplication from cached CGWindowList metadata.
 	// This is snapshot metadata and may be empty when resolution is unavailable.
 	// Empty string if NSRunningApplication resolution fails or registry data is unavailable.
-	BundleId string `protobuf:"bytes,10,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
+	BundleId string `protobuf:"bytes,5,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
 	// Core Graphics window layer from kCGWindowLayer.
 	//
 	// This is a compositing layer, not a z-order index. Multiple windows may
 	// share the same layer; clients must not infer front-to-back order from it.
-	Layer         int32 `protobuf:"varint,11,opt,name=layer,proto3" json:"layer,omitempty"`
+	Layer         int32 `protobuf:"varint,6,opt,name=layer,proto3" json:"layer,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -401,21 +401,20 @@ var File_exactmac_v1_window_proto protoreflect.FileDescriptor
 
 const file_exactmac_v1_window_proto_rawDesc = "" +
 	"\n" +
-	"\x18exactmac/v1/window.proto\x12\vexactmac.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xad\x02\n" +
+	"\x18exactmac/v1/window.proto\x12\vexactmac.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\x9e\x02\n" +
 	"\x06Window\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x19\n" +
 	"\x05title\x18\x02 \x01(\tB\x03\xe0A\x03R\x05title\x120\n" +
 	"\x06bounds\x18\x03 \x01(\v2\x13.exactmac.v1.BoundsB\x03\xe0A\x03R\x06bounds\x12\x1d\n" +
-	"\avisible\x18\x05 \x01(\bB\x03\xe0A\x03R\avisible\x12 \n" +
-	"\tbundle_id\x18\n" +
-	" \x01(\tB\x03\xe0A\x03R\bbundleId\x12\x19\n" +
-	"\x05layer\x18\v \x01(\x05B\x03\xe0A\x03R\x05layer:R\xeaAO\n" +
-	"\x0fexactmac/Window\x12+applications/{application}/windows/{window}*\awindows2\x06windowJ\x04\b\x04\x10\x05R\az_index\"R\n" +
+	"\avisible\x18\x04 \x01(\bB\x03\xe0A\x03R\avisible\x12 \n" +
+	"\tbundle_id\x18\x05 \x01(\tB\x03\xe0A\x03R\bbundleId\x12\x19\n" +
+	"\x05layer\x18\x06 \x01(\x05B\x03\xe0A\x03R\x05layer:R\xeaAO\n" +
+	"\x0fexactmac/Window\x12+applications/{application}/windows/{window}*\awindows2\x06window\"R\n" +
 	"\x06Bounds\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\x14\n" +
 	"\x05width\x18\x03 \x01(\x01R\x05width\x12\x16\n" +
-	"\x06height\x18\x04 \x01(\x01R\x06height\"\xac\x03\n" +
+	"\x06height\x18\x04 \x01(\x01R\x06height\"\x9a\x03\n" +
 	"\vWindowState\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12!\n" +
 	"\tresizable\x18\x02 \x01(\bB\x03\xe0A\x03R\tresizable\x12%\n" +
@@ -426,10 +425,8 @@ const file_exactmac_v1_window_proto_rawDesc = "" +
 	"\tax_hidden\x18\a \x01(\bB\x03\xe0A\x03R\baxHidden\x12!\n" +
 	"\tminimized\x18\b \x01(\bB\x03\xe0A\x03R\tminimized\x12\x1d\n" +
 	"\afocused\x18\t \x01(\bB\x03\xe0A\x03R\afocused:g\xeaAd\n" +
-	"\x14exactmac/WindowState\x121applications/{application}/windows/{window}/state*\fwindowStates2\vwindowStateJ\x04\b\n" +
-	"\x10\vR\n" +
-	"fullscreenB\xbc\x01\n" +
-	"!io.github.joeycumines.exactmac.v1B\vWindowProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1\xa2\x02\x03EXX\xaa\x02\vExactmac.V1\xca\x02\vExactmac\\V1\xe2\x02\x17Exactmac\\V1\\GPBMetadata\xea\x02\fExactmac::V1b\x06proto3"
+	"\x14exactmac/WindowState\x121applications/{application}/windows/{window}/state*\fwindowStates2\vwindowStateBq\n" +
+	"!io.github.joeycumines.exactmac.v1B\vWindowProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpbb\x06proto3"
 
 var (
 	file_exactmac_v1_window_proto_rawDescOnce sync.Once

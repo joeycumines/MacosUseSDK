@@ -393,7 +393,7 @@ public actor MacroExecutor {
         case let .loop(loopAction):
             try await executeLoopAction(loopAction, context: &context, control: control)
 
-        case let .assign(assignAction):
+        case let .assignment(assignAction):
             try executeAssignAction(assignAction, context: &context)
 
         case let .methodCall(methodCall):
@@ -526,7 +526,7 @@ public actor MacroExecutor {
     ) async throws -> Bool {
         try await control.checkpoint(.condition)
         switch condition.condition {
-        case let .elementExists(selectorString):
+        case let .elementSelector(selectorString):
             // Parse string to determine selector type
             let selector = parseSelectorString(selectorString)
             let validatedSelector = try SelectorParser.shared.parseSelector(selector)
@@ -538,18 +538,18 @@ public actor MacroExecutor {
             )
             return !elementsWithPaths.isEmpty
 
-        case let .windowExists(title):
+        case let .windowTitle(title):
             guard let pid = context.pid else { return false }
             try await windowRegistry.refreshWindows(forPID: pid)
             let windows = try await windowRegistry.listWindows(forPID: pid)
             return windows.contains { $0.title.contains(title) }
 
-        case let .applicationRunning(bundleId):
+        case let .runningApplicationBundleID(bundleId):
             let workspace = NSWorkspace.shared
             let runningApps = workspace.runningApplications
             return runningApps.contains { $0.bundleIdentifier == bundleId }
 
-        case let .variableEquals(varCondition):
+        case let .variableCondition(varCondition):
             guard let value = context.variables[varCondition.variable] else {
                 return false
             }
@@ -572,7 +572,7 @@ public actor MacroExecutor {
         context: MacroContext,
         control: MacroExecutionControl,
     ) async throws -> Bool {
-        switch compound.operator {
+        switch compound.logicalOperator {
         case .and:
             for condition in compound.conditions
                 where try await !evaluateCondition(condition, context: context, control: control)
@@ -629,7 +629,7 @@ public actor MacroExecutor {
                 }
             }
 
-        case let .foreach(forEachLoop):
+        case let .eachItemLoop(forEachLoop):
             try await executeForEachLoop(
                 forEachLoop,
                 actions: loopAction.actions,
@@ -764,7 +764,7 @@ public actor MacroExecutor {
             context.nextPhysicalOrdinal = clickNextOrdinal
             try await executePhysicalInput(
                 Exactmac_V1_InputAction.with {
-                    $0.click = Exactmac_V1_MouseClick.with {
+                    $0.mouseClick = Exactmac_V1_MouseClick.with {
                         $0.position = Exactmac_Type_Point.with {
                             $0.x = centerX
                             $0.y = centerY
@@ -790,7 +790,7 @@ public actor MacroExecutor {
             context.nextPhysicalOrdinal = typeNextOrdinal
             try await executePhysicalInput(
                 Exactmac_V1_InputAction.with {
-                    $0.typeText = Exactmac_V1_TextInput.with {
+                    $0.textInput = Exactmac_V1_TextInput.with {
                         $0.text = text
                     }
                 },
@@ -855,9 +855,9 @@ public actor MacroExecutor {
 
         // Substitute in text input
         switch result.inputType {
-        case var .typeText(textInput):
+        case var .textInput(textInput):
             textInput.text = substituteVariablesInString(textInput.text, context: context)
-            result.inputType = .typeText(textInput)
+            result.inputType = .textInput(textInput)
         default:
             break
         }
@@ -904,9 +904,10 @@ public actor MacroExecutor {
 /// Supports formats:
 /// - "role:Button" -> role selector
 /// - "text:OK" -> exact text match
-/// - "textContains:Submit" -> text contains
+/// - "text_substring:Submit" -> canonical text substring selector
+/// - "textSubstring:Submit" and "textContains:Submit" -> legacy aliases
 /// - "Button" -> defaults to role selector (backward compatible)
-private func parseSelectorString(_ str: String) -> Exactmac_Type_ElementSelector {
+func parseSelectorString(_ str: String) -> Exactmac_Type_ElementSelector {
     if str.hasPrefix("role:") {
         Exactmac_Type_ElementSelector.with {
             $0.role = String(str.dropFirst(5))
@@ -915,9 +916,17 @@ private func parseSelectorString(_ str: String) -> Exactmac_Type_ElementSelector
         Exactmac_Type_ElementSelector.with {
             $0.text = String(str.dropFirst(5))
         }
+    } else if str.hasPrefix("text_substring:") {
+        Exactmac_Type_ElementSelector.with {
+            $0.textSubstring = String(str.dropFirst(15))
+        }
+    } else if str.hasPrefix("textSubstring:") {
+        Exactmac_Type_ElementSelector.with {
+            $0.textSubstring = String(str.dropFirst(14))
+        }
     } else if str.hasPrefix("textContains:") {
         Exactmac_Type_ElementSelector.with {
-            $0.textContains = String(str.dropFirst(13))
+            $0.textSubstring = String(str.dropFirst(13))
         }
     } else if str.hasPrefix("textRegex:") {
         Exactmac_Type_ElementSelector.with {

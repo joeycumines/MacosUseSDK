@@ -257,7 +257,7 @@ struct ServiceLifetimeTests {
 
 private func makeLifetimeNestedMacro() -> Exactmac_V1_Macro {
     let assignment = Exactmac_V1_MacroAction.with {
-        $0.assign = Exactmac_V1_AssignAction.with {
+        $0.assignment = Exactmac_V1_AssignAction.with {
             $0.variable = "iteration"
             $0.literal = "active"
         }

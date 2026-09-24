@@ -7,6 +7,12 @@ import XCTest
 
 /// Unit tests for MacroExecutor error types and supporting structures.
 final class MacroExecutorTests: XCTestCase {
+    func testSelectorStringParserAcceptsCanonicalAndLegacySubstringForms() {
+        XCTAssertEqual(parseSelectorString("text_substring:Submit").textSubstring, "Submit")
+        XCTAssertEqual(parseSelectorString("textSubstring:Submit").textSubstring, "Submit")
+        XCTAssertEqual(parseSelectorString("textContains:Submit").textSubstring, "Submit")
+    }
+
     func testInputActionPreservesAnimationIntentThroughMacroExecution() async throws {
         let recorder = MacroInputIntentRecorder()
         let inputOverlayPresenter = InputOverlayPresenter { presentation in
@@ -58,9 +64,9 @@ final class MacroExecutorTests: XCTestCase {
             $0.actions = [
                 Exactmac_V1_MacroAction.with {
                     $0.input = Exactmac_V1_InputAction.with {
-                        $0.showAnimation = true
+                        $0.visualFeedback = true
                         $0.animationDuration = 0.625
-                        $0.moveMouse = Exactmac_V1_MouseMove.with {
+                        $0.mouseMove = Exactmac_V1_MouseMove.with {
                             $0.position = Exactmac_Type_Point.with {
                                 $0.x = 10
                                 $0.y = 20
@@ -258,8 +264,8 @@ final class MacroExecutorTests: XCTestCase {
             $0.name = "macros/body-wins"
             $0.actions = [
                 Exactmac_V1_MacroAction.with {
-                    $0.assign.variable = "result"
-                    $0.assign.literal = "complete"
+                    $0.assignment.variable = "result"
+                    $0.assignment.literal = "complete"
                 },
             ]
         }
@@ -325,11 +331,11 @@ final class MacroExecutorTests: XCTestCase {
             $0.name = "macros/retired-empty-branch"
             $0.actions = [
                 Exactmac_V1_MacroAction.with {
-                    $0.conditional.condition.variableEquals.variable = "missing"
-                    $0.conditional.condition.variableEquals.value = "true"
+                    $0.conditional.condition.variableCondition.variable = "missing"
+                    $0.conditional.condition.variableCondition.value = "true"
                     $0.conditional.thenActions = [
                         Exactmac_V1_MacroAction.with {
-                            $0.input.moveMouse.position = Exactmac_Type_Point.with {
+                            $0.input.mouseMove.position = Exactmac_Type_Point.with {
                                 $0.x = 10
                                 $0.y = 20
                             }
@@ -589,7 +595,7 @@ private actor MacroInputIntentRecorder {
 
 private func makeNestedLoopMacro(count: Int32 = .max) -> Exactmac_V1_Macro {
     let assignment = Exactmac_V1_MacroAction.with {
-        $0.assign = Exactmac_V1_AssignAction.with {
+        $0.assignment = Exactmac_V1_AssignAction.with {
             $0.variable = "iteration"
             $0.literal = "active"
         }

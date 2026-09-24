@@ -42,7 +42,6 @@ final class OperationsProvider: Google_Longrunning_Operations.ServiceProtocol {
                 ("name", ""),
                 ("done", showOnlyDone.map(String.init) ?? ""),
                 ("return_partial_success", "false"),
-                ("page_size", String(pageSize)),
             ],
         )
         let (operations, nextPageToken) = try await operationStore.listOperations(

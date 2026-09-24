@@ -43,8 +43,8 @@ struct WindowCaptureTruthContractGRPCTests {
                     $0.window = windowName
                     $0.format = .jpeg
                     $0.quality = 91
-                    $0.includeShadow = true
-                    $0.includeOcrText = true
+                    $0.shadowEnabled = true
+                    $0.ocrEnabled = true
                 },
                 descriptor: Exactmac_V1_ExactMac.Method.CaptureWindowScreenshot.descriptor,
             )
@@ -101,7 +101,7 @@ struct WindowCaptureTruthContractGRPCTests {
                     client: client,
                     request: Exactmac_V1_CaptureWindowScreenshotRequest.with {
                         $0.window = windowName
-                        $0.includeOcrText = includeOCR
+                        $0.ocrEnabled = includeOCR
                     },
                     descriptor: Exactmac_V1_ExactMac.Method.CaptureWindowScreenshot.descriptor,
                 )
@@ -152,7 +152,7 @@ struct WindowCaptureTruthContractGRPCTests {
                         client: client,
                         request: Exactmac_V1_CaptureWindowScreenshotRequest.with {
                             $0.window = windowName
-                            $0.includeOcrText = includeOCR
+                            $0.ocrEnabled = includeOCR
                         },
                         descriptor: Exactmac_V1_ExactMac.Method.CaptureWindowScreenshot.descriptor,
                     )
@@ -176,7 +176,7 @@ struct WindowCaptureTruthContractGRPCTests {
                         client: client,
                         request: Exactmac_V1_CaptureWindowScreenshotRequest.with {
                             $0.window = windowName
-                            $0.includeShadow = true
+                            $0.shadowEnabled = true
                         },
                         descriptor: Exactmac_V1_ExactMac.Method.CaptureWindowScreenshot.descriptor,
                     )

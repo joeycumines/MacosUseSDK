@@ -73,7 +73,7 @@ actor ObservationManager {
             $0.type = type
             $0.state = .pending
             $0.createTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
-            $0.activate = activate
+            $0.activation = activate
             if let filter {
                 $0.filter = filter
             }
@@ -710,17 +710,17 @@ actor ObservationManager {
     private nonisolated func detectElementChanges(previous: [Exactmac_V1_Element], current: [Exactmac_V1_Element]) -> [ElementChange] {
         var changes: [ElementChange] = []
         // Use uniquingKeysWith to handle any duplicate paths gracefully (keep first occurrence)
-        let previousMap = Dictionary(previous.map { ($0.path, $0) }, uniquingKeysWith: { first, _ in first })
-        let currentMap = Dictionary(current.map { ($0.path, $0) }, uniquingKeysWith: { first, _ in first })
+        let previousMap = Dictionary(previous.map { ($0.pathIndices, $0) }, uniquingKeysWith: { first, _ in first })
+        let currentMap = Dictionary(current.map { ($0.pathIndices, $0) }, uniquingKeysWith: { first, _ in first })
 
-        for element in current where previousMap[element.path] == nil {
+        for element in current where previousMap[element.pathIndices] == nil {
             changes.append(.added(element))
         }
-        for element in previous where currentMap[element.path] == nil {
+        for element in previous where currentMap[element.pathIndices] == nil {
             changes.append(.removed(element))
         }
         for element in current {
-            if let prevElement = previousMap[element.path], !elementsEqual(prevElement, element) {
+            if let prevElement = previousMap[element.pathIndices], !elementsEqual(prevElement, element) {
                 changes.append(.modified(old: prevElement, new: element))
             }
         }
@@ -730,9 +730,9 @@ actor ObservationManager {
     private nonisolated func detectAttributeChanges(previous: [Exactmac_V1_Element], current: [Exactmac_V1_Element], watchedAttributes: [String]) -> [ElementChange] {
         var changes: [ElementChange] = []
         // Use uniquingKeysWith to handle any duplicate paths gracefully (keep first occurrence)
-        let previousMap = Dictionary(previous.map { ($0.path, $0) }, uniquingKeysWith: { first, _ in first })
+        let previousMap = Dictionary(previous.map { ($0.pathIndices, $0) }, uniquingKeysWith: { first, _ in first })
         for element in current {
-            if let prevElement = previousMap[element.path] {
+            if let prevElement = previousMap[element.pathIndices] {
                 let attributeChanges = findAttributeChanges(old: prevElement, new: element, watched: watchedAttributes)
                 if !attributeChanges.isEmpty {
                     changes.append(.modified(old: prevElement, new: element))
@@ -774,11 +774,11 @@ actor ObservationManager {
             $0.eventTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
             $0.sequence = sequence
             switch change {
-            case let .added(element): $0.eventType = .elementAdded(Exactmac_V1_ElementEvent.with { $0.element = element })
-            case let .removed(element): $0.eventType = .elementRemoved(Exactmac_V1_ElementEvent.with { $0.element = element })
+            case let .added(element): $0.eventType = .elementAddition(Exactmac_V1_ElementEvent.with { $0.element = element })
+            case let .removed(element): $0.eventType = .elementRemoval(Exactmac_V1_ElementEvent.with { $0.element = element })
             case let .modified(old, new):
                 let attributeChanges = findAttributeChanges(old: old, new: new, watched: [])
-                $0.eventType = .elementModified(Exactmac_V1_ElementModified.with { $0.oldElement = old; $0.newElement = new; $0.changes = attributeChanges })
+                $0.eventType = .elementModification(Exactmac_V1_ElementModified.with { $0.oldElement = old; $0.newElement = new; $0.changes = attributeChanges })
             }
         }
     }

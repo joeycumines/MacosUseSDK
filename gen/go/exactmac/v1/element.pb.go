@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/v1/element.proto
 
-package exactmacv1
+package exactmacpb
 
 import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -33,37 +33,34 @@ type Element struct {
 	// Canonical resource name in the format
 	// "applications/{application}/elements/{element}". The element segment is
 	// an opaque server-generated ID valid only while this resource is retained.
-	//
-	// Field 13 is intentionally additive: fields 1 through 12 retain the wire
-	// numbers used by element values returned before resource naming existed.
-	Name string `protobuf:"bytes,13,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The accessibility role of the element (for example, button or text field).
-	Role string `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	Role string `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
 	// Text content of the element, if any.
-	Text *string `protobuf:"bytes,2,opt,name=text,proto3,oneof" json:"text,omitempty"`
+	Text *string `protobuf:"bytes,3,opt,name=text,proto3,oneof" json:"text,omitempty"`
 	// X coordinate in Global Display Coordinates (top-left origin, Y increases downward).
-	X *float64 `protobuf:"fixed64,3,opt,name=x,proto3,oneof" json:"x,omitempty"`
+	X *float64 `protobuf:"fixed64,4,opt,name=x,proto3,oneof" json:"x,omitempty"`
 	// Y coordinate in Global Display Coordinates (top-left origin, Y increases downward).
-	Y *float64 `protobuf:"fixed64,4,opt,name=y,proto3,oneof" json:"y,omitempty"`
+	Y *float64 `protobuf:"fixed64,5,opt,name=y,proto3,oneof" json:"y,omitempty"`
 	// Width of the element in pixels.
-	Width *float64 `protobuf:"fixed64,5,opt,name=width,proto3,oneof" json:"width,omitempty"`
+	Width *float64 `protobuf:"fixed64,6,opt,name=width,proto3,oneof" json:"width,omitempty"`
 	// Height of the element in pixels.
-	Height *float64 `protobuf:"fixed64,6,opt,name=height,proto3,oneof" json:"height,omitempty"`
+	Height *float64 `protobuf:"fixed64,7,opt,name=height,proto3,oneof" json:"height,omitempty"`
 	// Opaque ephemeral ID for request fields that already carry the application parent.
-	ElementId string `protobuf:"bytes,7,opt,name=element_id,json=elementId,proto3" json:"element_id,omitempty"`
+	ElementId string `protobuf:"bytes,8,opt,name=element_id,json=elementId,proto3" json:"element_id,omitempty"`
 	// Whether the element is enabled for interaction.
-	Enabled *bool `protobuf:"varint,8,opt,name=enabled,proto3,oneof" json:"enabled,omitempty"`
+	Enabled *bool `protobuf:"varint,9,opt,name=enabled,proto3,oneof" json:"enabled,omitempty"`
 	// Whether the element has keyboard focus.
-	Focused *bool `protobuf:"varint,9,opt,name=focused,proto3,oneof" json:"focused,omitempty"`
-	// Hierarchy path from the traversal root to this element.
-	Path []int32 `protobuf:"varint,10,rep,packed,name=path,proto3" json:"path,omitempty"`
+	Focused *bool `protobuf:"varint,10,opt,name=focused,proto3,oneof" json:"focused,omitempty"`
+	// Hierarchy path indices from the traversal root to this element.
+	PathIndices []int32 `protobuf:"varint,11,rep,packed,name=path_indices,json=pathIndices,proto3" json:"path_indices,omitempty"`
 	// Additional Accessibility attributes represented as key-value pairs.
-	Attributes map[string]string `protobuf:"bytes,11,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Attributes map[string]string `protobuf:"bytes,12,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Available Accessibility action names.
-	Actions []string `protobuf:"bytes,12,rep,name=actions,proto3" json:"actions,omitempty"`
-	// Parent application resource (for example, "applications/com.apple.TextEdit-abc123").
+	Actions []string `protobuf:"bytes,13,rep,name=actions,proto3" json:"actions,omitempty"`
+	// Owning application resource (for example, "applications/com.apple.TextEdit-abc123").
 	// This is the canonical owner at discovery time; a stale element must be re-resolved.
-	Parent        string `protobuf:"bytes,14,opt,name=parent,proto3" json:"parent,omitempty"`
+	Application   string `protobuf:"bytes,14,opt,name=application,proto3" json:"application,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -168,9 +165,9 @@ func (x *Element) GetFocused() bool {
 	return false
 }
 
-func (x *Element) GetPath() []int32 {
+func (x *Element) GetPathIndices() []int32 {
 	if x != nil {
-		return x.Path
+		return x.PathIndices
 	}
 	return nil
 }
@@ -189,9 +186,9 @@ func (x *Element) GetActions() []string {
 	return nil
 }
 
-func (x *Element) GetParent() string {
+func (x *Element) GetApplication() string {
 	if x != nil {
-		return x.Parent
+		return x.Application
 	}
 	return ""
 }
@@ -200,27 +197,27 @@ var File_exactmac_v1_element_proto protoreflect.FileDescriptor
 
 const file_exactmac_v1_element_proto_rawDesc = "" +
 	"\n" +
-	"\x19exactmac/v1/element.proto\x12\vexactmac.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xca\x05\n" +
+	"\x19exactmac/v1/element.proto\x12\vexactmac.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xe3\x05\n" +
 	"\aElement\x12\x17\n" +
-	"\x04name\x18\r \x01(\tB\x03\xe0A\bR\x04name\x12\x17\n" +
-	"\x04role\x18\x01 \x01(\tB\x03\xe0A\x03R\x04role\x12\x1c\n" +
-	"\x04text\x18\x02 \x01(\tB\x03\xe0A\x03H\x00R\x04text\x88\x01\x01\x12\x16\n" +
-	"\x01x\x18\x03 \x01(\x01B\x03\xe0A\x03H\x01R\x01x\x88\x01\x01\x12\x16\n" +
-	"\x01y\x18\x04 \x01(\x01B\x03\xe0A\x03H\x02R\x01y\x88\x01\x01\x12\x1e\n" +
-	"\x05width\x18\x05 \x01(\x01B\x03\xe0A\x03H\x03R\x05width\x88\x01\x01\x12 \n" +
-	"\x06height\x18\x06 \x01(\x01B\x03\xe0A\x03H\x04R\x06height\x88\x01\x01\x12\"\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x17\n" +
+	"\x04role\x18\x02 \x01(\tB\x03\xe0A\x03R\x04role\x12\x1c\n" +
+	"\x04text\x18\x03 \x01(\tB\x03\xe0A\x03H\x00R\x04text\x88\x01\x01\x12\x16\n" +
+	"\x01x\x18\x04 \x01(\x01B\x03\xe0A\x03H\x01R\x01x\x88\x01\x01\x12\x16\n" +
+	"\x01y\x18\x05 \x01(\x01B\x03\xe0A\x03H\x02R\x01y\x88\x01\x01\x12\x1e\n" +
+	"\x05width\x18\x06 \x01(\x01B\x03\xe0A\x03H\x03R\x05width\x88\x01\x01\x12 \n" +
+	"\x06height\x18\a \x01(\x01B\x03\xe0A\x03H\x04R\x06height\x88\x01\x01\x12\"\n" +
 	"\n" +
-	"element_id\x18\a \x01(\tB\x03\xe0A\x03R\telementId\x12\"\n" +
-	"\aenabled\x18\b \x01(\bB\x03\xe0A\x03H\x05R\aenabled\x88\x01\x01\x12\"\n" +
-	"\afocused\x18\t \x01(\bB\x03\xe0A\x03H\x06R\afocused\x88\x01\x01\x12\x17\n" +
-	"\x04path\x18\n" +
-	" \x03(\x05B\x03\xe0A\x03R\x04path\x12I\n" +
+	"element_id\x18\b \x01(\tB\x03\xe0A\x03R\telementId\x12\"\n" +
+	"\aenabled\x18\t \x01(\bB\x03\xe0A\x03H\x05R\aenabled\x88\x01\x01\x12\"\n" +
+	"\afocused\x18\n" +
+	" \x01(\bB\x03\xe0A\x03H\x06R\afocused\x88\x01\x01\x12&\n" +
+	"\fpath_indices\x18\v \x03(\x05B\x03\xe0A\x03R\vpathIndices\x12I\n" +
 	"\n" +
-	"attributes\x18\v \x03(\v2$.exactmac.v1.Element.AttributesEntryB\x03\xe0A\x03R\n" +
+	"attributes\x18\f \x03(\v2$.exactmac.v1.Element.AttributesEntryB\x03\xe0A\x03R\n" +
 	"attributes\x12\x1d\n" +
-	"\aactions\x18\f \x03(\tB\x03\xe0A\x03R\aactions\x124\n" +
-	"\x06parent\x18\x0e \x01(\tB\x1c\xe0A\x03\xfaA\x16\n" +
-	"\x14exactmac/ApplicationR\x06parent\x1a=\n" +
+	"\aactions\x18\r \x03(\tB\x03\xe0A\x03R\aactions\x12>\n" +
+	"\vapplication\x18\x0e \x01(\tB\x1c\xe0A\x03\xfaA\x16\n" +
+	"\x14exactmac/ApplicationR\vapplication\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01:W\xeaAT\n" +
@@ -233,8 +230,8 @@ const file_exactmac_v1_element_proto_rawDesc = "" +
 	"\n" +
 	"\b_enabledB\n" +
 	"\n" +
-	"\b_focusedB\xbd\x01\n" +
-	"!io.github.joeycumines.exactmac.v1B\fElementProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1\xa2\x02\x03EXX\xaa\x02\vExactmac.V1\xca\x02\vExactmac\\V1\xe2\x02\x17Exactmac\\V1\\GPBMetadata\xea\x02\fExactmac::V1b\x06proto3"
+	"\b_focusedBr\n" +
+	"!io.github.joeycumines.exactmac.v1B\fElementProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpbb\x06proto3"
 
 var (
 	file_exactmac_v1_element_proto_rawDescOnce sync.Once

@@ -198,7 +198,7 @@ func requireMainDisplay(t *testing.T, displays []*pb.Display) *pb.Display {
 	}
 	mainIndex := -1
 	for index, display := range displays {
-		if display.GetIsMain() {
+		if display.GetMain() {
 			if mainIndex != -1 {
 				t.Fatalf("ListDisplays returned multiple main displays: %q and %q", displays[mainIndex].GetName(), display.GetName())
 			}

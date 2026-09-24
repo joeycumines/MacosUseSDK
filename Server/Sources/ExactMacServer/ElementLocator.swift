@@ -298,7 +298,7 @@ public actor ElementLocator {
                 applicationName: scope.applicationName,
             )
             try Task.checkCancellation()
-            return registeredElements.map { ($0, $0.path) }
+            return registeredElements.map { ($0, $0.pathIndices) }
         }
     }
 
@@ -436,7 +436,7 @@ public actor ElementLocator {
         case let .text(text):
             return element.text == text
 
-        case let .textContains(substring):
+        case let .textSubstring(substring):
             guard element.hasText else { return false }
             return element.text.contains(substring)
 
@@ -480,8 +480,8 @@ public actor ElementLocator {
         case let .compound(compoundSelector):
             let subMatches = compoundSelector.selectors.map { matchesSelector(element, selector: $0) }
 
-            switch compoundSelector.operator {
-            case .and, .unspecified:
+            switch compoundSelector.logicalOperator {
+            case .and:
                 return subMatches.allSatisfy(\.self)
             case .or:
                 return subMatches.contains(true)
@@ -491,7 +491,7 @@ public actor ElementLocator {
                 // If empty selectors, return false (undefined behavior)
                 guard !subMatches.isEmpty else { return false }
                 return !subMatches.allSatisfy(\.self)
-            case .UNRECOGNIZED:
+            case .unspecified, .UNRECOGNIZED:
                 return false
             }
 

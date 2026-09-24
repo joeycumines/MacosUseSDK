@@ -216,7 +216,7 @@ fileprivate nonisolated let _protobuf_package = "exactmac.v1"
 
 nonisolated extension Exactmac_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Window"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}title\0\u{1}bounds\0\u{2}\u{2}visible\0\u{4}\u{5}bundle_id\0\u{1}layer\0\u{b}z_index\0\u{c}\u{4}\u{1}")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}title\0\u{1}bounds\0\u{1}visible\0\u{3}bundle_id\0\u{1}layer\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -227,9 +227,9 @@ nonisolated extension Exactmac_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._
       case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.title) }()
       case 3: try { try decoder.decodeSingularMessageField(value: &self._bounds) }()
-      case 5: try { try decoder.decodeSingularBoolField(value: &self.visible) }()
-      case 10: try { try decoder.decodeSingularStringField(value: &self.bundleID) }()
-      case 11: try { try decoder.decodeSingularInt32Field(value: &self.layer) }()
+      case 4: try { try decoder.decodeSingularBoolField(value: &self.visible) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.bundleID) }()
+      case 6: try { try decoder.decodeSingularInt32Field(value: &self.layer) }()
       default: break
       }
     }
@@ -250,13 +250,13 @@ nonisolated extension Exactmac_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._
       try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
     } }()
     if self.visible != false {
-      try visitor.visitSingularBoolField(value: self.visible, fieldNumber: 5)
+      try visitor.visitSingularBoolField(value: self.visible, fieldNumber: 4)
     }
     if !self.bundleID.isEmpty {
-      try visitor.visitSingularStringField(value: self.bundleID, fieldNumber: 10)
+      try visitor.visitSingularStringField(value: self.bundleID, fieldNumber: 5)
     }
     if self.layer != 0 {
-      try visitor.visitSingularInt32Field(value: self.layer, fieldNumber: 11)
+      try visitor.visitSingularInt32Field(value: self.layer, fieldNumber: 6)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -320,7 +320,7 @@ nonisolated extension Exactmac_V1_Bounds: SwiftProtobuf.Message, SwiftProtobuf._
 
 nonisolated extension Exactmac_V1_WindowState: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WindowState"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}resizable\0\u{1}minimizable\0\u{1}closable\0\u{1}modal\0\u{1}floating\0\u{3}ax_hidden\0\u{1}minimized\0\u{1}focused\0\u{b}fullscreen\0\u{c}\u{a}\u{1}")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}resizable\0\u{1}minimizable\0\u{1}closable\0\u{1}modal\0\u{1}floating\0\u{3}ax_hidden\0\u{1}minimized\0\u{1}focused\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {

@@ -457,3 +457,49 @@ func TestGRPCErrorResult_NonGRPCError(t *testing.T) {
 		t.Errorf("result should contain formatted message: %s", text)
 	}
 }
+
+// resultIsError checks whether a ToolResult represents an error.
+func resultIsError(r *ToolResult) bool {
+	return r != nil && r.IsError
+}
+
+// resultText returns the concatenated text content of a ToolResult.
+func resultText(r *ToolResult) string {
+	if r == nil {
+		return ""
+	}
+	var parts []string
+	for _, c := range r.Content {
+		if c.Type == "text" {
+			parts = append(parts, c.Text)
+		}
+	}
+	return strings.Join(parts, "\n")
+}
+
+// resultContains checks whether the ToolResult text contains the given substring.
+func resultContains(r *ToolResult, substr string) bool {
+	return strings.Contains(resultText(r), substr)
+}
+
+func TestCUATruncateText(t *testing.T) {
+	tests := []struct {
+		name string
+		text string
+		want string
+	}{
+		{"short text passes through", "hello", "hello"},
+		{"exactly max length", strings.Repeat("a", maxDisplayTextLen), strings.Repeat("a", maxDisplayTextLen)},
+		{"over max length truncated", strings.Repeat("a", maxDisplayTextLen+10), strings.Repeat("a", maxDisplayTextLen) + "..."},
+		{"empty string", "", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := truncateText(tt.text)
+			if got != tt.want {
+				t.Errorf("truncateText() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}

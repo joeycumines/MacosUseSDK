@@ -512,10 +512,10 @@ final class SessionManagerTests: XCTestCase {
 
         let snapshotOptional = await manager.getSessionSnapshot(sessionName: session.name)
         let snapshot = try XCTUnwrap(snapshotOptional)
-        XCTAssertEqual(snapshot.history.count, 1)
-        XCTAssertEqual(snapshot.history[0].operationType, "CreateWindow")
-        XCTAssertEqual(snapshot.history[0].resource, "windows/123")
-        XCTAssertTrue(snapshot.history[0].success)
+        XCTAssertEqual(snapshot.operationRecords.count, 1)
+        XCTAssertEqual(snapshot.operationRecords[0].operationType, "CreateWindow")
+        XCTAssertEqual(snapshot.operationRecords[0].resource, "windows/123")
+        XCTAssertTrue(snapshot.operationRecords[0].success)
 
         // Cleanup
         _ = await manager.deleteSession(name: session.name)
@@ -540,8 +540,8 @@ final class SessionManagerTests: XCTestCase {
 
         let snapshotOptional = await manager.getSessionSnapshot(sessionName: session.name)
         let snapshot = try XCTUnwrap(snapshotOptional)
-        XCTAssertFalse(snapshot.history[0].success)
-        XCTAssertEqual(snapshot.history[0].error, "Window not found")
+        XCTAssertFalse(snapshot.operationRecords[0].success)
+        XCTAssertEqual(snapshot.operationRecords[0].error, "Window not found")
 
         // Cleanup
         _ = await manager.deleteSession(name: session.name)
@@ -580,7 +580,7 @@ final class SessionManagerTests: XCTestCase {
         XCTAssertEqual(snapshot.session.name, session.name)
         XCTAssertTrue(snapshot.applications.contains("applications/111"))
         XCTAssertTrue(snapshot.observations.contains("observations/222"))
-        XCTAssertEqual(snapshot.history.count, 1)
+        XCTAssertEqual(snapshot.operationRecords.count, 1)
 
         // Cleanup
         _ = await manager.deleteSession(name: session.name)
@@ -879,7 +879,7 @@ final class SessionManagerTests: XCTestCase {
         // Empty collections should be present but empty
         XCTAssertTrue(snapshot.applications.isEmpty, "Applications should be empty")
         XCTAssertTrue(snapshot.observations.isEmpty, "Observations should be empty")
-        XCTAssertTrue(snapshot.history.isEmpty, "History should be empty")
+        XCTAssertTrue(snapshot.operationRecords.isEmpty, "History should be empty")
 
         // Cleanup
         _ = await manager.deleteSession(name: session.name)
@@ -908,10 +908,10 @@ final class SessionManagerTests: XCTestCase {
         let snapshotOptional = await manager.getSessionSnapshot(sessionName: session.name)
         let snapshot = try XCTUnwrap(snapshotOptional)
 
-        XCTAssertEqual(snapshot.history.count, 5, "Should have 5 operations")
+        XCTAssertEqual(snapshot.operationRecords.count, 5, "Should have 5 operations")
 
         // Verify operations are in order (timestamp ordering)
-        for (idx, op) in snapshot.history.enumerated() {
+        for (idx, op) in snapshot.operationRecords.enumerated() {
             XCTAssertEqual(op.operationType, "Operation\(idx)")
             XCTAssertEqual(op.resource, "resource/\(idx)")
         }

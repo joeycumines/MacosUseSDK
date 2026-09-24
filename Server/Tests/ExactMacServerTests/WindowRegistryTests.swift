@@ -442,7 +442,7 @@ struct WindowRegistryCacheInvalidationTests {
         // First refresh to populate cache
         try await registry.refreshWindows(forPID: 100)
 
-        // getLastKnownWindow should return cached data
+        // getLastKnownWindow should return cached window
         let cached = await registry.getLastKnownWindow(1001)
         #expect(cached != nil, "Should return cached window")
         #expect(cached?.windowID == 1001, "Should return correct window ID")
@@ -450,5 +450,66 @@ struct WindowRegistryCacheInvalidationTests {
         // Verify non-existent window returns nil
         let missing = await registry.getLastKnownWindow(9999)
         #expect(missing == nil, "Should return nil for missing window")
+    }
+
+    @Test
+    func `window pagination applies skip to first and continuation pages`() async throws {
+        let now = Date()
+        let bindings = (0 ..< 5).map { index in
+            WindowRegistry.WindowBinding(
+                resourceID: "window-\(index)",
+                applicationName: "applications/100",
+                processIdentity: nil,
+                info: WindowRegistry.WindowInfo(
+                    windowID: CGWindowID(index + 1),
+                    ownerPID: 100,
+                    bounds: CGRect(x: 0, y: 0, width: 100, height: 100),
+                    title: "Window \(index)",
+                    layer: Int32(index),
+                    isOnScreen: true,
+                    timestamp: now,
+                    bundleID: "com.example.test",
+                ),
+                retainedElement: nil,
+            )
+        }
+        let registry = WindowRegistry()
+        let queryBinding = ParsingHelpers.pageTokenQuery(method: "ListWindows")
+
+        let first = try await registry.firstWindowPage(
+            bindings: bindings,
+            pageSize: 2,
+            skip: 1,
+            queryBinding: queryBinding,
+            applicationName: "applications/100",
+            pid: 100,
+            processIdentity: nil,
+        )
+        #expect(first.bindings.map(\.resourceID) == ["window-1", "window-2"])
+        #expect(!first.nextPageToken.isEmpty)
+
+        let continued = try await registry.continuationWindowPage(
+            token: first.nextPageToken,
+            pageSize: 1,
+            skip: 1,
+            queryBinding: queryBinding,
+            applicationName: "applications/100",
+            pid: 100,
+            processIdentity: nil,
+        )
+        #expect(continued.bindings.map(\.resourceID) == ["window-4"])
+        #expect(continued.nextPageToken.isEmpty)
+
+        let outOfRange = try await registry.firstWindowPage(
+            bindings: bindings,
+            pageSize: 2,
+            skip: 10,
+            queryBinding: queryBinding,
+            applicationName: "applications/100",
+            pid: 100,
+            processIdentity: nil,
+        )
+        #expect(outOfRange.bindings.isEmpty)
+        #expect(outOfRange.nextPageToken.isEmpty)
     }
 }

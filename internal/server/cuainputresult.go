@@ -127,33 +127,33 @@ func expectedInputPostedEventCount(action *pb.InputAction) (int32, error) {
 	}
 	var count int64
 	switch inputType := action.GetInputType().(type) {
-	case *pb.InputAction_Click:
-		if inputType.Click == nil {
+	case *pb.InputAction_MouseClick:
+		if inputType.MouseClick == nil {
 			return 0, fmt.Errorf("click action is missing")
 		}
 		clickCount := int64(1)
-		if inputType.Click.ClickCount != nil {
-			clickCount = int64(inputType.Click.GetClickCount())
+		if inputType.MouseClick.ClickCount != nil {
+			clickCount = int64(inputType.MouseClick.GetClickCount())
 		}
 		if clickCount < 1 {
 			return 0, fmt.Errorf("click_count must be positive")
 		}
 		count = clickCount * 2
-	case *pb.InputAction_TypeText:
-		if inputType.TypeText == nil || inputType.TypeText.GetText() == "" {
-			return 0, fmt.Errorf("type_text action is missing text")
+	case *pb.InputAction_TextInput:
+		if inputType.TextInput == nil || inputType.TextInput.GetText() == "" {
+			return 0, fmt.Errorf("text_input action is missing text")
 		}
-		count = int64(uniseg.GraphemeClusterCount(inputType.TypeText.GetText())) * 2
-	case *pb.InputAction_PressKey:
-		if inputType.PressKey == nil {
-			return 0, fmt.Errorf("press_key action is missing")
+		count = int64(uniseg.GraphemeClusterCount(inputType.TextInput.GetText())) * 2
+	case *pb.InputAction_KeyPress:
+		if inputType.KeyPress == nil {
+			return 0, fmt.Errorf("key_press action is missing")
 		}
 		count = 2
-	case *pb.InputAction_MoveMouse:
-		if inputType.MoveMouse == nil {
-			return 0, fmt.Errorf("move_mouse action is missing")
+	case *pb.InputAction_MouseMove:
+		if inputType.MouseMove == nil {
+			return 0, fmt.Errorf("mouse_move action is missing")
 		}
-		duration := inputType.MoveMouse.GetDuration()
+		duration := inputType.MouseMove.GetDuration()
 		if !isFinite(duration) || duration < 0 {
 			return 0, fmt.Errorf("move duration is invalid")
 		}
@@ -162,29 +162,29 @@ func expectedInputPostedEventCount(action *pb.InputAction) (int32, error) {
 		} else {
 			count = 20
 		}
-	case *pb.InputAction_Drag:
-		if inputType.Drag == nil {
+	case *pb.InputAction_MouseDrag:
+		if inputType.MouseDrag == nil {
 			return 0, fmt.Errorf("drag action is missing")
 		}
-		switch pathCount := len(inputType.Drag.GetPath()); {
+		switch pathCount := len(inputType.MouseDrag.GetWaypoints()); {
 		case pathCount == 0:
 			count = 3
 		case pathCount >= 2:
 			count = int64(pathCount) + 1
 		default:
-			return 0, fmt.Errorf("drag path must contain at least two points")
+			return 0, fmt.Errorf("drag waypoints must contain at least two points")
 		}
-	case *pb.InputAction_Scroll:
-		if inputType.Scroll == nil {
+	case *pb.InputAction_ScrollAction:
+		if inputType.ScrollAction == nil {
 			return 0, fmt.Errorf("scroll action is missing")
 		}
-		scrollCount, err := expectedScrollPostedEventCount(inputType.Scroll)
+		scrollCount, err := expectedScrollPostedEventCount(inputType.ScrollAction)
 		if err != nil {
 			return 0, err
 		}
 		count = scrollCount
-	case *pb.InputAction_Hover:
-		if inputType.Hover == nil {
+	case *pb.InputAction_HoverAction:
+		if inputType.HoverAction == nil {
 			return 0, fmt.Errorf("hover action is missing")
 		}
 		count = 1

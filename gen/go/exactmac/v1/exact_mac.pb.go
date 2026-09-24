@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/v1/exact_mac.proto
 
-package exactmacv1
+package exactmacpb
 
 import (
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
@@ -481,8 +481,9 @@ type ListApplicationBundlesRequest struct {
 	// Maximum number of bundles to return. Zero uses the server default;
 	// negative values are invalid and values above 1000 are clamped to 1000.
 	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// Opaque token from a previous request with identical semantic query inputs,
-	// including the effective page size after defaulting and clamping.
+	// Opaque token from a previous request with identical non-pagination query
+	// inputs. The page size may change on a continuation request; clients must
+	// treat the token as opaque.
 	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// Ordering specification. Supported fields are name, display_name,
 	// bundle_id, and bundle_url, optionally followed by " desc".
@@ -491,7 +492,12 @@ type ListApplicationBundlesRequest struct {
 	// bundle_id; multiple conditions use AND semantics.
 	Filter string `protobuf:"bytes,4,opt,name=filter,proto3" json:"filter,omitempty"`
 	// Amount of metadata to return. Unspecified defaults to BASIC.
-	View          ApplicationView `protobuf:"varint,5,opt,name=view,proto3,enum=exactmac.v1.ApplicationView" json:"view,omitempty"`
+	View ApplicationView `protobuf:"varint,5,opt,name=view,proto3,enum=exactmac.v1.ApplicationView" json:"view,omitempty"`
+	// Number of individual resources to skip before returning this page.
+	// A continuation adds this value to the position encoded by page_token.
+	// If the requested position is beyond the collection, return an empty page
+	// without a next_page_token.
+	Skip          int32 `protobuf:"varint,6,opt,name=skip,proto3" json:"skip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -559,6 +565,13 @@ func (x *ListApplicationBundlesRequest) GetView() ApplicationView {
 		return x.View
 	}
 	return ApplicationView_APPLICATION_VIEW_UNSPECIFIED
+}
+
+func (x *ListApplicationBundlesRequest) GetSkip() int32 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
 }
 
 // Response from listing installed application bundles.
@@ -745,7 +758,7 @@ type GetApplicationRequest struct {
 	// Resource name of the application.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Amount of metadata to return. Unspecified defaults to BASIC.
-	View          ApplicationView `protobuf:"varint,3,opt,name=view,proto3,enum=exactmac.v1.ApplicationView" json:"view,omitempty"`
+	View          ApplicationView `protobuf:"varint,2,opt,name=view,proto3,enum=exactmac.v1.ApplicationView" json:"view,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -799,9 +812,9 @@ type ListApplicationsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Maximum number of applications to return.
 	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// Page token from a previous ListApplications call.
-	// This token is opaque and its structure must not be relied upon by clients.
-	// Only its presence or absence should be used to determine pagination state.
+	// Page token from a previous call. The token is bound to the other semantic
+	// query inputs, not page_size or skip; clients may change either when continuing.
+	// Its structure is opaque and must not be relied upon by clients.
 	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// Ordering specification. Supported fields are name, pid, display_name,
 	// bundle_id, and active, optionally followed by " desc".
@@ -810,7 +823,12 @@ type ListApplicationsRequest struct {
 	// bundle_id; multiple conditions use AND semantics.
 	Filter string `protobuf:"bytes,4,opt,name=filter,proto3" json:"filter,omitempty"`
 	// Amount of metadata to return. Unspecified defaults to BASIC.
-	View          ApplicationView `protobuf:"varint,5,opt,name=view,proto3,enum=exactmac.v1.ApplicationView" json:"view,omitempty"`
+	View ApplicationView `protobuf:"varint,5,opt,name=view,proto3,enum=exactmac.v1.ApplicationView" json:"view,omitempty"`
+	// Number of individual resources to skip before returning this page.
+	// A continuation adds this value to the position encoded by page_token.
+	// If the requested position is beyond the collection, return an empty page
+	// without a next_page_token.
+	Skip          int32 `protobuf:"varint,6,opt,name=skip,proto3" json:"skip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -878,6 +896,13 @@ func (x *ListApplicationsRequest) GetView() ApplicationView {
 		return x.View
 	}
 	return ApplicationView_APPLICATION_VIEW_UNSPECIFIED
+}
+
+func (x *ListApplicationsRequest) GetSkip() int32 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
 }
 
 // Response from listing applications.
@@ -1270,13 +1295,18 @@ type ListInputsRequest struct {
 	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
 	// Maximum number of inputs to return.
 	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// Page token from a previous ListInputs call.
-	// This token is opaque and its structure must not be relied upon by clients.
-	// Only its presence or absence should be used to determine pagination state.
+	// Page token from a previous call. The token is bound to the other semantic
+	// query inputs, not page_size or skip; clients may change either when continuing.
+	// Its structure is opaque and must not be relied upon by clients.
 	PageToken string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// Filter inputs by state. Valid values: PENDING, EXECUTING, COMPLETED,
 	// FAILED, CANCELLED.
-	Filter        string `protobuf:"bytes,4,opt,name=filter,proto3" json:"filter,omitempty"`
+	Filter string `protobuf:"bytes,4,opt,name=filter,proto3" json:"filter,omitempty"`
+	// Number of individual resources to skip before returning this page.
+	// A continuation adds this value to the position encoded by page_token.
+	// If the requested position is beyond the collection, return an empty page
+	// without a next_page_token.
+	Skip          int32 `protobuf:"varint,5,opt,name=skip,proto3" json:"skip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1337,6 +1367,13 @@ func (x *ListInputsRequest) GetFilter() string {
 		return x.Filter
 	}
 	return ""
+}
+
+func (x *ListInputsRequest) GetSkip() int32 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
 }
 
 // Response from listing inputs.
@@ -1455,7 +1492,7 @@ func (x *TraverseAccessibilityRequest) GetVisibleOnly() bool {
 type TraverseAccessibilityResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Name of the application.
-	App string `protobuf:"bytes,1,opt,name=app,proto3" json:"app,omitempty"`
+	Application string `protobuf:"bytes,1,opt,name=application,proto3" json:"application,omitempty"`
 	// Elements found in the traversal.
 	Elements []*Element `protobuf:"bytes,2,rep,name=elements,proto3" json:"elements,omitempty"`
 	// Statistics about the traversal.
@@ -1496,9 +1533,9 @@ func (*TraverseAccessibilityResponse) Descriptor() ([]byte, []int) {
 	return file_exactmac_v1_exact_mac_proto_rawDescGZIP(), []int{17}
 }
 
-func (x *TraverseAccessibilityResponse) GetApp() string {
+func (x *TraverseAccessibilityResponse) GetApplication() string {
 	if x != nil {
-		return x.App
+		return x.Application
 	}
 	return ""
 }
@@ -1591,14 +1628,14 @@ func (x *WatchAccessibilityRequest) GetVisibleOnly() bool {
 // Response streamed from watching accessibility.
 type WatchAccessibilityResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Elements added since last update.
-	Added []*Element `protobuf:"bytes,1,rep,name=added,proto3" json:"added,omitempty"`
-	// Elements removed since last update.
-	Removed []*Element `protobuf:"bytes,2,rep,name=removed,proto3" json:"removed,omitempty"`
-	// Elements modified since last update.
-	Modified      []*ModifiedElement `protobuf:"bytes,3,rep,name=modified,proto3" json:"modified,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// Elements added since the last update.
+	AddedElements []*Element `protobuf:"bytes,1,rep,name=added_elements,json=addedElements,proto3" json:"added_elements,omitempty"`
+	// Elements removed since the last update.
+	RemovedElements []*Element `protobuf:"bytes,2,rep,name=removed_elements,json=removedElements,proto3" json:"removed_elements,omitempty"`
+	// Elements modified since the last update.
+	ModifiedElements []*ModifiedElement `protobuf:"bytes,3,rep,name=modified_elements,json=modifiedElements,proto3" json:"modified_elements,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *WatchAccessibilityResponse) Reset() {
@@ -1631,23 +1668,23 @@ func (*WatchAccessibilityResponse) Descriptor() ([]byte, []int) {
 	return file_exactmac_v1_exact_mac_proto_rawDescGZIP(), []int{19}
 }
 
-func (x *WatchAccessibilityResponse) GetAdded() []*Element {
+func (x *WatchAccessibilityResponse) GetAddedElements() []*Element {
 	if x != nil {
-		return x.Added
+		return x.AddedElements
 	}
 	return nil
 }
 
-func (x *WatchAccessibilityResponse) GetRemoved() []*Element {
+func (x *WatchAccessibilityResponse) GetRemovedElements() []*Element {
 	if x != nil {
-		return x.Removed
+		return x.RemovedElements
 	}
 	return nil
 }
 
-func (x *WatchAccessibilityResponse) GetModified() []*ModifiedElement {
+func (x *WatchAccessibilityResponse) GetModifiedElements() []*ModifiedElement {
 	if x != nil {
-		return x.Modified
+		return x.ModifiedElements
 	}
 	return nil
 }
@@ -1727,9 +1764,9 @@ type FindElementsRequest struct {
 	Selector *_type.ElementSelector `protobuf:"bytes,2,opt,name=selector,proto3" json:"selector,omitempty"`
 	// Maximum number of elements to return.
 	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// Page token from a previous FindElements call.
-	// This token is opaque and its structure must not be relied upon by clients.
-	// Only its presence or absence should be used to determine pagination state.
+	// Page token from a previous call. The token is bound to the other semantic
+	// query inputs, not page_size or skip; clients may change either when continuing.
+	// Its structure is opaque and must not be relied upon by clients.
 	PageToken string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// Whether to search only visible elements.
 	VisibleOnly bool `protobuf:"varint,5,opt,name=visible_only,json=visibleOnly,proto3" json:"visible_only,omitempty"`
@@ -1743,7 +1780,12 @@ type FindElementsRequest struct {
 	// Element IDs returned by this call are guaranteed fresh; any callers
 	// holding previously-issued element IDs must re-resolve them with
 	// get_element or a subsequent find_elements.
-	ForceRefresh  bool `protobuf:"varint,6,opt,name=force_refresh,json=forceRefresh,proto3" json:"force_refresh,omitempty"`
+	CacheBypass bool `protobuf:"varint,6,opt,name=cache_bypass,json=cacheBypass,proto3" json:"cache_bypass,omitempty"`
+	// Number of individual resources to skip before returning this page.
+	// A continuation adds this value to the position encoded by page_token.
+	// If the requested position is beyond the collection, return an empty page
+	// without a next_page_token.
+	Skip          int32 `protobuf:"varint,7,opt,name=skip,proto3" json:"skip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1813,11 +1855,18 @@ func (x *FindElementsRequest) GetVisibleOnly() bool {
 	return false
 }
 
-func (x *FindElementsRequest) GetForceRefresh() bool {
+func (x *FindElementsRequest) GetCacheBypass() bool {
 	if x != nil {
-		return x.ForceRefresh
+		return x.CacheBypass
 	}
 	return false
+}
+
+func (x *FindElementsRequest) GetSkip() int32 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
 }
 
 // Response from finding elements.
@@ -1890,9 +1939,9 @@ type FindRegionElementsRequest struct {
 	Selector *_type.ElementSelector `protobuf:"bytes,3,opt,name=selector,proto3" json:"selector,omitempty"`
 	// Maximum number of elements to return.
 	PageSize int32 `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// Page token from a previous call.
-	// This token is opaque and its structure must not be relied upon by clients.
-	// Only its presence or absence should be used to determine pagination state.
+	// Page token from a previous call. The token is bound to the other semantic
+	// query inputs, not page_size or skip; clients may change either when continuing.
+	// Its structure is opaque and must not be relied upon by clients.
 	PageToken string `protobuf:"bytes,5,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// If true, the server discards any cached element data for the target
 	// application's PID before traversing the accessibility tree, so the
@@ -1904,7 +1953,12 @@ type FindRegionElementsRequest struct {
 	// state. Element IDs returned by this call are guaranteed fresh; any
 	// callers holding previously-issued element IDs must re-resolve them
 	// with get_element or a subsequent find_region_elements.
-	ForceRefresh  bool `protobuf:"varint,6,opt,name=force_refresh,json=forceRefresh,proto3" json:"force_refresh,omitempty"`
+	CacheBypass bool `protobuf:"varint,6,opt,name=cache_bypass,json=cacheBypass,proto3" json:"cache_bypass,omitempty"`
+	// Number of individual resources to skip before returning this page.
+	// A continuation adds this value to the position encoded by page_token.
+	// If the requested position is beyond the collection, return an empty page
+	// without a next_page_token.
+	Skip          int32 `protobuf:"varint,7,opt,name=skip,proto3" json:"skip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1974,11 +2028,18 @@ func (x *FindRegionElementsRequest) GetPageToken() string {
 	return ""
 }
 
-func (x *FindRegionElementsRequest) GetForceRefresh() bool {
+func (x *FindRegionElementsRequest) GetCacheBypass() bool {
 	if x != nil {
-		return x.ForceRefresh
+		return x.CacheBypass
 	}
 	return false
+}
+
+func (x *FindRegionElementsRequest) GetSkip() int32 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
 }
 
 // Response from finding elements in a region.
@@ -2093,9 +2154,15 @@ type ListElementsRequest struct {
 	// Maximum number of elements to return. If zero, the server uses 100. Values
 	// above 1000 are coerced to 1000; negative values are invalid.
 	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// Opaque token from a previous ListElements request. The parent must match
-	// the request that produced the token.
-	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Page token from a previous call. The token is bound to the other semantic
+	// query inputs, not page_size or skip; clients may change either when continuing.
+	// Its structure is opaque and must not be relied upon by clients.
+	PageToken string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Number of individual resources to skip before returning this page.
+	// A continuation adds this value to the position encoded by page_token.
+	// If the requested position is beyond the collection, return an empty page
+	// without a next_page_token.
+	Skip          int32 `protobuf:"varint,4,opt,name=skip,proto3" json:"skip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2149,6 +2216,13 @@ func (x *ListElementsRequest) GetPageToken() string {
 		return x.PageToken
 	}
 	return ""
+}
+
+func (x *ListElementsRequest) GetSkip() int32 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
 }
 
 // Response from listing retained element resources.
@@ -3125,8 +3199,8 @@ type StateCondition struct {
 	//
 	//	*StateCondition_Enabled
 	//	*StateCondition_Focused
-	//	*StateCondition_TextEquals
-	//	*StateCondition_TextContains
+	//	*StateCondition_Text
+	//	*StateCondition_TextSubstring
 	//	*StateCondition_Attribute
 	Condition     isStateCondition_Condition `protobuf_oneof:"condition"`
 	unknownFields protoimpl.UnknownFields
@@ -3188,19 +3262,19 @@ func (x *StateCondition) GetFocused() bool {
 	return false
 }
 
-func (x *StateCondition) GetTextEquals() string {
+func (x *StateCondition) GetText() string {
 	if x != nil {
-		if x, ok := x.Condition.(*StateCondition_TextEquals); ok {
-			return x.TextEquals
+		if x, ok := x.Condition.(*StateCondition_Text); ok {
+			return x.Text
 		}
 	}
 	return ""
 }
 
-func (x *StateCondition) GetTextContains() string {
+func (x *StateCondition) GetTextSubstring() string {
 	if x != nil {
-		if x, ok := x.Condition.(*StateCondition_TextContains); ok {
-			return x.TextContains
+		if x, ok := x.Condition.(*StateCondition_TextSubstring); ok {
+			return x.TextSubstring
 		}
 	}
 	return ""
@@ -3229,14 +3303,14 @@ type StateCondition_Focused struct {
 	Focused bool `protobuf:"varint,2,opt,name=focused,proto3,oneof"`
 }
 
-type StateCondition_TextEquals struct {
+type StateCondition_Text struct {
 	// Wait for element text to match.
-	TextEquals string `protobuf:"bytes,3,opt,name=text_equals,json=textEquals,proto3,oneof"`
+	Text string `protobuf:"bytes,3,opt,name=text,proto3,oneof"`
 }
 
-type StateCondition_TextContains struct {
-	// Wait for element text to contain substring.
-	TextContains string `protobuf:"bytes,4,opt,name=text_contains,json=textContains,proto3,oneof"`
+type StateCondition_TextSubstring struct {
+	// Wait for element text to contain a substring.
+	TextSubstring string `protobuf:"bytes,4,opt,name=text_substring,json=textSubstring,proto3,oneof"`
 }
 
 type StateCondition_Attribute struct {
@@ -3248,9 +3322,9 @@ func (*StateCondition_Enabled) isStateCondition_Condition() {}
 
 func (*StateCondition_Focused) isStateCondition_Condition() {}
 
-func (*StateCondition_TextEquals) isStateCondition_Condition() {}
+func (*StateCondition_Text) isStateCondition_Condition() {}
 
-func (*StateCondition_TextContains) isStateCondition_Condition() {}
+func (*StateCondition_TextSubstring) isStateCondition_Condition() {}
 
 func (*StateCondition_Attribute) isStateCondition_Condition() {}
 
@@ -3422,9 +3496,9 @@ type ListWindowsRequest struct {
 	// is honored. Parent, filter, and ordering must otherwise match the request
 	// that produced the token.
 	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// Page token from a previous ListWindows call.
-	// This token is opaque and its structure must not be relied upon by clients.
-	// Only its presence or absence should be used to determine pagination state.
+	// Page token from a previous call. The token is bound to the other semantic
+	// query inputs, not page_size or skip; clients may change either when continuing.
+	// Its structure is opaque and must not be relied upon by clients.
 	PageToken string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// Ordering specification. Supported fields are name, title, and layer in a
 	// comma-separated list; append " desc" for descending order. Omitted
@@ -3433,7 +3507,12 @@ type ListWindowsRequest struct {
 	// Filter expression. Supported clauses are case-sensitive title="..."
 	// equality with the * wildcard and visible=true/false;
 	// multiple conditions use whitespace or AND semantics.
-	Filter        string `protobuf:"bytes,5,opt,name=filter,proto3" json:"filter,omitempty"`
+	Filter string `protobuf:"bytes,5,opt,name=filter,proto3" json:"filter,omitempty"`
+	// Number of individual resources to skip before returning this page.
+	// A continuation adds this value to the position encoded by page_token.
+	// If the requested position is beyond the collection, return an empty page
+	// without a next_page_token.
+	Skip          int32 `protobuf:"varint,6,opt,name=skip,proto3" json:"skip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3501,6 +3580,13 @@ func (x *ListWindowsRequest) GetFilter() string {
 		return x.Filter
 	}
 	return ""
+}
+
+func (x *ListWindowsRequest) GetSkip() int32 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
 }
 
 // Request to get the state of a window.
@@ -4146,10 +4232,15 @@ type ListObservationsRequest struct {
 	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
 	// Maximum number of observations to return.
 	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// Page token from a previous ListObservations call.
-	// This token is opaque and its structure must not be relied upon by clients.
-	// Only its presence or absence should be used to determine pagination state.
-	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Page token from a previous call. The token is bound to the other semantic
+	// query inputs, not page_size or skip; clients may change either when continuing.
+	// Its structure is opaque and must not be relied upon by clients.
+	PageToken string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Number of individual resources to skip before returning this page.
+	// A continuation adds this value to the position encoded by page_token.
+	// If the requested position is beyond the collection, return an empty page
+	// without a next_page_token.
+	Skip          int32 `protobuf:"varint,4,opt,name=skip,proto3" json:"skip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4203,6 +4294,13 @@ func (x *ListObservationsRequest) GetPageToken() string {
 		return x.PageToken
 	}
 	return ""
+}
+
+func (x *ListObservationsRequest) GetSkip() int32 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
 }
 
 // Response from listing observations.
@@ -4506,10 +4604,15 @@ type ListSessionsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Maximum number of sessions to return.
 	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// Page token from a previous ListSessions call.
-	// This token is opaque and its structure must not be relied upon by clients.
-	// Only its presence or absence should be used to determine pagination state.
-	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Page token from a previous call. The token is bound to the other semantic
+	// query inputs, not page_size or skip; clients may change either when continuing.
+	// Its structure is opaque and must not be relied upon by clients.
+	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Number of individual resources to skip before returning this page.
+	// A continuation adds this value to the position encoded by page_token.
+	// If the requested position is beyond the collection, return an empty page
+	// without a next_page_token.
+	Skip          int32 `protobuf:"varint,3,opt,name=skip,proto3" json:"skip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4556,6 +4659,13 @@ func (x *ListSessionsRequest) GetPageToken() string {
 		return x.PageToken
 	}
 	return ""
+}
+
+func (x *ListSessionsRequest) GetSkip() int32 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
 }
 
 // Response from listing sessions.
@@ -4776,10 +4886,15 @@ type ListMacrosRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Maximum number of macros to return.
 	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// Page token from a previous ListMacros call.
-	// This token is opaque and its structure must not be relied upon by clients.
-	// Only its presence or absence should be used to determine pagination state.
-	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Page token from a previous call. The token is bound to the other semantic
+	// query inputs, not page_size or skip; clients may change either when continuing.
+	// Its structure is opaque and must not be relied upon by clients.
+	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Number of individual resources to skip before returning this page.
+	// A continuation adds this value to the position encoded by page_token.
+	// If the requested position is beyond the collection, return an empty page
+	// without a next_page_token.
+	Skip          int32 `protobuf:"varint,3,opt,name=skip,proto3" json:"skip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4826,6 +4941,13 @@ func (x *ListMacrosRequest) GetPageToken() string {
 		return x.PageToken
 	}
 	return ""
+}
+
+func (x *ListMacrosRequest) GetSkip() int32 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
 }
 
 // Response from listing macros.
@@ -5075,7 +5197,7 @@ func (x *ExecuteMacroRequest) GetOptions() *ExecutionOptions {
 type ExecutionOptions struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Maximum execution time in seconds.
-	Timeout       float64 `protobuf:"fixed64,3,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	Timeout       float64 `protobuf:"fixed64,1,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5123,13 +5245,13 @@ type ExecuteMacroResponse struct {
 	// Whether execution succeeded.
 	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	// Number of actions executed.
-	ActionsExecuted int32 `protobuf:"varint,2,opt,name=actions_executed,json=actionsExecuted,proto3" json:"actions_executed,omitempty"`
+	ExecutedActionCount int32 `protobuf:"varint,2,opt,name=executed_action_count,json=executedActionCount,proto3" json:"executed_action_count,omitempty"`
 	// Execution duration.
 	ExecutionDuration *durationpb.Duration `protobuf:"bytes,3,opt,name=execution_duration,json=executionDuration,proto3" json:"execution_duration,omitempty"`
 	// Error message if failed.
 	Error string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
-	// Execution log (if recording was enabled).
-	Log           []*ExecutionLogEntry `protobuf:"bytes,5,rep,name=log,proto3" json:"log,omitempty"`
+	// Execution log entries.
+	LogEntries    []*ExecutionLogEntry `protobuf:"bytes,5,rep,name=log_entries,json=logEntries,proto3" json:"log_entries,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5171,9 +5293,9 @@ func (x *ExecuteMacroResponse) GetSuccess() bool {
 	return false
 }
 
-func (x *ExecuteMacroResponse) GetActionsExecuted() int32 {
+func (x *ExecuteMacroResponse) GetExecutedActionCount() int32 {
 	if x != nil {
-		return x.ActionsExecuted
+		return x.ExecutedActionCount
 	}
 	return 0
 }
@@ -5192,9 +5314,9 @@ func (x *ExecuteMacroResponse) GetError() string {
 	return ""
 }
 
-func (x *ExecuteMacroResponse) GetLog() []*ExecutionLogEntry {
+func (x *ExecuteMacroResponse) GetLogEntries() []*ExecutionLogEntry {
 	if x != nil {
-		return x.Log
+		return x.LogEntries
 	}
 	return nil
 }
@@ -5205,7 +5327,7 @@ type ExecuteMacroMetadata struct {
 	// Macro being executed.
 	Macro string `protobuf:"bytes,1,opt,name=macro,proto3" json:"macro,omitempty"`
 	// Current action index.
-	CurrentAction int32 `protobuf:"varint,2,opt,name=current_action,json=currentAction,proto3" json:"current_action,omitempty"`
+	CurrentActionIndex int32 `protobuf:"varint,2,opt,name=current_action_index,json=currentActionIndex,proto3" json:"current_action_index,omitempty"`
 	// Total actions in macro.
 	TotalActions int32 `protobuf:"varint,3,opt,name=total_actions,json=totalActions,proto3" json:"total_actions,omitempty"`
 	// Elapsed duration.
@@ -5251,9 +5373,9 @@ func (x *ExecuteMacroMetadata) GetMacro() string {
 	return ""
 }
 
-func (x *ExecuteMacroMetadata) GetCurrentAction() int32 {
+func (x *ExecuteMacroMetadata) GetCurrentActionIndex() int32 {
 	if x != nil {
-		return x.CurrentAction
+		return x.CurrentActionIndex
 	}
 	return 0
 }
@@ -5576,10 +5698,10 @@ type CaptureScreenshotRequest struct {
 	// JPEG quality (1-100, only for JPEG format). A zero value selects the
 	// effective default quality of 85.
 	Quality int32 `protobuf:"varint,2,opt,name=quality,proto3" json:"quality,omitempty"`
-	// Whether to include OCR text extraction.
-	IncludeOcrText bool `protobuf:"varint,4,opt,name=include_ocr_text,json=includeOcrText,proto3" json:"include_ocr_text,omitempty"`
+	// Whether to enable OCR text extraction.
+	OcrEnabled bool `protobuf:"varint,3,opt,name=ocr_enabled,json=ocrEnabled,proto3" json:"ocr_enabled,omitempty"`
 	// Exact display resource to capture. If omitted, captures the main display.
-	Display       string `protobuf:"bytes,5,opt,name=display,proto3" json:"display,omitempty"`
+	Display       string `protobuf:"bytes,4,opt,name=display,proto3" json:"display,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5628,9 +5750,9 @@ func (x *CaptureScreenshotRequest) GetQuality() int32 {
 	return 0
 }
 
-func (x *CaptureScreenshotRequest) GetIncludeOcrText() bool {
+func (x *CaptureScreenshotRequest) GetOcrEnabled() bool {
 	if x != nil {
-		return x.IncludeOcrText
+		return x.OcrEnabled
 	}
 	return false
 }
@@ -5645,7 +5767,8 @@ func (x *CaptureScreenshotRequest) GetDisplay() string {
 // Response from capturing a screenshot.
 type CaptureScreenshotResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Image data (encoded according to format).
+	// Image data (encoded according to format). PNG and TIFF preserve source
+	// alpha when present; JPEG discards alpha because JPEG is opaque-only.
 	ImageData []byte `protobuf:"bytes,1,opt,name=image_data,json=imageData,proto3" json:"image_data,omitempty"`
 	// Image format used.
 	Format ImageFormat `protobuf:"varint,2,opt,name=format,proto3,enum=exactmac.v1.ImageFormat" json:"format,omitempty"`
@@ -5662,11 +5785,11 @@ type CaptureScreenshotResponse struct {
 	//	*CaptureScreenshotResponse_OcrError
 	OcrResult isCaptureScreenshotResponse_OcrResult `protobuf_oneof:"ocr_result"`
 	// Exact active display resource captured from the admitted topology snapshot.
-	Display string `protobuf:"bytes,6,opt,name=display,proto3" json:"display,omitempty"`
+	Display string `protobuf:"bytes,7,opt,name=display,proto3" json:"display,omitempty"`
 	// Exact captured logical region in Global Display Coordinates (top-left origin).
-	Region *_type.Region `protobuf:"bytes,7,opt,name=region,proto3" json:"region,omitempty"`
+	Region *_type.Region `protobuf:"bytes,8,opt,name=region,proto3" json:"region,omitempty"`
 	// Encoded image pixels per logical display point.
-	Scale         float64 `protobuf:"fixed64,8,opt,name=scale,proto3" json:"scale,omitempty"`
+	Scale         float64 `protobuf:"fixed64,9,opt,name=scale,proto3" json:"scale,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5786,7 +5909,7 @@ type CaptureScreenshotResponse_OcrText struct {
 
 type CaptureScreenshotResponse_OcrError struct {
 	// OCR extraction failure for an otherwise successful image capture.
-	OcrError *status.Status `protobuf:"bytes,9,opt,name=ocr_error,json=ocrError,proto3,oneof"`
+	OcrError *status.Status `protobuf:"bytes,6,opt,name=ocr_error,json=ocrError,proto3,oneof"`
 }
 
 func (*CaptureScreenshotResponse_OcrText) isCaptureScreenshotResponse_OcrResult() {}
@@ -5804,11 +5927,11 @@ type CaptureWindowScreenshotRequest struct {
 	// effective default quality of 85.
 	Quality int32 `protobuf:"varint,3,opt,name=quality,proto3" json:"quality,omitempty"`
 	// Whether to include window shadow.
-	IncludeShadow bool `protobuf:"varint,4,opt,name=include_shadow,json=includeShadow,proto3" json:"include_shadow,omitempty"`
+	ShadowEnabled bool `protobuf:"varint,4,opt,name=shadow_enabled,json=shadowEnabled,proto3" json:"shadow_enabled,omitempty"`
 	// Whether to include OCR text extraction.
-	IncludeOcrText bool `protobuf:"varint,5,opt,name=include_ocr_text,json=includeOcrText,proto3" json:"include_ocr_text,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	OcrEnabled    bool `protobuf:"varint,5,opt,name=ocr_enabled,json=ocrEnabled,proto3" json:"ocr_enabled,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CaptureWindowScreenshotRequest) Reset() {
@@ -5862,16 +5985,16 @@ func (x *CaptureWindowScreenshotRequest) GetQuality() int32 {
 	return 0
 }
 
-func (x *CaptureWindowScreenshotRequest) GetIncludeShadow() bool {
+func (x *CaptureWindowScreenshotRequest) GetShadowEnabled() bool {
 	if x != nil {
-		return x.IncludeShadow
+		return x.ShadowEnabled
 	}
 	return false
 }
 
-func (x *CaptureWindowScreenshotRequest) GetIncludeOcrText() bool {
+func (x *CaptureWindowScreenshotRequest) GetOcrEnabled() bool {
 	if x != nil {
-		return x.IncludeOcrText
+		return x.OcrEnabled
 	}
 	return false
 }
@@ -5879,7 +6002,8 @@ func (x *CaptureWindowScreenshotRequest) GetIncludeOcrText() bool {
 // Response from capturing a window screenshot.
 type CaptureWindowScreenshotResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Image data (encoded according to format).
+	// Image data (encoded according to format). PNG and TIFF preserve source
+	// alpha when present; JPEG discards alpha because JPEG is opaque-only.
 	ImageData []byte `protobuf:"bytes,1,opt,name=image_data,json=imageData,proto3" json:"image_data,omitempty"`
 	// Image format used.
 	Format ImageFormat `protobuf:"varint,2,opt,name=format,proto3,enum=exactmac.v1.ImageFormat" json:"format,omitempty"`
@@ -6071,9 +6195,9 @@ type CaptureElementScreenshotRequest struct {
 	// Padding around element in pixels.
 	Padding int32 `protobuf:"varint,5,opt,name=padding,proto3" json:"padding,omitempty"`
 	// Whether to include OCR text extraction.
-	IncludeOcrText bool `protobuf:"varint,6,opt,name=include_ocr_text,json=includeOcrText,proto3" json:"include_ocr_text,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	OcrEnabled    bool `protobuf:"varint,6,opt,name=ocr_enabled,json=ocrEnabled,proto3" json:"ocr_enabled,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CaptureElementScreenshotRequest) Reset() {
@@ -6141,9 +6265,9 @@ func (x *CaptureElementScreenshotRequest) GetPadding() int32 {
 	return 0
 }
 
-func (x *CaptureElementScreenshotRequest) GetIncludeOcrText() bool {
+func (x *CaptureElementScreenshotRequest) GetOcrEnabled() bool {
 	if x != nil {
-		return x.IncludeOcrText
+		return x.OcrEnabled
 	}
 	return false
 }
@@ -6151,7 +6275,8 @@ func (x *CaptureElementScreenshotRequest) GetIncludeOcrText() bool {
 // Response from capturing an element screenshot.
 type CaptureElementScreenshotResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Image data (encoded according to format).
+	// Image data (encoded according to format). PNG and TIFF preserve source
+	// alpha when present; JPEG discards alpha because JPEG is opaque-only.
 	ImageData []byte `protobuf:"bytes,1,opt,name=image_data,json=imageData,proto3" json:"image_data,omitempty"`
 	// Image format used.
 	Format ImageFormat `protobuf:"varint,2,opt,name=format,proto3,enum=exactmac.v1.ImageFormat" json:"format,omitempty"`
@@ -6357,11 +6482,11 @@ type CaptureRegionScreenshotRequest struct {
 	// JPEG quality (1-100, only for JPEG format). A zero value selects the
 	// effective default quality of 85.
 	Quality int32 `protobuf:"varint,3,opt,name=quality,proto3" json:"quality,omitempty"`
-	// Whether to include OCR text extraction.
-	IncludeOcrText bool `protobuf:"varint,5,opt,name=include_ocr_text,json=includeOcrText,proto3" json:"include_ocr_text,omitempty"`
+	// Whether to enable OCR text extraction.
+	OcrEnabled bool `protobuf:"varint,4,opt,name=ocr_enabled,json=ocrEnabled,proto3" json:"ocr_enabled,omitempty"`
 	// Exact display resource containing the region. If omitted, the display is
 	// inferred from the region in Global Display Coordinates (top-left origin).
-	Display       string `protobuf:"bytes,6,opt,name=display,proto3" json:"display,omitempty"`
+	Display       string `protobuf:"bytes,5,opt,name=display,proto3" json:"display,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6417,9 +6542,9 @@ func (x *CaptureRegionScreenshotRequest) GetQuality() int32 {
 	return 0
 }
 
-func (x *CaptureRegionScreenshotRequest) GetIncludeOcrText() bool {
+func (x *CaptureRegionScreenshotRequest) GetOcrEnabled() bool {
 	if x != nil {
-		return x.IncludeOcrText
+		return x.OcrEnabled
 	}
 	return false
 }
@@ -6434,7 +6559,8 @@ func (x *CaptureRegionScreenshotRequest) GetDisplay() string {
 // Response from capturing a region screenshot.
 type CaptureRegionScreenshotResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Image data (encoded according to format).
+	// Image data (encoded according to format). PNG and TIFF preserve source
+	// alpha when present; JPEG discards alpha because JPEG is opaque-only.
 	ImageData []byte `protobuf:"bytes,1,opt,name=image_data,json=imageData,proto3" json:"image_data,omitempty"`
 	// Image format used.
 	Format ImageFormat `protobuf:"varint,2,opt,name=format,proto3,enum=exactmac.v1.ImageFormat" json:"format,omitempty"`
@@ -6453,9 +6579,9 @@ type CaptureRegionScreenshotResponse struct {
 	//	*CaptureRegionScreenshotResponse_OcrError
 	OcrResult isCaptureRegionScreenshotResponse_OcrResult `protobuf_oneof:"ocr_result"`
 	// Exact active display resource from which the region was captured.
-	Display string `protobuf:"bytes,7,opt,name=display,proto3" json:"display,omitempty"`
+	Display string `protobuf:"bytes,8,opt,name=display,proto3" json:"display,omitempty"`
 	// Encoded image pixels per logical display point.
-	Scale         float64 `protobuf:"fixed64,8,opt,name=scale,proto3" json:"scale,omitempty"`
+	Scale         float64 `protobuf:"fixed64,9,opt,name=scale,proto3" json:"scale,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6575,7 +6701,7 @@ type CaptureRegionScreenshotResponse_OcrText struct {
 
 type CaptureRegionScreenshotResponse_OcrError struct {
 	// OCR extraction failure for an otherwise successful image capture.
-	OcrError *status.Status `protobuf:"bytes,9,opt,name=ocr_error,json=ocrError,proto3,oneof"`
+	OcrError *status.Status `protobuf:"bytes,7,opt,name=ocr_error,json=ocrError,proto3,oneof"`
 }
 
 func (*CaptureRegionScreenshotResponse_OcrText) isCaptureRegionScreenshotResponse_OcrResult() {}
@@ -6808,7 +6934,7 @@ func (x *ClearClipboardResponse) GetClipboard() *Clipboard {
 type GetClipboardHistoryRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The name of the clipboard history resource.
-	// Format: clipboard/history (singleton)
+	// Format: clipboardHistory (singleton)
 	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -6865,9 +6991,9 @@ type AutomateOpenFileDialogRequest struct {
 	// Timeout for dialog to appear (seconds).
 	Timeout float64 `protobuf:"fixed64,5,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	// Whether to allow multiple file selection.
-	AllowMultiple bool `protobuf:"varint,6,opt,name=allow_multiple,json=allowMultiple,proto3" json:"allow_multiple,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	MultipleSelection bool `protobuf:"varint,6,opt,name=multiple_selection,json=multipleSelection,proto3" json:"multiple_selection,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *AutomateOpenFileDialogRequest) Reset() {
@@ -6935,9 +7061,9 @@ func (x *AutomateOpenFileDialogRequest) GetTimeout() float64 {
 	return 0
 }
 
-func (x *AutomateOpenFileDialogRequest) GetAllowMultiple() bool {
+func (x *AutomateOpenFileDialogRequest) GetMultipleSelection() bool {
 	if x != nil {
-		return x.AllowMultiple
+		return x.MultipleSelection
 	}
 	return false
 }
@@ -7020,9 +7146,9 @@ type AutomateSaveFileDialogRequest struct {
 	// Timeout for dialog to appear (seconds).
 	Timeout float64 `protobuf:"fixed64,5,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	// Whether to confirm overwrite.
-	ConfirmOverwrite bool `protobuf:"varint,6,opt,name=confirm_overwrite,json=confirmOverwrite,proto3" json:"confirm_overwrite,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	OverwriteConfirmation bool `protobuf:"varint,6,opt,name=overwrite_confirmation,json=overwriteConfirmation,proto3" json:"overwrite_confirmation,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *AutomateSaveFileDialogRequest) Reset() {
@@ -7090,9 +7216,9 @@ func (x *AutomateSaveFileDialogRequest) GetTimeout() float64 {
 	return 0
 }
 
-func (x *AutomateSaveFileDialogRequest) GetConfirmOverwrite() bool {
+func (x *AutomateSaveFileDialogRequest) GetOverwriteConfirmation() bool {
 	if x != nil {
-		return x.ConfirmOverwrite
+		return x.OverwriteConfirmation
 	}
 	return false
 }
@@ -7169,9 +7295,9 @@ type ExecuteAppleScriptRequest struct {
 	// Timeout for script execution.
 	Timeout *durationpb.Duration `protobuf:"bytes,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	// Whether to compile the script (for validation).
-	CompileOnly   bool `protobuf:"varint,3,opt,name=compile_only,json=compileOnly,proto3" json:"compile_only,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	ValidationOnly bool `protobuf:"varint,3,opt,name=validation_only,json=validationOnly,proto3" json:"validation_only,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ExecuteAppleScriptRequest) Reset() {
@@ -7218,9 +7344,9 @@ func (x *ExecuteAppleScriptRequest) GetTimeout() *durationpb.Duration {
 	return nil
 }
 
-func (x *ExecuteAppleScriptRequest) GetCompileOnly() bool {
+func (x *ExecuteAppleScriptRequest) GetValidationOnly() bool {
 	if x != nil {
-		return x.CompileOnly
+		return x.ValidationOnly
 	}
 	return false
 }
@@ -7306,9 +7432,9 @@ type ExecuteJavaScriptRequest struct {
 	// Timeout for script execution.
 	Timeout *durationpb.Duration `protobuf:"bytes,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	// Whether to compile the script (for validation).
-	CompileOnly   bool `protobuf:"varint,3,opt,name=compile_only,json=compileOnly,proto3" json:"compile_only,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	ValidationOnly bool `protobuf:"varint,3,opt,name=validation_only,json=validationOnly,proto3" json:"validation_only,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ExecuteJavaScriptRequest) Reset() {
@@ -7355,9 +7481,9 @@ func (x *ExecuteJavaScriptRequest) GetTimeout() *durationpb.Duration {
 	return nil
 }
 
-func (x *ExecuteJavaScriptRequest) GetCompileOnly() bool {
+func (x *ExecuteJavaScriptRequest) GetValidationOnly() bool {
 	if x != nil {
-		return x.CompileOnly
+		return x.ValidationOnly
 	}
 	return false
 }
@@ -7445,7 +7571,7 @@ type ExecuteShellCommandRequest struct {
 	// Working directory for command execution.
 	WorkingDirectory string `protobuf:"bytes,3,opt,name=working_directory,json=workingDirectory,proto3" json:"working_directory,omitempty"`
 	// Environment variables (key-value pairs).
-	Environment map[string]string `protobuf:"bytes,4,rep,name=environment,proto3" json:"environment,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	EnvironmentVariables map[string]string `protobuf:"bytes,4,rep,name=environment_variables,json=environmentVariables,proto3" json:"environment_variables,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Timeout for command execution.
 	Timeout *durationpb.Duration `protobuf:"bytes,5,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	// Input to provide to command via stdin.
@@ -7507,9 +7633,9 @@ func (x *ExecuteShellCommandRequest) GetWorkingDirectory() string {
 	return ""
 }
 
-func (x *ExecuteShellCommandRequest) GetEnvironment() map[string]string {
+func (x *ExecuteShellCommandRequest) GetEnvironmentVariables() map[string]string {
 	if x != nil {
-		return x.Environment
+		return x.EnvironmentVariables
 	}
 	return nil
 }
@@ -7746,29 +7872,29 @@ func (x *ValidateScriptResponse) GetWarnings() []string {
 }
 
 // Request to get available scripting dictionaries.
-type GetScriptingDictionariesRequest struct {
+type GetScriptingDictionaryCatalogRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The name of the scripting dictionaries resource.
-	// Format: scriptingDictionaries (singleton)
+	// The name of the scripting dictionary catalog resource.
+	// Format: scriptingDictionaryCatalog (singleton)
 	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetScriptingDictionariesRequest) Reset() {
-	*x = GetScriptingDictionariesRequest{}
+func (x *GetScriptingDictionaryCatalogRequest) Reset() {
+	*x = GetScriptingDictionaryCatalogRequest{}
 	mi := &file_exactmac_v1_exact_mac_proto_msgTypes[108]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetScriptingDictionariesRequest) String() string {
+func (x *GetScriptingDictionaryCatalogRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetScriptingDictionariesRequest) ProtoMessage() {}
+func (*GetScriptingDictionaryCatalogRequest) ProtoMessage() {}
 
-func (x *GetScriptingDictionariesRequest) ProtoReflect() protoreflect.Message {
+func (x *GetScriptingDictionaryCatalogRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_exactmac_v1_exact_mac_proto_msgTypes[108]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -7780,12 +7906,12 @@ func (x *GetScriptingDictionariesRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetScriptingDictionariesRequest.ProtoReflect.Descriptor instead.
-func (*GetScriptingDictionariesRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetScriptingDictionaryCatalogRequest.ProtoReflect.Descriptor instead.
+func (*GetScriptingDictionaryCatalogRequest) Descriptor() ([]byte, []int) {
 	return file_exactmac_v1_exact_mac_proto_rawDescGZIP(), []int{108}
 }
 
-func (x *GetScriptingDictionariesRequest) GetName() string {
+func (x *GetScriptingDictionaryCatalogRequest) GetName() string {
 	if x != nil {
 		return x.Name
 	}
@@ -7800,14 +7926,15 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\x1bGetApplicationBundleRequest\x126\n" +
 	"\x04name\x18\x01 \x01(\tB\"\xe0A\x02\xfaA\x1c\n" +
 	"\x1aexactmac/ApplicationBundleR\x04name\x125\n" +
-	"\x04view\x18\x02 \x01(\x0e2\x1c.exactmac.v1.ApplicationViewB\x03\xe0A\x01R\x04view\"\xd9\x01\n" +
+	"\x04view\x18\x02 \x01(\x0e2\x1c.exactmac.v1.ApplicationViewB\x03\xe0A\x01R\x04view\"\xf2\x01\n" +
 	"\x1dListApplicationBundlesRequest\x12 \n" +
 	"\tpage_size\x18\x01 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\x12\x1e\n" +
 	"\border_by\x18\x03 \x01(\tB\x03\xe0A\x01R\aorderBy\x12\x1b\n" +
 	"\x06filter\x18\x04 \x01(\tB\x03\xe0A\x01R\x06filter\x125\n" +
-	"\x04view\x18\x05 \x01(\x0e2\x1c.exactmac.v1.ApplicationViewB\x03\xe0A\x01R\x04view\"\xa3\x01\n" +
+	"\x04view\x18\x05 \x01(\x0e2\x1c.exactmac.v1.ApplicationViewB\x03\xe0A\x01R\x04view\x12\x17\n" +
+	"\x04skip\x18\x06 \x01(\x05B\x03\xe0A\x01R\x04skip\"\xa3\x01\n" +
 	"\x1eListApplicationBundlesResponse\x12T\n" +
 	"\x13application_bundles\x18\x01 \x03(\v2\x1e.exactmac.v1.ApplicationBundleB\x03\xe0A\x03R\x12applicationBundles\x12+\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"\xb0\x01\n" +
@@ -7820,18 +7947,19 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\x04mode\x18\x03 \x01(\x0e2 .exactmac.v1.ApplicationOpenModeB\x03\xe0A\x01R\x04mode\"\xaa\x01\n" +
 	"\x17OpenApplicationResponse\x12?\n" +
 	"\vapplication\x18\x01 \x01(\v2\x18.exactmac.v1.ApplicationB\x03\xe0A\x03R\vapplication\x12N\n" +
-	"\vdisposition\x18\x02 \x01(\x0e2'.exactmac.v1.ApplicationOpenDispositionB\x03\xe0A\x03R\vdisposition\"\x91\x01\n" +
+	"\vdisposition\x18\x02 \x01(\x0e2'.exactmac.v1.ApplicationOpenDispositionB\x03\xe0A\x03R\vdisposition\"\x80\x01\n" +
 	"\x15GetApplicationRequest\x120\n" +
 	"\x04name\x18\x01 \x01(\tB\x1c\xe0A\x02\xfaA\x16\n" +
 	"\x14exactmac/ApplicationR\x04name\x125\n" +
-	"\x04view\x18\x03 \x01(\x0e2\x1c.exactmac.v1.ApplicationViewB\x03\xe0A\x01R\x04viewJ\x04\b\x02\x10\x03R\tread_mask\"\xd3\x01\n" +
+	"\x04view\x18\x02 \x01(\x0e2\x1c.exactmac.v1.ApplicationViewB\x03\xe0A\x01R\x04view\"\xec\x01\n" +
 	"\x17ListApplicationsRequest\x12 \n" +
 	"\tpage_size\x18\x01 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\x12\x1e\n" +
 	"\border_by\x18\x03 \x01(\tB\x03\xe0A\x01R\aorderBy\x12\x1b\n" +
 	"\x06filter\x18\x04 \x01(\tB\x03\xe0A\x01R\x06filter\x125\n" +
-	"\x04view\x18\x05 \x01(\x0e2\x1c.exactmac.v1.ApplicationViewB\x03\xe0A\x01R\x04view\"\x8a\x01\n" +
+	"\x04view\x18\x05 \x01(\x0e2\x1c.exactmac.v1.ApplicationViewB\x03\xe0A\x01R\x04view\x12\x17\n" +
+	"\x04skip\x18\x06 \x01(\x05B\x03\xe0A\x01R\x04skip\"\x8a\x01\n" +
 	"\x18ListApplicationsResponse\x12A\n" +
 	"\fapplications\x18\x01 \x03(\v2\x18.exactmac.v1.ApplicationB\x03\xe0A\x03R\fapplications\x12+\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"N\n" +
@@ -7854,22 +7982,23 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\binput_id\x18\x03 \x01(\tB\x03\xe0A\x01R\ainputId\"=\n" +
 	"\x0fGetInputRequest\x12*\n" +
 	"\x04name\x18\x01 \x01(\tB\x16\xe0A\x02\xfaA\x10\n" +
-	"\x0eexactmac/InputR\x04name\"\xa6\x01\n" +
+	"\x0eexactmac/InputR\x04name\"\xbf\x01\n" +
 	"\x11ListInputsRequest\x12.\n" +
 	"\x06parent\x18\x01 \x01(\tB\x16\xe0A\x02\xfaA\x10\x12\x0eexactmac/InputR\x06parent\x12 \n" +
 	"\tpage_size\x18\x02 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
 	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\x12\x1b\n" +
-	"\x06filter\x18\x04 \x01(\tB\x03\xe0A\x01R\x06filter\"r\n" +
+	"\x06filter\x18\x04 \x01(\tB\x03\xe0A\x01R\x06filter\x12\x17\n" +
+	"\x04skip\x18\x05 \x01(\x05B\x03\xe0A\x01R\x04skip\"r\n" +
 	"\x12ListInputsResponse\x12/\n" +
 	"\x06inputs\x18\x01 \x03(\v2\x12.exactmac.v1.InputB\x03\xe0A\x03R\x06inputs\x12+\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"\x88\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"x\n" +
 	"\x1cTraverseAccessibilityRequest\x120\n" +
 	"\x04name\x18\x01 \x01(\tB\x1c\xe0A\x02\xfaA\x16\n" +
 	"\x14exactmac/ApplicationR\x04name\x12&\n" +
-	"\fvisible_only\x18\x02 \x01(\bB\x03\xe0A\x01R\vvisibleOnlyJ\x04\b\x03\x10\x04R\bactivate\"\xf1\x01\n" +
-	"\x1dTraverseAccessibilityResponse\x12\x15\n" +
-	"\x03app\x18\x01 \x01(\tB\x03\xe0A\x03R\x03app\x125\n" +
+	"\fvisible_only\x18\x02 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\"\x81\x02\n" +
+	"\x1dTraverseAccessibilityResponse\x12%\n" +
+	"\vapplication\x18\x01 \x01(\tB\x03\xe0A\x03R\vapplication\x125\n" +
 	"\belements\x18\x02 \x03(\v2\x14.exactmac.v1.ElementB\x03\xe0A\x03R\belements\x128\n" +
 	"\x05stats\x18\x03 \x01(\v2\x1d.exactmac.type.TraversalStatsB\x03\xe0A\x03R\x05stats\x12H\n" +
 	"\x0fprocessing_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\x0eprocessingTime\"\x9f\x01\n" +
@@ -7877,17 +8006,17 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tB\x1c\xe0A\x02\xfaA\x16\n" +
 	"\x14exactmac/ApplicationR\x04name\x12(\n" +
 	"\rpoll_interval\x18\x02 \x01(\x01B\x03\xe0A\x01R\fpollInterval\x12&\n" +
-	"\fvisible_only\x18\x03 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\"\xc1\x01\n" +
-	"\x1aWatchAccessibilityResponse\x12/\n" +
-	"\x05added\x18\x01 \x03(\v2\x14.exactmac.v1.ElementB\x03\xe0A\x03R\x05added\x123\n" +
-	"\aremoved\x18\x02 \x03(\v2\x14.exactmac.v1.ElementB\x03\xe0A\x03R\aremoved\x12=\n" +
-	"\bmodified\x18\x03 \x03(\v2\x1c.exactmac.v1.ModifiedElementB\x03\xe0A\x03R\bmodified\"\xc6\x01\n" +
+	"\fvisible_only\x18\x03 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\"\xf4\x01\n" +
+	"\x1aWatchAccessibilityResponse\x12@\n" +
+	"\x0eadded_elements\x18\x01 \x03(\v2\x14.exactmac.v1.ElementB\x03\xe0A\x03R\raddedElements\x12D\n" +
+	"\x10removed_elements\x18\x02 \x03(\v2\x14.exactmac.v1.ElementB\x03\xe0A\x03R\x0fremovedElements\x12N\n" +
+	"\x11modified_elements\x18\x03 \x03(\v2\x1c.exactmac.v1.ModifiedElementB\x03\xe0A\x03R\x10modifiedElements\"\xc6\x01\n" +
 	"\x0fModifiedElement\x12:\n" +
 	"\vold_element\x18\x01 \x01(\v2\x14.exactmac.v1.ElementB\x03\xe0A\x03R\n" +
 	"oldElement\x12:\n" +
 	"\vnew_element\x18\x02 \x01(\v2\x14.exactmac.v1.ElementB\x03\xe0A\x03R\n" +
 	"newElement\x12;\n" +
-	"\achanges\x18\x03 \x03(\v2\x1c.exactmac.v1.AttributeChangeB\x03\xe0A\x03R\achanges\"\x91\x02\n" +
+	"\achanges\x18\x03 \x03(\v2\x1c.exactmac.v1.AttributeChangeB\x03\xe0A\x03R\achanges\"\xa8\x02\n" +
 	"\x13FindElementsRequest\x12!\n" +
 	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
 	"\x01*R\x06parent\x12?\n" +
@@ -7895,11 +8024,12 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\tpage_size\x18\x03 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
 	"page_token\x18\x04 \x01(\tB\x03\xe0A\x01R\tpageToken\x12&\n" +
-	"\fvisible_only\x18\x05 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\x12(\n" +
-	"\rforce_refresh\x18\x06 \x01(\bB\x03\xe0A\x01R\fforceRefresh\"z\n" +
+	"\fvisible_only\x18\x05 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\x12&\n" +
+	"\fcache_bypass\x18\x06 \x01(\bB\x03\xe0A\x01R\vcacheBypass\x12\x17\n" +
+	"\x04skip\x18\a \x01(\x05B\x03\xe0A\x01R\x04skip\"z\n" +
 	"\x14FindElementsResponse\x125\n" +
 	"\belements\x18\x01 \x03(\v2\x14.exactmac.v1.ElementB\x03\xe0A\x03R\belements\x12+\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"\xa3\x02\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"\xba\x02\n" +
 	"\x19FindRegionElementsRequest\x12!\n" +
 	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
 	"\x01*R\x06parent\x122\n" +
@@ -7907,19 +8037,21 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\bselector\x18\x03 \x01(\v2\x1e.exactmac.type.ElementSelectorB\x03\xe0A\x01R\bselector\x12 \n" +
 	"\tpage_size\x18\x04 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x05 \x01(\tB\x03\xe0A\x01R\tpageToken\x12(\n" +
-	"\rforce_refresh\x18\x06 \x01(\bB\x03\xe0A\x01R\fforceRefresh\"\x80\x01\n" +
+	"page_token\x18\x05 \x01(\tB\x03\xe0A\x01R\tpageToken\x12&\n" +
+	"\fcache_bypass\x18\x06 \x01(\bB\x03\xe0A\x01R\vcacheBypass\x12\x17\n" +
+	"\x04skip\x18\a \x01(\x05B\x03\xe0A\x01R\x04skip\"\x80\x01\n" +
 	"\x1aFindRegionElementsResponse\x125\n" +
 	"\belements\x18\x01 \x03(\v2\x14.exactmac.v1.ElementB\x03\xe0A\x03R\belements\x12+\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"A\n" +
 	"\x11GetElementRequest\x12,\n" +
 	"\x04name\x18\x01 \x01(\tB\x18\xe0A\x02\xfaA\x12\n" +
-	"\x10exactmac/ElementR\x04name\"\x8d\x01\n" +
+	"\x10exactmac/ElementR\x04name\"\xa6\x01\n" +
 	"\x13ListElementsRequest\x120\n" +
 	"\x06parent\x18\x01 \x01(\tB\x18\xe0A\x02\xfaA\x12\x12\x10exactmac/ElementR\x06parent\x12 \n" +
 	"\tpage_size\x18\x02 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\"z\n" +
+	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\x12\x17\n" +
+	"\x04skip\x18\x04 \x01(\x05B\x03\xe0A\x01R\x04skip\"z\n" +
 	"\x14ListElementsResponse\x125\n" +
 	"\belements\x18\x01 \x03(\v2\x14.exactmac.v1.ElementB\x03\xe0A\x03R\belements\x12+\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"\xde\x02\n" +
@@ -8000,13 +8132,12 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\tcondition\x18\x04 \x01(\v2\x1b.exactmac.v1.StateConditionB\x03\xe0A\x02R\tcondition\x12\x1d\n" +
 	"\atimeout\x18\x05 \x01(\x01B\x03\xe0A\x01R\atimeout\x12(\n" +
 	"\rpoll_interval\x18\x06 \x01(\x01B\x03\xe0A\x01R\fpollIntervalB\b\n" +
-	"\x06target\"\xe0\x01\n" +
+	"\x06target\"\xd5\x01\n" +
 	"\x0eStateCondition\x12\x1a\n" +
 	"\aenabled\x18\x01 \x01(\bH\x00R\aenabled\x12\x1a\n" +
-	"\afocused\x18\x02 \x01(\bH\x00R\afocused\x12!\n" +
-	"\vtext_equals\x18\x03 \x01(\tH\x00R\n" +
-	"textEquals\x12%\n" +
-	"\rtext_contains\x18\x04 \x01(\tH\x00R\ftextContains\x12?\n" +
+	"\afocused\x18\x02 \x01(\bH\x00R\afocused\x12\x14\n" +
+	"\x04text\x18\x03 \x01(\tH\x00R\x04text\x12'\n" +
+	"\x0etext_substring\x18\x04 \x01(\tH\x00R\rtextSubstring\x12?\n" +
 	"\tattribute\x18\x05 \x01(\v2\x1f.exactmac.v1.AttributeConditionH\x00R\tattributeB\v\n" +
 	"\tcondition\"O\n" +
 	"\x18WaitElementStateResponse\x123\n" +
@@ -8017,7 +8148,7 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\x10GetWindowRequest\x12+\n" +
 	"\x04name\x18\x01 \x01(\tB\x17\xe0A\x02\xfaA\x11\n" +
 	"\x0fexactmac/WindowR\x04name\x12<\n" +
-	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskB\x03\xe0A\x01R\breadMask\"\xcd\x01\n" +
+	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskB\x03\xe0A\x01R\breadMask\"\xe6\x01\n" +
 	"\x12ListWindowsRequest\x124\n" +
 	"\x06parent\x18\x01 \x01(\tB\x1c\xe0A\x02\xfaA\x16\n" +
 	"\x14exactmac/ApplicationR\x06parent\x12 \n" +
@@ -8025,7 +8156,8 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\n" +
 	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\x12\x1e\n" +
 	"\border_by\x18\x04 \x01(\tB\x03\xe0A\x01R\aorderBy\x12\x1b\n" +
-	"\x06filter\x18\x05 \x01(\tB\x03\xe0A\x01R\x06filter\"I\n" +
+	"\x06filter\x18\x05 \x01(\tB\x03\xe0A\x01R\x06filter\x12\x17\n" +
+	"\x04skip\x18\x06 \x01(\x05B\x03\xe0A\x01R\x04skip\"I\n" +
 	"\x15GetWindowStateRequest\x120\n" +
 	"\x04name\x18\x01 \x01(\tB\x1c\xe0A\x02\xfaA\x16\n" +
 	"\x14exactmac/WindowStateR\x04name\"v\n" +
@@ -8070,13 +8202,14 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\x04type\x18\x02 \x01(\x0e2\x1c.exactmac.v1.ObservationTypeB\x03\xe0A\x03R\x04type\"I\n" +
 	"\x15GetObservationRequest\x120\n" +
 	"\x04name\x18\x01 \x01(\tB\x1c\xe0A\x02\xfaA\x16\n" +
-	"\x14exactmac/ObservationR\x04name\"\x95\x01\n" +
+	"\x14exactmac/ObservationR\x04name\"\xae\x01\n" +
 	"\x17ListObservationsRequest\x124\n" +
 	"\x06parent\x18\x01 \x01(\tB\x1c\xe0A\x02\xfaA\x16\n" +
 	"\x14exactmac/ApplicationR\x06parent\x12 \n" +
 	"\tpage_size\x18\x02 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\"\x8a\x01\n" +
+	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\x12\x17\n" +
+	"\x04skip\x18\x04 \x01(\x05B\x03\xe0A\x01R\x04skip\"\x8a\x01\n" +
 	"\x18ListObservationsResponse\x12A\n" +
 	"\fobservations\x18\x01 \x03(\v2\x18.exactmac.v1.ObservationB\x03\xe0A\x03R\fobservations\x12+\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"L\n" +
@@ -8094,11 +8227,12 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"session_id\x18\x02 \x01(\tB\x03\xe0A\x01R\tsessionId\"A\n" +
 	"\x11GetSessionRequest\x12,\n" +
 	"\x04name\x18\x01 \x01(\tB\x18\xe0A\x02\xfaA\x12\n" +
-	"\x10exactmac/SessionR\x04name\"[\n" +
+	"\x10exactmac/SessionR\x04name\"t\n" +
 	"\x13ListSessionsRequest\x12 \n" +
 	"\tpage_size\x18\x01 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\"z\n" +
+	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\x12\x17\n" +
+	"\x04skip\x18\x03 \x01(\x05B\x03\xe0A\x01R\x04skip\"z\n" +
 	"\x14ListSessionsResponse\x125\n" +
 	"\bsessions\x18\x01 \x03(\v2\x14.exactmac.v1.SessionB\x03\xe0A\x03R\bsessions\x12+\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"_\n" +
@@ -8111,11 +8245,12 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\bmacro_id\x18\x02 \x01(\tB\x03\xe0A\x01R\amacroId\"=\n" +
 	"\x0fGetMacroRequest\x12*\n" +
 	"\x04name\x18\x01 \x01(\tB\x16\xe0A\x02\xfaA\x10\n" +
-	"\x0eexactmac/MacroR\x04name\"Y\n" +
+	"\x0eexactmac/MacroR\x04name\"r\n" +
 	"\x11ListMacrosRequest\x12 \n" +
 	"\tpage_size\x18\x01 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\"r\n" +
+	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\x12\x17\n" +
+	"\x04skip\x18\x03 \x01(\x05B\x03\xe0A\x01R\x04skip\"r\n" +
 	"\x12ListMacrosResponse\x12/\n" +
 	"\x06macros\x18\x01 \x03(\v2\x12.exactmac.v1.MacroB\x03\xe0A\x03R\x06macros\x12+\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"\x85\x01\n" +
@@ -8136,29 +8271,30 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\aoptions\x18\x04 \x01(\v2\x1d.exactmac.v1.ExecutionOptionsB\x03\xe0A\x01R\aoptions\x1aB\n" +
 	"\x14ParameterValuesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"o\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"1\n" +
 	"\x10ExecutionOptions\x12\x1d\n" +
-	"\atimeout\x18\x03 \x01(\x01B\x03\xe0A\x01R\atimeoutJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03J\x04\b\x04\x10\x05R\x05speedR\x11continue_on_errorR\x10record_execution\"\x86\x02\n" +
+	"\atimeout\x18\x01 \x01(\x01B\x03\xe0A\x01R\atimeout\"\x9e\x02\n" +
 	"\x14ExecuteMacroResponse\x12\x1d\n" +
-	"\asuccess\x18\x01 \x01(\bB\x03\xe0A\x03R\asuccess\x12.\n" +
-	"\x10actions_executed\x18\x02 \x01(\x05B\x03\xe0A\x03R\x0factionsExecuted\x12M\n" +
+	"\asuccess\x18\x01 \x01(\bB\x03\xe0A\x03R\asuccess\x127\n" +
+	"\x15executed_action_count\x18\x02 \x01(\x05B\x03\xe0A\x03R\x13executedActionCount\x12M\n" +
 	"\x12execution_duration\x18\x03 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x03R\x11executionDuration\x12\x19\n" +
-	"\x05error\x18\x04 \x01(\tB\x03\xe0A\x03R\x05error\x125\n" +
-	"\x03log\x18\x05 \x03(\v2\x1e.exactmac.v1.ExecutionLogEntryB\x03\xe0A\x03R\x03log\"\xe5\x01\n" +
+	"\x05error\x18\x04 \x01(\tB\x03\xe0A\x03R\x05error\x12D\n" +
+	"\vlog_entries\x18\x05 \x03(\v2\x1e.exactmac.v1.ExecutionLogEntryB\x03\xe0A\x03R\n" +
+	"logEntries\"\xf0\x01\n" +
 	"\x14ExecuteMacroMetadata\x12,\n" +
 	"\x05macro\x18\x01 \x01(\tB\x16\xe0A\x03\xfaA\x10\n" +
-	"\x0eexactmac/MacroR\x05macro\x12*\n" +
-	"\x0ecurrent_action\x18\x02 \x01(\x05B\x03\xe0A\x03R\rcurrentAction\x12(\n" +
+	"\x0eexactmac/MacroR\x05macro\x125\n" +
+	"\x14current_action_index\x18\x02 \x01(\x05B\x03\xe0A\x03R\x12currentActionIndex\x12(\n" +
 	"\rtotal_actions\x18\x03 \x01(\x05B\x03\xe0A\x03R\ftotalActions\x12I\n" +
-	"\x10elapsed_duration\x18\x04 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x03R\x0felapsedDuration\"\xca\x02\n" +
+	"\x10elapsed_duration\x18\x04 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x03R\x0felapsedDuration\"\xa4\x02\n" +
 	"\x17BeginTransactionRequest\x122\n" +
 	"\asession\x18\x01 \x01(\tB\x18\xe0A\x02\xfaA\x12\n" +
 	"\x10exactmac/SessionR\asession\x12a\n" +
 	"\x0fisolation_level\x18\x02 \x01(\x0e23.exactmac.v1.BeginTransactionRequest.IsolationLevelB\x03\xe0A\x01R\x0eisolationLevel\x12\x1d\n" +
-	"\atimeout\x18\x03 \x01(\x01B\x03\xe0A\x01R\atimeout\"y\n" +
+	"\atimeout\x18\x03 \x01(\x01B\x03\xe0A\x01R\atimeout\"S\n" +
 	"\x0eIsolationLevel\x12\x1f\n" +
 	"\x1bISOLATION_LEVEL_UNSPECIFIED\x10\x00\x12 \n" +
-	"\x1cISOLATION_LEVEL_SERIALIZABLE\x10\x01\"\x04\b\x02\x10\x02*\x1eISOLATION_LEVEL_READ_COMMITTED\"\xa1\x01\n" +
+	"\x1cISOLATION_LEVEL_SERIALIZABLE\x10\x01\"\xa1\x01\n" +
 	"\x18BeginTransactionResponse\x12*\n" +
 	"\x0etransaction_id\x18\x01 \x01(\tB\x03\xe0A\x03R\rtransactionId\x12$\n" +
 	"\vrevision_id\x18\x02 \x01(\tB\x03\xe0A\x03R\n" +
@@ -8176,13 +8312,14 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\x0etransaction_id\x18\x03 \x01(\tB\x03\xe0A\x02R\rtransactionId\"I\n" +
 	"\x19GetSessionSnapshotRequest\x12,\n" +
 	"\x04name\x18\x01 \x01(\tB\x18\xe0A\x02\xfaA\x12\n" +
-	"\x10exactmac/SessionR\x04name\"\xd9\x01\n" +
+	"\x10exactmac/SessionR\x04name\"\xca\x01\n" +
 	"\x18CaptureScreenshotRequest\x125\n" +
 	"\x06format\x18\x01 \x01(\x0e2\x18.exactmac.v1.ImageFormatB\x03\xe0A\x01R\x06format\x12\x1d\n" +
-	"\aquality\x18\x02 \x01(\x05B\x03\xe0A\x01R\aquality\x12-\n" +
-	"\x10include_ocr_text\x18\x04 \x01(\bB\x03\xe0A\x01R\x0eincludeOcrText\x122\n" +
-	"\adisplay\x18\x05 \x01(\tB\x18\xe0A\x01\xfaA\x12\n" +
-	"\x10exactmac/DisplayR\adisplayJ\x04\b\x03\x10\x04\"\x99\x03\n" +
+	"\aquality\x18\x02 \x01(\x05B\x03\xe0A\x01R\aquality\x12$\n" +
+	"\vocr_enabled\x18\x03 \x01(\bB\x03\xe0A\x01R\n" +
+	"ocrEnabled\x122\n" +
+	"\adisplay\x18\x04 \x01(\tB\x18\xe0A\x01\xfaA\x12\n" +
+	"\x10exactmac/DisplayR\adisplay\"\x99\x03\n" +
 	"\x19CaptureScreenshotResponse\x12\"\n" +
 	"\n" +
 	"image_data\x18\x01 \x01(\fB\x03\xe0A\x03R\timageData\x125\n" +
@@ -8190,20 +8327,21 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\x05width\x18\x03 \x01(\x05B\x03\xe0A\x03R\x05width\x12\x1b\n" +
 	"\x06height\x18\x04 \x01(\x05B\x03\xe0A\x03R\x06height\x12 \n" +
 	"\bocr_text\x18\x05 \x01(\tB\x03\xe0A\x03H\x00R\aocrText\x126\n" +
-	"\tocr_error\x18\t \x01(\v2\x12.google.rpc.StatusB\x03\xe0A\x03H\x00R\bocrError\x122\n" +
-	"\adisplay\x18\x06 \x01(\tB\x18\xe0A\x03\xfaA\x12\n" +
+	"\tocr_error\x18\x06 \x01(\v2\x12.google.rpc.StatusB\x03\xe0A\x03H\x00R\bocrError\x122\n" +
+	"\adisplay\x18\a \x01(\tB\x18\xe0A\x03\xfaA\x12\n" +
 	"\x10exactmac/DisplayR\adisplay\x122\n" +
-	"\x06region\x18\a \x01(\v2\x15.exactmac.type.RegionB\x03\xe0A\x03R\x06region\x12\x19\n" +
-	"\x05scale\x18\b \x01(\x01B\x03\xe0A\x03R\x05scaleB\f\n" +
+	"\x06region\x18\b \x01(\v2\x15.exactmac.type.RegionB\x03\xe0A\x03R\x06region\x12\x19\n" +
+	"\x05scale\x18\t \x01(\x01B\x03\xe0A\x03R\x05scaleB\f\n" +
 	"\n" +
-	"ocr_result\"\x82\x02\n" +
+	"ocr_result\"\xf9\x01\n" +
 	"\x1eCaptureWindowScreenshotRequest\x12/\n" +
 	"\x06window\x18\x01 \x01(\tB\x17\xe0A\x02\xfaA\x11\n" +
 	"\x0fexactmac/WindowR\x06window\x125\n" +
 	"\x06format\x18\x02 \x01(\x0e2\x18.exactmac.v1.ImageFormatB\x03\xe0A\x01R\x06format\x12\x1d\n" +
 	"\aquality\x18\x03 \x01(\x05B\x03\xe0A\x01R\aquality\x12*\n" +
-	"\x0einclude_shadow\x18\x04 \x01(\bB\x03\xe0A\x01R\rincludeShadow\x12-\n" +
-	"\x10include_ocr_text\x18\x05 \x01(\bB\x03\xe0A\x01R\x0eincludeOcrText\"\xa8\x04\n" +
+	"\x0eshadow_enabled\x18\x04 \x01(\bB\x03\xe0A\x01R\rshadowEnabled\x12$\n" +
+	"\vocr_enabled\x18\x05 \x01(\bB\x03\xe0A\x01R\n" +
+	"ocrEnabled\"\xa8\x04\n" +
 	"\x1fCaptureWindowScreenshotResponse\x12\"\n" +
 	"\n" +
 	"image_data\x18\x01 \x01(\fB\x03\xe0A\x03R\timageData\x125\n" +
@@ -8221,7 +8359,7 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\x0fshadow_included\x18\v \x01(\bB\x03\xe0A\x03R\x0eshadowIncluded\x12\x1d\n" +
 	"\aclipped\x18\f \x01(\bB\x03\xe0A\x03R\aclippedB\f\n" +
 	"\n" +
-	"ocr_result\"\x8c\x02\n" +
+	"ocr_result\"\x83\x02\n" +
 	"\x1fCaptureElementScreenshotRequest\x12!\n" +
 	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
 	"\x01*R\x06parent\x12\"\n" +
@@ -8229,8 +8367,9 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"element_id\x18\x02 \x01(\tB\x03\xe0A\x02R\telementId\x125\n" +
 	"\x06format\x18\x03 \x01(\x0e2\x18.exactmac.v1.ImageFormatB\x03\xe0A\x01R\x06format\x12\x1d\n" +
 	"\aquality\x18\x04 \x01(\x05B\x03\xe0A\x01R\aquality\x12\x1d\n" +
-	"\apadding\x18\x05 \x01(\x05B\x03\xe0A\x01R\apadding\x12-\n" +
-	"\x10include_ocr_text\x18\x06 \x01(\bB\x03\xe0A\x01R\x0eincludeOcrText\"\xe6\x04\n" +
+	"\apadding\x18\x05 \x01(\x05B\x03\xe0A\x01R\apadding\x12$\n" +
+	"\vocr_enabled\x18\x06 \x01(\bB\x03\xe0A\x01R\n" +
+	"ocrEnabled\"\xe6\x04\n" +
 	" CaptureElementScreenshotResponse\x12\"\n" +
 	"\n" +
 	"image_data\x18\x01 \x01(\fB\x03\xe0A\x03R\timageData\x125\n" +
@@ -8252,14 +8391,15 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\apadding\x18\r \x01(\x05B\x03\xe0A\x03R\apadding\x12\x1d\n" +
 	"\aclipped\x18\x0e \x01(\bB\x03\xe0A\x03R\aclippedB\f\n" +
 	"\n" +
-	"ocr_result\"\x93\x02\n" +
+	"ocr_result\"\x84\x02\n" +
 	"\x1eCaptureRegionScreenshotRequest\x122\n" +
 	"\x06region\x18\x01 \x01(\v2\x15.exactmac.type.RegionB\x03\xe0A\x02R\x06region\x125\n" +
 	"\x06format\x18\x02 \x01(\x0e2\x18.exactmac.v1.ImageFormatB\x03\xe0A\x01R\x06format\x12\x1d\n" +
-	"\aquality\x18\x03 \x01(\x05B\x03\xe0A\x01R\aquality\x12-\n" +
-	"\x10include_ocr_text\x18\x05 \x01(\bB\x03\xe0A\x01R\x0eincludeOcrText\x122\n" +
-	"\adisplay\x18\x06 \x01(\tB\x18\xe0A\x01\xfaA\x12\n" +
-	"\x10exactmac/DisplayR\adisplayJ\x04\b\x04\x10\x05\"\x9f\x03\n" +
+	"\aquality\x18\x03 \x01(\x05B\x03\xe0A\x01R\aquality\x12$\n" +
+	"\vocr_enabled\x18\x04 \x01(\bB\x03\xe0A\x01R\n" +
+	"ocrEnabled\x122\n" +
+	"\adisplay\x18\x05 \x01(\tB\x18\xe0A\x01\xfaA\x12\n" +
+	"\x10exactmac/DisplayR\adisplay\"\x9f\x03\n" +
 	"\x1fCaptureRegionScreenshotResponse\x12\"\n" +
 	"\n" +
 	"image_data\x18\x01 \x01(\fB\x03\xe0A\x03R\timageData\x125\n" +
@@ -8268,77 +8408,77 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\x06height\x18\x04 \x01(\x05B\x03\xe0A\x03R\x06height\x122\n" +
 	"\x06region\x18\x05 \x01(\v2\x15.exactmac.type.RegionB\x03\xe0A\x03R\x06region\x12 \n" +
 	"\bocr_text\x18\x06 \x01(\tB\x03\xe0A\x03H\x00R\aocrText\x126\n" +
-	"\tocr_error\x18\t \x01(\v2\x12.google.rpc.StatusB\x03\xe0A\x03H\x00R\bocrError\x122\n" +
-	"\adisplay\x18\a \x01(\tB\x18\xe0A\x03\xfaA\x12\n" +
+	"\tocr_error\x18\a \x01(\v2\x12.google.rpc.StatusB\x03\xe0A\x03H\x00R\bocrError\x122\n" +
+	"\adisplay\x18\b \x01(\tB\x18\xe0A\x03\xfaA\x12\n" +
 	"\x10exactmac/DisplayR\adisplay\x12\x19\n" +
-	"\x05scale\x18\b \x01(\x01B\x03\xe0A\x03R\x05scaleB\f\n" +
+	"\x05scale\x18\t \x01(\x01B\x03\xe0A\x03R\x05scaleB\f\n" +
 	"\n" +
 	"ocr_result\"E\n" +
 	"\x13GetClipboardRequest\x12.\n" +
 	"\x04name\x18\x01 \x01(\tB\x1a\xe0A\x02\xfaA\x14\n" +
-	"\x12exactmac/ClipboardR\x04name\"k\n" +
+	"\x12exactmac/ClipboardR\x04name\"U\n" +
 	"\x15WriteClipboardRequest\x12<\n" +
-	"\acontent\x18\x01 \x01(\v2\x1d.exactmac.v1.ClipboardContentB\x03\xe0A\x02R\acontentJ\x04\b\x02\x10\x03R\x0eclear_existing\"S\n" +
+	"\acontent\x18\x01 \x01(\v2\x1d.exactmac.v1.ClipboardContentB\x03\xe0A\x02R\acontent\"S\n" +
 	"\x16WriteClipboardResponse\x129\n" +
 	"\tclipboard\x18\x01 \x01(\v2\x16.exactmac.v1.ClipboardB\x03\xe0A\x03R\tclipboard\"\x17\n" +
 	"\x15ClearClipboardRequest\"S\n" +
 	"\x16ClearClipboardResponse\x129\n" +
-	"\tclipboard\x18\x01 \x01(\v2\x16.exactmac.v1.ClipboardB\x03\xe0A\x03R\tclipboard\";\n" +
-	"\x1aGetClipboardHistoryRequest\x12\x1d\n" +
-	"\x04name\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
-	"\x01*R\x04name\"\xa6\x02\n" +
+	"\tclipboard\x18\x01 \x01(\v2\x16.exactmac.v1.ClipboardB\x03\xe0A\x03R\tclipboard\"S\n" +
+	"\x1aGetClipboardHistoryRequest\x125\n" +
+	"\x04name\x18\x01 \x01(\tB!\xe0A\x02\xfaA\x1b\n" +
+	"\x19exactmac/ClipboardHistoryR\x04name\"\xae\x02\n" +
 	"\x1dAutomateOpenFileDialogRequest\x12>\n" +
 	"\vapplication\x18\x01 \x01(\tB\x1c\xe0A\x02\xfaA\x16\n" +
 	"\x14exactmac/ApplicationR\vapplication\x12 \n" +
 	"\tfile_path\x18\x02 \x01(\tB\x03\xe0A\x01R\bfilePath\x120\n" +
 	"\x11default_directory\x18\x03 \x01(\tB\x03\xe0A\x01R\x10defaultDirectory\x12&\n" +
 	"\ffile_filters\x18\x04 \x03(\tB\x03\xe0A\x01R\vfileFilters\x12\x1d\n" +
-	"\atimeout\x18\x05 \x01(\x01B\x03\xe0A\x01R\atimeout\x12*\n" +
-	"\x0eallow_multiple\x18\x06 \x01(\bB\x03\xe0A\x01R\rallowMultiple\"\x86\x01\n" +
+	"\atimeout\x18\x05 \x01(\x01B\x03\xe0A\x01R\atimeout\x122\n" +
+	"\x12multiple_selection\x18\x06 \x01(\bB\x03\xe0A\x01R\x11multipleSelection\"\x86\x01\n" +
 	"\x1eAutomateOpenFileDialogResponse\x12\x1d\n" +
 	"\asuccess\x18\x01 \x01(\bB\x03\xe0A\x03R\asuccess\x12*\n" +
 	"\x0eselected_paths\x18\x02 \x03(\tB\x03\xe0A\x03R\rselectedPaths\x12\x19\n" +
-	"\x05error\x18\x03 \x01(\tB\x03\xe0A\x03R\x05error\"\xb4\x02\n" +
+	"\x05error\x18\x03 \x01(\tB\x03\xe0A\x03R\x05error\"\xbe\x02\n" +
 	"\x1dAutomateSaveFileDialogRequest\x12>\n" +
 	"\vapplication\x18\x01 \x01(\tB\x1c\xe0A\x02\xfaA\x16\n" +
 	"\x14exactmac/ApplicationR\vapplication\x12 \n" +
 	"\tfile_path\x18\x02 \x01(\tB\x03\xe0A\x02R\bfilePath\x120\n" +
 	"\x11default_directory\x18\x03 \x01(\tB\x03\xe0A\x01R\x10defaultDirectory\x12.\n" +
 	"\x10default_filename\x18\x04 \x01(\tB\x03\xe0A\x01R\x0fdefaultFilename\x12\x1d\n" +
-	"\atimeout\x18\x05 \x01(\x01B\x03\xe0A\x01R\atimeout\x120\n" +
-	"\x11confirm_overwrite\x18\x06 \x01(\bB\x03\xe0A\x01R\x10confirmOverwrite\"~\n" +
+	"\atimeout\x18\x05 \x01(\x01B\x03\xe0A\x01R\atimeout\x12:\n" +
+	"\x16overwrite_confirmation\x18\x06 \x01(\bB\x03\xe0A\x01R\x15overwriteConfirmation\"~\n" +
 	"\x1eAutomateSaveFileDialogResponse\x12\x1d\n" +
 	"\asuccess\x18\x01 \x01(\bB\x03\xe0A\x03R\asuccess\x12\"\n" +
 	"\n" +
 	"saved_path\x18\x02 \x01(\tB\x03\xe0A\x03R\tsavedPath\x12\x19\n" +
-	"\x05error\x18\x03 \x01(\tB\x03\xe0A\x03R\x05error\"\x9a\x01\n" +
+	"\x05error\x18\x03 \x01(\tB\x03\xe0A\x03R\x05error\"\xa0\x01\n" +
 	"\x19ExecuteAppleScriptRequest\x12\x1b\n" +
 	"\x06script\x18\x01 \x01(\tB\x03\xe0A\x02R\x06script\x128\n" +
-	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x01R\atimeout\x12&\n" +
-	"\fcompile_only\x18\x03 \x01(\bB\x03\xe0A\x01R\vcompileOnly\"\xc2\x01\n" +
+	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x01R\atimeout\x12,\n" +
+	"\x0fvalidation_only\x18\x03 \x01(\bB\x03\xe0A\x01R\x0evalidationOnly\"\xc2\x01\n" +
 	"\x1aExecuteAppleScriptResponse\x12\x1d\n" +
 	"\asuccess\x18\x01 \x01(\bB\x03\xe0A\x03R\asuccess\x12\x1b\n" +
 	"\x06output\x18\x02 \x01(\tB\x03\xe0A\x03R\x06output\x12\x19\n" +
 	"\x05error\x18\x03 \x01(\tB\x03\xe0A\x03R\x05error\x12M\n" +
-	"\x12execution_duration\x18\x04 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x03R\x11executionDuration\"\x99\x01\n" +
+	"\x12execution_duration\x18\x04 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x03R\x11executionDuration\"\x9f\x01\n" +
 	"\x18ExecuteJavaScriptRequest\x12\x1b\n" +
 	"\x06script\x18\x01 \x01(\tB\x03\xe0A\x02R\x06script\x128\n" +
-	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x01R\atimeout\x12&\n" +
-	"\fcompile_only\x18\x03 \x01(\bB\x03\xe0A\x01R\vcompileOnly\"\xc1\x01\n" +
+	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x01R\atimeout\x12,\n" +
+	"\x0fvalidation_only\x18\x03 \x01(\bB\x03\xe0A\x01R\x0evalidationOnly\"\xc1\x01\n" +
 	"\x19ExecuteJavaScriptResponse\x12\x1d\n" +
 	"\asuccess\x18\x01 \x01(\bB\x03\xe0A\x03R\asuccess\x12\x1b\n" +
 	"\x06output\x18\x02 \x01(\tB\x03\xe0A\x03R\x06output\x12\x19\n" +
 	"\x05error\x18\x03 \x01(\tB\x03\xe0A\x03R\x05error\x12M\n" +
-	"\x12execution_duration\x18\x04 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x03R\x11executionDuration\"\x97\x03\n" +
+	"\x12execution_duration\x18\x04 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x03R\x11executionDuration\"\xbc\x03\n" +
 	"\x1aExecuteShellCommandRequest\x12\x1d\n" +
 	"\acommand\x18\x01 \x01(\tB\x03\xe0A\x02R\acommand\x12\x17\n" +
 	"\x04args\x18\x02 \x03(\tB\x03\xe0A\x01R\x04args\x120\n" +
-	"\x11working_directory\x18\x03 \x01(\tB\x03\xe0A\x01R\x10workingDirectory\x12_\n" +
-	"\venvironment\x18\x04 \x03(\v28.exactmac.v1.ExecuteShellCommandRequest.EnvironmentEntryB\x03\xe0A\x01R\venvironment\x128\n" +
+	"\x11working_directory\x18\x03 \x01(\tB\x03\xe0A\x01R\x10workingDirectory\x12{\n" +
+	"\x15environment_variables\x18\x04 \x03(\v2A.exactmac.v1.ExecuteShellCommandRequest.EnvironmentVariablesEntryB\x03\xe0A\x01R\x14environmentVariables\x128\n" +
 	"\atimeout\x18\x05 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x01R\atimeout\x12\x19\n" +
 	"\x05stdin\x18\x06 \x01(\tB\x03\xe0A\x01R\x05stdin\x12\x19\n" +
-	"\x05shell\x18\a \x01(\tB\x03\xe0A\x01R\x05shell\x1a>\n" +
-	"\x10EnvironmentEntry\x12\x10\n" +
+	"\x05shell\x18\a \x01(\tB\x03\xe0A\x01R\x05shell\x1aG\n" +
+	"\x19EnvironmentVariablesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x82\x02\n" +
 	"\x1bExecuteShellCommandResponse\x12\x1d\n" +
@@ -8354,19 +8494,19 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\x16ValidateScriptResponse\x12\x19\n" +
 	"\x05valid\x18\x01 \x01(\bB\x03\xe0A\x03R\x05valid\x12\x1b\n" +
 	"\x06errors\x18\x02 \x03(\tB\x03\xe0A\x03R\x06errors\x12\x1f\n" +
-	"\bwarnings\x18\x03 \x03(\tB\x03\xe0A\x03R\bwarnings\"@\n" +
-	"\x1fGetScriptingDictionariesRequest\x12\x1d\n" +
-	"\x04name\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
-	"\x01*R\x04name*\xd4\x01\n" +
+	"\bwarnings\x18\x03 \x03(\tB\x03\xe0A\x03R\bwarnings\"g\n" +
+	"$GetScriptingDictionaryCatalogRequest\x12?\n" +
+	"\x04name\x18\x01 \x01(\tB+\xe0A\x02\xfaA%\n" +
+	"#exactmac/ScriptingDictionaryCatalogR\x04name*\xd4\x01\n" +
 	"\x1bApplicationCloseDisposition\x12-\n" +
 	")APPLICATION_CLOSE_DISPOSITION_UNSPECIFIED\x10\x00\x120\n" +
 	",APPLICATION_CLOSE_DISPOSITION_ALREADY_EXITED\x10\x01\x12*\n" +
 	"&APPLICATION_CLOSE_DISPOSITION_GRACEFUL\x10\x02\x12(\n" +
-	"$APPLICATION_CLOSE_DISPOSITION_FORCED\x10\x03*\xc3\x01\n" +
+	"$APPLICATION_CLOSE_DISPOSITION_FORCED\x10\x03*\x98\x01\n" +
 	"\x13ApplicationOpenMode\x12%\n" +
 	"!APPLICATION_OPEN_MODE_UNSPECIFIED\x10\x00\x12,\n" +
 	"(APPLICATION_OPEN_MODE_LAUNCH_OR_ACTIVATE\x10\x01\x12,\n" +
-	"(APPLICATION_OPEN_MODE_FORCE_NEW_INSTANCE\x10\x02\"\x04\b\x03\x10\x03*#APPLICATION_OPEN_MODE_ACTIVATE_ONLY*\x91\x02\n" +
+	"(APPLICATION_OPEN_MODE_FORCE_NEW_INSTANCE\x10\x02*\x91\x02\n" +
 	"\x1aApplicationOpenDisposition\x12,\n" +
 	"(APPLICATION_OPEN_DISPOSITION_UNSPECIFIED\x10\x00\x12-\n" +
 	")APPLICATION_OPEN_DISPOSITION_LAUNCHED_NEW\x10\x01\x123\n" +
@@ -8376,7 +8516,7 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	" ApplicationActivationDisposition\x122\n" +
 	".APPLICATION_ACTIVATION_DISPOSITION_UNSPECIFIED\x10\x00\x120\n" +
 	",APPLICATION_ACTIVATION_DISPOSITION_ACTIVATED\x10\x01\x125\n" +
-	"1APPLICATION_ACTIVATION_DISPOSITION_ALREADY_ACTIVE\x10\x022\xa5R\n" +
+	"1APPLICATION_ACTIVATION_DISPOSITION_ALREADY_ACTIVE\x10\x022\xb8R\n" +
 	"\bExactMac\x12\x90\x01\n" +
 	"\x14GetApplicationBundle\x12(.exactmac.v1.GetApplicationBundleRequest\x1a\x1e.exactmac.v1.ApplicationBundle\".\xdaA\x04name\x82\xd3\xe4\x93\x02!\x12\x1f/v1/{name=applicationBundles/*}\x12\x91\x01\n" +
 	"\x16ListApplicationBundles\x12*.exactmac.v1.ListApplicationBundlesRequest\x1a+.exactmac.v1.ListApplicationBundlesResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/applicationBundles\x12\x94\x01\n" +
@@ -8439,8 +8579,8 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\x15CaptureCursorPosition\x12).exactmac.v1.CaptureCursorPositionRequest\x1a*.exactmac.v1.CaptureCursorPositionResponse\"+\x82\xd3\xe4\x93\x02%:\x01*\" /v1/cursor:captureCursorPosition\x12m\n" +
 	"\fGetClipboard\x12 .exactmac.v1.GetClipboardRequest\x1a\x16.exactmac.v1.Clipboard\"#\xdaA\x04name\x82\xd3\xe4\x93\x02\x16\x12\x14/v1/{name=clipboard}\x12\x83\x01\n" +
 	"\x0eWriteClipboard\x12\".exactmac.v1.WriteClipboardRequest\x1a#.exactmac.v1.WriteClipboardResponse\"(\xdaA\acontent\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/clipboard:write\x12y\n" +
-	"\x0eClearClipboard\x12\".exactmac.v1.ClearClipboardRequest\x1a#.exactmac.v1.ClearClipboardResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/clipboard:clear\x12\x8a\x01\n" +
-	"\x13GetClipboardHistory\x12'.exactmac.v1.GetClipboardHistoryRequest\x1a\x1d.exactmac.v1.ClipboardHistory\"+\xdaA\x04name\x82\xd3\xe4\x93\x02\x1e\x12\x1c/v1/{name=clipboard/history}\x12\xcd\x01\n" +
+	"\x0eClearClipboard\x12\".exactmac.v1.ClearClipboardRequest\x1a#.exactmac.v1.ClearClipboardResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/clipboard:clear\x12\x89\x01\n" +
+	"\x13GetClipboardHistory\x12'.exactmac.v1.GetClipboardHistoryRequest\x1a\x1d.exactmac.v1.ClipboardHistory\"*\xdaA\x04name\x82\xd3\xe4\x93\x02\x1d\x12\x1b/v1/{name=clipboardHistory}\x12\xcd\x01\n" +
 	"\x16AutomateOpenFileDialog\x12*.exactmac.v1.AutomateOpenFileDialogRequest\x1a+.exactmac.v1.AutomateOpenFileDialogResponse\"Z\xdaA\x15application,file_path\x82\xd3\xe4\x93\x02<:\x01*\"7/v1/{application=applications/*}:automateOpenFileDialog\x12\xcd\x01\n" +
 	"\x16AutomateSaveFileDialog\x12*.exactmac.v1.AutomateSaveFileDialogRequest\x1a+.exactmac.v1.AutomateSaveFileDialogResponse\"Z\xdaA\x15application,file_path\x82\xd3\xe4\x93\x02<:\x01*\"7/v1/{application=applications/*}:automateSaveFileDialog\x12n\n" +
 	"\vCreateMacro\x12\x1f.exactmac.v1.CreateMacroRequest\x1a\x12.exactmac.v1.Macro\"*\xdaA\x0emacro,macro_id\x82\xd3\xe4\x93\x02\x13:\x05macro\"\n" +
@@ -8456,9 +8596,9 @@ const file_exactmac_v1_exact_mac_proto_rawDesc = "" +
 	"\x12ExecuteAppleScript\x12&.exactmac.v1.ExecuteAppleScriptRequest\x1a'.exactmac.v1.ExecuteAppleScriptResponse\"2\xdaA\x06script\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/v1/scripts:executeAppleScript\x12\x95\x01\n" +
 	"\x11ExecuteJavaScript\x12%.exactmac.v1.ExecuteJavaScriptRequest\x1a&.exactmac.v1.ExecuteJavaScriptResponse\"1\xdaA\x06script\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/v1/scripts:executeJavaScript\x12\x9e\x01\n" +
 	"\x13ExecuteShellCommand\x12'.exactmac.v1.ExecuteShellCommandRequest\x1a(.exactmac.v1.ExecuteShellCommandResponse\"4\xdaA\acommand\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/scripts:executeShellCommand\x12\x8e\x01\n" +
-	"\x0eValidateScript\x12\".exactmac.v1.ValidateScriptRequest\x1a#.exactmac.v1.ValidateScriptResponse\"3\xdaA\vtype,script\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/v1/scripts:validateScript\x12\x9d\x01\n" +
-	"\x18GetScriptingDictionaries\x12,.exactmac.v1.GetScriptingDictionariesRequest\x1a\".exactmac.v1.ScriptingDictionaries\"/\xdaA\x04name\x82\xd3\xe4\x93\x02\"\x12 /v1/{name=scriptingDictionaries}B\xbe\x01\n" +
-	"!io.github.joeycumines.exactmac.v1B\rExactMacProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1\xa2\x02\x03EXX\xaa\x02\vExactmac.V1\xca\x02\vExactmac\\V1\xe2\x02\x17Exactmac\\V1\\GPBMetadata\xea\x02\fExactmac::V1b\x06proto3"
+	"\x0eValidateScript\x12\".exactmac.v1.ValidateScriptRequest\x1a#.exactmac.v1.ValidateScriptResponse\"3\xdaA\vtype,script\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/v1/scripts:validateScript\x12\xb1\x01\n" +
+	"\x1dGetScriptingDictionaryCatalog\x121.exactmac.v1.GetScriptingDictionaryCatalogRequest\x1a'.exactmac.v1.ScriptingDictionaryCatalog\"4\xdaA\x04name\x82\xd3\xe4\x93\x02'\x12%/v1/{name=scriptingDictionaryCatalog}Bs\n" +
+	"!io.github.joeycumines.exactmac.v1B\rExactMacProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpbb\x06proto3"
 
 var (
 	file_exactmac_v1_exact_mac_proto_rawDescOnce sync.Once
@@ -8475,162 +8615,162 @@ func file_exactmac_v1_exact_mac_proto_rawDescGZIP() []byte {
 var file_exactmac_v1_exact_mac_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
 var file_exactmac_v1_exact_mac_proto_msgTypes = make([]protoimpl.MessageInfo, 111)
 var file_exactmac_v1_exact_mac_proto_goTypes = []any{
-	(ApplicationCloseDisposition)(0),            // 0: exactmac.v1.ApplicationCloseDisposition
-	(ApplicationOpenMode)(0),                    // 1: exactmac.v1.ApplicationOpenMode
-	(ApplicationOpenDisposition)(0),             // 2: exactmac.v1.ApplicationOpenDisposition
-	(ApplicationActivationDisposition)(0),       // 3: exactmac.v1.ApplicationActivationDisposition
-	(ClickElementRequest_ClickType)(0),          // 4: exactmac.v1.ClickElementRequest.ClickType
-	(WriteElementValueRequest_WriteMode)(0),     // 5: exactmac.v1.WriteElementValueRequest.WriteMode
-	(BeginTransactionRequest_IsolationLevel)(0), // 6: exactmac.v1.BeginTransactionRequest.IsolationLevel
-	(*GetApplicationBundleRequest)(nil),         // 7: exactmac.v1.GetApplicationBundleRequest
-	(*ListApplicationBundlesRequest)(nil),       // 8: exactmac.v1.ListApplicationBundlesRequest
-	(*ListApplicationBundlesResponse)(nil),      // 9: exactmac.v1.ListApplicationBundlesResponse
-	(*OpenApplicationRequest)(nil),              // 10: exactmac.v1.OpenApplicationRequest
-	(*OpenApplicationResponse)(nil),             // 11: exactmac.v1.OpenApplicationResponse
-	(*GetApplicationRequest)(nil),               // 12: exactmac.v1.GetApplicationRequest
-	(*ListApplicationsRequest)(nil),             // 13: exactmac.v1.ListApplicationsRequest
-	(*ListApplicationsResponse)(nil),            // 14: exactmac.v1.ListApplicationsResponse
-	(*ActivateApplicationRequest)(nil),          // 15: exactmac.v1.ActivateApplicationRequest
-	(*ActivateApplicationResponse)(nil),         // 16: exactmac.v1.ActivateApplicationResponse
-	(*CloseApplicationRequest)(nil),             // 17: exactmac.v1.CloseApplicationRequest
-	(*CloseApplicationResponse)(nil),            // 18: exactmac.v1.CloseApplicationResponse
-	(*CreateInputRequest)(nil),                  // 19: exactmac.v1.CreateInputRequest
-	(*GetInputRequest)(nil),                     // 20: exactmac.v1.GetInputRequest
-	(*ListInputsRequest)(nil),                   // 21: exactmac.v1.ListInputsRequest
-	(*ListInputsResponse)(nil),                  // 22: exactmac.v1.ListInputsResponse
-	(*TraverseAccessibilityRequest)(nil),        // 23: exactmac.v1.TraverseAccessibilityRequest
-	(*TraverseAccessibilityResponse)(nil),       // 24: exactmac.v1.TraverseAccessibilityResponse
-	(*WatchAccessibilityRequest)(nil),           // 25: exactmac.v1.WatchAccessibilityRequest
-	(*WatchAccessibilityResponse)(nil),          // 26: exactmac.v1.WatchAccessibilityResponse
-	(*ModifiedElement)(nil),                     // 27: exactmac.v1.ModifiedElement
-	(*FindElementsRequest)(nil),                 // 28: exactmac.v1.FindElementsRequest
-	(*FindElementsResponse)(nil),                // 29: exactmac.v1.FindElementsResponse
-	(*FindRegionElementsRequest)(nil),           // 30: exactmac.v1.FindRegionElementsRequest
-	(*FindRegionElementsResponse)(nil),          // 31: exactmac.v1.FindRegionElementsResponse
-	(*GetElementRequest)(nil),                   // 32: exactmac.v1.GetElementRequest
-	(*ListElementsRequest)(nil),                 // 33: exactmac.v1.ListElementsRequest
-	(*ListElementsResponse)(nil),                // 34: exactmac.v1.ListElementsResponse
-	(*ClickElementRequest)(nil),                 // 35: exactmac.v1.ClickElementRequest
-	(*ClickElementResponse)(nil),                // 36: exactmac.v1.ClickElementResponse
-	(*WriteElementValueRequest)(nil),            // 37: exactmac.v1.WriteElementValueRequest
-	(*WriteElementValueResponse)(nil),           // 38: exactmac.v1.WriteElementValueResponse
-	(*GetElementActionsRequest)(nil),            // 39: exactmac.v1.GetElementActionsRequest
-	(*ElementActions)(nil),                      // 40: exactmac.v1.ElementActions
-	(*PerformElementActionRequest)(nil),         // 41: exactmac.v1.PerformElementActionRequest
-	(*PerformElementActionResponse)(nil),        // 42: exactmac.v1.PerformElementActionResponse
-	(*WaitElementRequest)(nil),                  // 43: exactmac.v1.WaitElementRequest
-	(*WaitElementResponse)(nil),                 // 44: exactmac.v1.WaitElementResponse
-	(*WaitElementMetadata)(nil),                 // 45: exactmac.v1.WaitElementMetadata
-	(*WaitElementStateRequest)(nil),             // 46: exactmac.v1.WaitElementStateRequest
-	(*StateCondition)(nil),                      // 47: exactmac.v1.StateCondition
-	(*WaitElementStateResponse)(nil),            // 48: exactmac.v1.WaitElementStateResponse
-	(*WaitElementStateMetadata)(nil),            // 49: exactmac.v1.WaitElementStateMetadata
-	(*GetWindowRequest)(nil),                    // 50: exactmac.v1.GetWindowRequest
-	(*ListWindowsRequest)(nil),                  // 51: exactmac.v1.ListWindowsRequest
-	(*GetWindowStateRequest)(nil),               // 52: exactmac.v1.GetWindowStateRequest
-	(*ListWindowsResponse)(nil),                 // 53: exactmac.v1.ListWindowsResponse
-	(*FocusWindowRequest)(nil),                  // 54: exactmac.v1.FocusWindowRequest
-	(*MoveWindowRequest)(nil),                   // 55: exactmac.v1.MoveWindowRequest
-	(*ResizeWindowRequest)(nil),                 // 56: exactmac.v1.ResizeWindowRequest
-	(*MinimizeWindowRequest)(nil),               // 57: exactmac.v1.MinimizeWindowRequest
-	(*RestoreWindowRequest)(nil),                // 58: exactmac.v1.RestoreWindowRequest
-	(*CloseWindowRequest)(nil),                  // 59: exactmac.v1.CloseWindowRequest
-	(*CloseWindowResponse)(nil),                 // 60: exactmac.v1.CloseWindowResponse
-	(*CreateObservationRequest)(nil),            // 61: exactmac.v1.CreateObservationRequest
-	(*CreateObservationMetadata)(nil),           // 62: exactmac.v1.CreateObservationMetadata
-	(*GetObservationRequest)(nil),               // 63: exactmac.v1.GetObservationRequest
-	(*ListObservationsRequest)(nil),             // 64: exactmac.v1.ListObservationsRequest
-	(*ListObservationsResponse)(nil),            // 65: exactmac.v1.ListObservationsResponse
-	(*CancelObservationRequest)(nil),            // 66: exactmac.v1.CancelObservationRequest
-	(*StreamObservationsRequest)(nil),           // 67: exactmac.v1.StreamObservationsRequest
-	(*StreamObservationsResponse)(nil),          // 68: exactmac.v1.StreamObservationsResponse
-	(*CreateSessionRequest)(nil),                // 69: exactmac.v1.CreateSessionRequest
-	(*GetSessionRequest)(nil),                   // 70: exactmac.v1.GetSessionRequest
-	(*ListSessionsRequest)(nil),                 // 71: exactmac.v1.ListSessionsRequest
-	(*ListSessionsResponse)(nil),                // 72: exactmac.v1.ListSessionsResponse
-	(*DeleteSessionRequest)(nil),                // 73: exactmac.v1.DeleteSessionRequest
-	(*CreateMacroRequest)(nil),                  // 74: exactmac.v1.CreateMacroRequest
-	(*GetMacroRequest)(nil),                     // 75: exactmac.v1.GetMacroRequest
-	(*ListMacrosRequest)(nil),                   // 76: exactmac.v1.ListMacrosRequest
-	(*ListMacrosResponse)(nil),                  // 77: exactmac.v1.ListMacrosResponse
-	(*UpdateMacroRequest)(nil),                  // 78: exactmac.v1.UpdateMacroRequest
-	(*DeleteMacroRequest)(nil),                  // 79: exactmac.v1.DeleteMacroRequest
-	(*ExecuteMacroRequest)(nil),                 // 80: exactmac.v1.ExecuteMacroRequest
-	(*ExecutionOptions)(nil),                    // 81: exactmac.v1.ExecutionOptions
-	(*ExecuteMacroResponse)(nil),                // 82: exactmac.v1.ExecuteMacroResponse
-	(*ExecuteMacroMetadata)(nil),                // 83: exactmac.v1.ExecuteMacroMetadata
-	(*BeginTransactionRequest)(nil),             // 84: exactmac.v1.BeginTransactionRequest
-	(*BeginTransactionResponse)(nil),            // 85: exactmac.v1.BeginTransactionResponse
-	(*CommitTransactionRequest)(nil),            // 86: exactmac.v1.CommitTransactionRequest
-	(*RollbackTransactionRequest)(nil),          // 87: exactmac.v1.RollbackTransactionRequest
-	(*GetSessionSnapshotRequest)(nil),           // 88: exactmac.v1.GetSessionSnapshotRequest
-	(*CaptureScreenshotRequest)(nil),            // 89: exactmac.v1.CaptureScreenshotRequest
-	(*CaptureScreenshotResponse)(nil),           // 90: exactmac.v1.CaptureScreenshotResponse
-	(*CaptureWindowScreenshotRequest)(nil),      // 91: exactmac.v1.CaptureWindowScreenshotRequest
-	(*CaptureWindowScreenshotResponse)(nil),     // 92: exactmac.v1.CaptureWindowScreenshotResponse
-	(*CaptureElementScreenshotRequest)(nil),     // 93: exactmac.v1.CaptureElementScreenshotRequest
-	(*CaptureElementScreenshotResponse)(nil),    // 94: exactmac.v1.CaptureElementScreenshotResponse
-	(*CaptureRegionScreenshotRequest)(nil),      // 95: exactmac.v1.CaptureRegionScreenshotRequest
-	(*CaptureRegionScreenshotResponse)(nil),     // 96: exactmac.v1.CaptureRegionScreenshotResponse
-	(*GetClipboardRequest)(nil),                 // 97: exactmac.v1.GetClipboardRequest
-	(*WriteClipboardRequest)(nil),               // 98: exactmac.v1.WriteClipboardRequest
-	(*WriteClipboardResponse)(nil),              // 99: exactmac.v1.WriteClipboardResponse
-	(*ClearClipboardRequest)(nil),               // 100: exactmac.v1.ClearClipboardRequest
-	(*ClearClipboardResponse)(nil),              // 101: exactmac.v1.ClearClipboardResponse
-	(*GetClipboardHistoryRequest)(nil),          // 102: exactmac.v1.GetClipboardHistoryRequest
-	(*AutomateOpenFileDialogRequest)(nil),       // 103: exactmac.v1.AutomateOpenFileDialogRequest
-	(*AutomateOpenFileDialogResponse)(nil),      // 104: exactmac.v1.AutomateOpenFileDialogResponse
-	(*AutomateSaveFileDialogRequest)(nil),       // 105: exactmac.v1.AutomateSaveFileDialogRequest
-	(*AutomateSaveFileDialogResponse)(nil),      // 106: exactmac.v1.AutomateSaveFileDialogResponse
-	(*ExecuteAppleScriptRequest)(nil),           // 107: exactmac.v1.ExecuteAppleScriptRequest
-	(*ExecuteAppleScriptResponse)(nil),          // 108: exactmac.v1.ExecuteAppleScriptResponse
-	(*ExecuteJavaScriptRequest)(nil),            // 109: exactmac.v1.ExecuteJavaScriptRequest
-	(*ExecuteJavaScriptResponse)(nil),           // 110: exactmac.v1.ExecuteJavaScriptResponse
-	(*ExecuteShellCommandRequest)(nil),          // 111: exactmac.v1.ExecuteShellCommandRequest
-	(*ExecuteShellCommandResponse)(nil),         // 112: exactmac.v1.ExecuteShellCommandResponse
-	(*ValidateScriptRequest)(nil),               // 113: exactmac.v1.ValidateScriptRequest
-	(*ValidateScriptResponse)(nil),              // 114: exactmac.v1.ValidateScriptResponse
-	(*GetScriptingDictionariesRequest)(nil),     // 115: exactmac.v1.GetScriptingDictionariesRequest
-	nil,                                         // 116: exactmac.v1.ExecuteMacroRequest.ParameterValuesEntry
-	nil,                                         // 117: exactmac.v1.ExecuteShellCommandRequest.EnvironmentEntry
-	(ApplicationView)(0),                        // 118: exactmac.v1.ApplicationView
-	(*ApplicationBundle)(nil),                   // 119: exactmac.v1.ApplicationBundle
-	(*Application)(nil),                         // 120: exactmac.v1.Application
-	(*Input)(nil),                               // 121: exactmac.v1.Input
-	(*Element)(nil),                             // 122: exactmac.v1.Element
-	(*_type.TraversalStats)(nil),                // 123: exactmac.type.TraversalStats
-	(*timestamppb.Timestamp)(nil),               // 124: google.protobuf.Timestamp
-	(*AttributeChange)(nil),                     // 125: exactmac.v1.AttributeChange
-	(*_type.ElementSelector)(nil),               // 126: exactmac.type.ElementSelector
-	(*_type.Region)(nil),                        // 127: exactmac.type.Region
-	(*AttributeCondition)(nil),                  // 128: exactmac.v1.AttributeCondition
-	(*fieldmaskpb.FieldMask)(nil),               // 129: google.protobuf.FieldMask
-	(*Window)(nil),                              // 130: exactmac.v1.Window
-	(*Observation)(nil),                         // 131: exactmac.v1.Observation
-	(ObservationType)(0),                        // 132: exactmac.v1.ObservationType
-	(*ObservationEvent)(nil),                    // 133: exactmac.v1.ObservationEvent
-	(*Session)(nil),                             // 134: exactmac.v1.Session
-	(*Macro)(nil),                               // 135: exactmac.v1.Macro
-	(*durationpb.Duration)(nil),                 // 136: google.protobuf.Duration
-	(*ExecutionLogEntry)(nil),                   // 137: exactmac.v1.ExecutionLogEntry
-	(ImageFormat)(0),                            // 138: exactmac.v1.ImageFormat
-	(*status.Status)(nil),                       // 139: google.rpc.Status
-	(*ClipboardContent)(nil),                    // 140: exactmac.v1.ClipboardContent
-	(*Clipboard)(nil),                           // 141: exactmac.v1.Clipboard
-	(ScriptType)(0),                             // 142: exactmac.v1.ScriptType
-	(*ListDisplaysRequest)(nil),                 // 143: exactmac.v1.ListDisplaysRequest
-	(*GetDisplayRequest)(nil),                   // 144: exactmac.v1.GetDisplayRequest
-	(*CaptureCursorPositionRequest)(nil),        // 145: exactmac.v1.CaptureCursorPositionRequest
-	(*WindowState)(nil),                         // 146: exactmac.v1.WindowState
-	(*longrunningpb.Operation)(nil),             // 147: google.longrunning.Operation
-	(*emptypb.Empty)(nil),                       // 148: google.protobuf.Empty
-	(*Transaction)(nil),                         // 149: exactmac.v1.Transaction
-	(*SessionSnapshot)(nil),                     // 150: exactmac.v1.SessionSnapshot
-	(*ListDisplaysResponse)(nil),                // 151: exactmac.v1.ListDisplaysResponse
-	(*Display)(nil),                             // 152: exactmac.v1.Display
-	(*CaptureCursorPositionResponse)(nil),       // 153: exactmac.v1.CaptureCursorPositionResponse
-	(*ClipboardHistory)(nil),                    // 154: exactmac.v1.ClipboardHistory
-	(*ScriptingDictionaries)(nil),               // 155: exactmac.v1.ScriptingDictionaries
+	(ApplicationCloseDisposition)(0),             // 0: exactmac.v1.ApplicationCloseDisposition
+	(ApplicationOpenMode)(0),                     // 1: exactmac.v1.ApplicationOpenMode
+	(ApplicationOpenDisposition)(0),              // 2: exactmac.v1.ApplicationOpenDisposition
+	(ApplicationActivationDisposition)(0),        // 3: exactmac.v1.ApplicationActivationDisposition
+	(ClickElementRequest_ClickType)(0),           // 4: exactmac.v1.ClickElementRequest.ClickType
+	(WriteElementValueRequest_WriteMode)(0),      // 5: exactmac.v1.WriteElementValueRequest.WriteMode
+	(BeginTransactionRequest_IsolationLevel)(0),  // 6: exactmac.v1.BeginTransactionRequest.IsolationLevel
+	(*GetApplicationBundleRequest)(nil),          // 7: exactmac.v1.GetApplicationBundleRequest
+	(*ListApplicationBundlesRequest)(nil),        // 8: exactmac.v1.ListApplicationBundlesRequest
+	(*ListApplicationBundlesResponse)(nil),       // 9: exactmac.v1.ListApplicationBundlesResponse
+	(*OpenApplicationRequest)(nil),               // 10: exactmac.v1.OpenApplicationRequest
+	(*OpenApplicationResponse)(nil),              // 11: exactmac.v1.OpenApplicationResponse
+	(*GetApplicationRequest)(nil),                // 12: exactmac.v1.GetApplicationRequest
+	(*ListApplicationsRequest)(nil),              // 13: exactmac.v1.ListApplicationsRequest
+	(*ListApplicationsResponse)(nil),             // 14: exactmac.v1.ListApplicationsResponse
+	(*ActivateApplicationRequest)(nil),           // 15: exactmac.v1.ActivateApplicationRequest
+	(*ActivateApplicationResponse)(nil),          // 16: exactmac.v1.ActivateApplicationResponse
+	(*CloseApplicationRequest)(nil),              // 17: exactmac.v1.CloseApplicationRequest
+	(*CloseApplicationResponse)(nil),             // 18: exactmac.v1.CloseApplicationResponse
+	(*CreateInputRequest)(nil),                   // 19: exactmac.v1.CreateInputRequest
+	(*GetInputRequest)(nil),                      // 20: exactmac.v1.GetInputRequest
+	(*ListInputsRequest)(nil),                    // 21: exactmac.v1.ListInputsRequest
+	(*ListInputsResponse)(nil),                   // 22: exactmac.v1.ListInputsResponse
+	(*TraverseAccessibilityRequest)(nil),         // 23: exactmac.v1.TraverseAccessibilityRequest
+	(*TraverseAccessibilityResponse)(nil),        // 24: exactmac.v1.TraverseAccessibilityResponse
+	(*WatchAccessibilityRequest)(nil),            // 25: exactmac.v1.WatchAccessibilityRequest
+	(*WatchAccessibilityResponse)(nil),           // 26: exactmac.v1.WatchAccessibilityResponse
+	(*ModifiedElement)(nil),                      // 27: exactmac.v1.ModifiedElement
+	(*FindElementsRequest)(nil),                  // 28: exactmac.v1.FindElementsRequest
+	(*FindElementsResponse)(nil),                 // 29: exactmac.v1.FindElementsResponse
+	(*FindRegionElementsRequest)(nil),            // 30: exactmac.v1.FindRegionElementsRequest
+	(*FindRegionElementsResponse)(nil),           // 31: exactmac.v1.FindRegionElementsResponse
+	(*GetElementRequest)(nil),                    // 32: exactmac.v1.GetElementRequest
+	(*ListElementsRequest)(nil),                  // 33: exactmac.v1.ListElementsRequest
+	(*ListElementsResponse)(nil),                 // 34: exactmac.v1.ListElementsResponse
+	(*ClickElementRequest)(nil),                  // 35: exactmac.v1.ClickElementRequest
+	(*ClickElementResponse)(nil),                 // 36: exactmac.v1.ClickElementResponse
+	(*WriteElementValueRequest)(nil),             // 37: exactmac.v1.WriteElementValueRequest
+	(*WriteElementValueResponse)(nil),            // 38: exactmac.v1.WriteElementValueResponse
+	(*GetElementActionsRequest)(nil),             // 39: exactmac.v1.GetElementActionsRequest
+	(*ElementActions)(nil),                       // 40: exactmac.v1.ElementActions
+	(*PerformElementActionRequest)(nil),          // 41: exactmac.v1.PerformElementActionRequest
+	(*PerformElementActionResponse)(nil),         // 42: exactmac.v1.PerformElementActionResponse
+	(*WaitElementRequest)(nil),                   // 43: exactmac.v1.WaitElementRequest
+	(*WaitElementResponse)(nil),                  // 44: exactmac.v1.WaitElementResponse
+	(*WaitElementMetadata)(nil),                  // 45: exactmac.v1.WaitElementMetadata
+	(*WaitElementStateRequest)(nil),              // 46: exactmac.v1.WaitElementStateRequest
+	(*StateCondition)(nil),                       // 47: exactmac.v1.StateCondition
+	(*WaitElementStateResponse)(nil),             // 48: exactmac.v1.WaitElementStateResponse
+	(*WaitElementStateMetadata)(nil),             // 49: exactmac.v1.WaitElementStateMetadata
+	(*GetWindowRequest)(nil),                     // 50: exactmac.v1.GetWindowRequest
+	(*ListWindowsRequest)(nil),                   // 51: exactmac.v1.ListWindowsRequest
+	(*GetWindowStateRequest)(nil),                // 52: exactmac.v1.GetWindowStateRequest
+	(*ListWindowsResponse)(nil),                  // 53: exactmac.v1.ListWindowsResponse
+	(*FocusWindowRequest)(nil),                   // 54: exactmac.v1.FocusWindowRequest
+	(*MoveWindowRequest)(nil),                    // 55: exactmac.v1.MoveWindowRequest
+	(*ResizeWindowRequest)(nil),                  // 56: exactmac.v1.ResizeWindowRequest
+	(*MinimizeWindowRequest)(nil),                // 57: exactmac.v1.MinimizeWindowRequest
+	(*RestoreWindowRequest)(nil),                 // 58: exactmac.v1.RestoreWindowRequest
+	(*CloseWindowRequest)(nil),                   // 59: exactmac.v1.CloseWindowRequest
+	(*CloseWindowResponse)(nil),                  // 60: exactmac.v1.CloseWindowResponse
+	(*CreateObservationRequest)(nil),             // 61: exactmac.v1.CreateObservationRequest
+	(*CreateObservationMetadata)(nil),            // 62: exactmac.v1.CreateObservationMetadata
+	(*GetObservationRequest)(nil),                // 63: exactmac.v1.GetObservationRequest
+	(*ListObservationsRequest)(nil),              // 64: exactmac.v1.ListObservationsRequest
+	(*ListObservationsResponse)(nil),             // 65: exactmac.v1.ListObservationsResponse
+	(*CancelObservationRequest)(nil),             // 66: exactmac.v1.CancelObservationRequest
+	(*StreamObservationsRequest)(nil),            // 67: exactmac.v1.StreamObservationsRequest
+	(*StreamObservationsResponse)(nil),           // 68: exactmac.v1.StreamObservationsResponse
+	(*CreateSessionRequest)(nil),                 // 69: exactmac.v1.CreateSessionRequest
+	(*GetSessionRequest)(nil),                    // 70: exactmac.v1.GetSessionRequest
+	(*ListSessionsRequest)(nil),                  // 71: exactmac.v1.ListSessionsRequest
+	(*ListSessionsResponse)(nil),                 // 72: exactmac.v1.ListSessionsResponse
+	(*DeleteSessionRequest)(nil),                 // 73: exactmac.v1.DeleteSessionRequest
+	(*CreateMacroRequest)(nil),                   // 74: exactmac.v1.CreateMacroRequest
+	(*GetMacroRequest)(nil),                      // 75: exactmac.v1.GetMacroRequest
+	(*ListMacrosRequest)(nil),                    // 76: exactmac.v1.ListMacrosRequest
+	(*ListMacrosResponse)(nil),                   // 77: exactmac.v1.ListMacrosResponse
+	(*UpdateMacroRequest)(nil),                   // 78: exactmac.v1.UpdateMacroRequest
+	(*DeleteMacroRequest)(nil),                   // 79: exactmac.v1.DeleteMacroRequest
+	(*ExecuteMacroRequest)(nil),                  // 80: exactmac.v1.ExecuteMacroRequest
+	(*ExecutionOptions)(nil),                     // 81: exactmac.v1.ExecutionOptions
+	(*ExecuteMacroResponse)(nil),                 // 82: exactmac.v1.ExecuteMacroResponse
+	(*ExecuteMacroMetadata)(nil),                 // 83: exactmac.v1.ExecuteMacroMetadata
+	(*BeginTransactionRequest)(nil),              // 84: exactmac.v1.BeginTransactionRequest
+	(*BeginTransactionResponse)(nil),             // 85: exactmac.v1.BeginTransactionResponse
+	(*CommitTransactionRequest)(nil),             // 86: exactmac.v1.CommitTransactionRequest
+	(*RollbackTransactionRequest)(nil),           // 87: exactmac.v1.RollbackTransactionRequest
+	(*GetSessionSnapshotRequest)(nil),            // 88: exactmac.v1.GetSessionSnapshotRequest
+	(*CaptureScreenshotRequest)(nil),             // 89: exactmac.v1.CaptureScreenshotRequest
+	(*CaptureScreenshotResponse)(nil),            // 90: exactmac.v1.CaptureScreenshotResponse
+	(*CaptureWindowScreenshotRequest)(nil),       // 91: exactmac.v1.CaptureWindowScreenshotRequest
+	(*CaptureWindowScreenshotResponse)(nil),      // 92: exactmac.v1.CaptureWindowScreenshotResponse
+	(*CaptureElementScreenshotRequest)(nil),      // 93: exactmac.v1.CaptureElementScreenshotRequest
+	(*CaptureElementScreenshotResponse)(nil),     // 94: exactmac.v1.CaptureElementScreenshotResponse
+	(*CaptureRegionScreenshotRequest)(nil),       // 95: exactmac.v1.CaptureRegionScreenshotRequest
+	(*CaptureRegionScreenshotResponse)(nil),      // 96: exactmac.v1.CaptureRegionScreenshotResponse
+	(*GetClipboardRequest)(nil),                  // 97: exactmac.v1.GetClipboardRequest
+	(*WriteClipboardRequest)(nil),                // 98: exactmac.v1.WriteClipboardRequest
+	(*WriteClipboardResponse)(nil),               // 99: exactmac.v1.WriteClipboardResponse
+	(*ClearClipboardRequest)(nil),                // 100: exactmac.v1.ClearClipboardRequest
+	(*ClearClipboardResponse)(nil),               // 101: exactmac.v1.ClearClipboardResponse
+	(*GetClipboardHistoryRequest)(nil),           // 102: exactmac.v1.GetClipboardHistoryRequest
+	(*AutomateOpenFileDialogRequest)(nil),        // 103: exactmac.v1.AutomateOpenFileDialogRequest
+	(*AutomateOpenFileDialogResponse)(nil),       // 104: exactmac.v1.AutomateOpenFileDialogResponse
+	(*AutomateSaveFileDialogRequest)(nil),        // 105: exactmac.v1.AutomateSaveFileDialogRequest
+	(*AutomateSaveFileDialogResponse)(nil),       // 106: exactmac.v1.AutomateSaveFileDialogResponse
+	(*ExecuteAppleScriptRequest)(nil),            // 107: exactmac.v1.ExecuteAppleScriptRequest
+	(*ExecuteAppleScriptResponse)(nil),           // 108: exactmac.v1.ExecuteAppleScriptResponse
+	(*ExecuteJavaScriptRequest)(nil),             // 109: exactmac.v1.ExecuteJavaScriptRequest
+	(*ExecuteJavaScriptResponse)(nil),            // 110: exactmac.v1.ExecuteJavaScriptResponse
+	(*ExecuteShellCommandRequest)(nil),           // 111: exactmac.v1.ExecuteShellCommandRequest
+	(*ExecuteShellCommandResponse)(nil),          // 112: exactmac.v1.ExecuteShellCommandResponse
+	(*ValidateScriptRequest)(nil),                // 113: exactmac.v1.ValidateScriptRequest
+	(*ValidateScriptResponse)(nil),               // 114: exactmac.v1.ValidateScriptResponse
+	(*GetScriptingDictionaryCatalogRequest)(nil), // 115: exactmac.v1.GetScriptingDictionaryCatalogRequest
+	nil,                                   // 116: exactmac.v1.ExecuteMacroRequest.ParameterValuesEntry
+	nil,                                   // 117: exactmac.v1.ExecuteShellCommandRequest.EnvironmentVariablesEntry
+	(ApplicationView)(0),                  // 118: exactmac.v1.ApplicationView
+	(*ApplicationBundle)(nil),             // 119: exactmac.v1.ApplicationBundle
+	(*Application)(nil),                   // 120: exactmac.v1.Application
+	(*Input)(nil),                         // 121: exactmac.v1.Input
+	(*Element)(nil),                       // 122: exactmac.v1.Element
+	(*_type.TraversalStats)(nil),          // 123: exactmac.type.TraversalStats
+	(*timestamppb.Timestamp)(nil),         // 124: google.protobuf.Timestamp
+	(*AttributeChange)(nil),               // 125: exactmac.v1.AttributeChange
+	(*_type.ElementSelector)(nil),         // 126: exactmac.type.ElementSelector
+	(*_type.Region)(nil),                  // 127: exactmac.type.Region
+	(*AttributeCondition)(nil),            // 128: exactmac.v1.AttributeCondition
+	(*fieldmaskpb.FieldMask)(nil),         // 129: google.protobuf.FieldMask
+	(*Window)(nil),                        // 130: exactmac.v1.Window
+	(*Observation)(nil),                   // 131: exactmac.v1.Observation
+	(ObservationType)(0),                  // 132: exactmac.v1.ObservationType
+	(*ObservationEvent)(nil),              // 133: exactmac.v1.ObservationEvent
+	(*Session)(nil),                       // 134: exactmac.v1.Session
+	(*Macro)(nil),                         // 135: exactmac.v1.Macro
+	(*durationpb.Duration)(nil),           // 136: google.protobuf.Duration
+	(*ExecutionLogEntry)(nil),             // 137: exactmac.v1.ExecutionLogEntry
+	(ImageFormat)(0),                      // 138: exactmac.v1.ImageFormat
+	(*status.Status)(nil),                 // 139: google.rpc.Status
+	(*ClipboardContent)(nil),              // 140: exactmac.v1.ClipboardContent
+	(*Clipboard)(nil),                     // 141: exactmac.v1.Clipboard
+	(ScriptType)(0),                       // 142: exactmac.v1.ScriptType
+	(*ListDisplaysRequest)(nil),           // 143: exactmac.v1.ListDisplaysRequest
+	(*GetDisplayRequest)(nil),             // 144: exactmac.v1.GetDisplayRequest
+	(*CaptureCursorPositionRequest)(nil),  // 145: exactmac.v1.CaptureCursorPositionRequest
+	(*WindowState)(nil),                   // 146: exactmac.v1.WindowState
+	(*longrunningpb.Operation)(nil),       // 147: google.longrunning.Operation
+	(*emptypb.Empty)(nil),                 // 148: google.protobuf.Empty
+	(*Transaction)(nil),                   // 149: exactmac.v1.Transaction
+	(*SessionSnapshot)(nil),               // 150: exactmac.v1.SessionSnapshot
+	(*ListDisplaysResponse)(nil),          // 151: exactmac.v1.ListDisplaysResponse
+	(*Display)(nil),                       // 152: exactmac.v1.Display
+	(*CaptureCursorPositionResponse)(nil), // 153: exactmac.v1.CaptureCursorPositionResponse
+	(*ClipboardHistory)(nil),              // 154: exactmac.v1.ClipboardHistory
+	(*ScriptingDictionaryCatalog)(nil),    // 155: exactmac.v1.ScriptingDictionaryCatalog
 }
 var file_exactmac_v1_exact_mac_proto_depIdxs = []int32{
 	118, // 0: exactmac.v1.GetApplicationBundleRequest.view:type_name -> exactmac.v1.ApplicationView
@@ -8651,9 +8791,9 @@ var file_exactmac_v1_exact_mac_proto_depIdxs = []int32{
 	122, // 15: exactmac.v1.TraverseAccessibilityResponse.elements:type_name -> exactmac.v1.Element
 	123, // 16: exactmac.v1.TraverseAccessibilityResponse.stats:type_name -> exactmac.type.TraversalStats
 	124, // 17: exactmac.v1.TraverseAccessibilityResponse.processing_time:type_name -> google.protobuf.Timestamp
-	122, // 18: exactmac.v1.WatchAccessibilityResponse.added:type_name -> exactmac.v1.Element
-	122, // 19: exactmac.v1.WatchAccessibilityResponse.removed:type_name -> exactmac.v1.Element
-	27,  // 20: exactmac.v1.WatchAccessibilityResponse.modified:type_name -> exactmac.v1.ModifiedElement
+	122, // 18: exactmac.v1.WatchAccessibilityResponse.added_elements:type_name -> exactmac.v1.Element
+	122, // 19: exactmac.v1.WatchAccessibilityResponse.removed_elements:type_name -> exactmac.v1.Element
+	27,  // 20: exactmac.v1.WatchAccessibilityResponse.modified_elements:type_name -> exactmac.v1.ModifiedElement
 	122, // 21: exactmac.v1.ModifiedElement.old_element:type_name -> exactmac.v1.Element
 	122, // 22: exactmac.v1.ModifiedElement.new_element:type_name -> exactmac.v1.Element
 	125, // 23: exactmac.v1.ModifiedElement.changes:type_name -> exactmac.v1.AttributeChange
@@ -8694,7 +8834,7 @@ var file_exactmac_v1_exact_mac_proto_depIdxs = []int32{
 	116, // 58: exactmac.v1.ExecuteMacroRequest.parameter_values:type_name -> exactmac.v1.ExecuteMacroRequest.ParameterValuesEntry
 	81,  // 59: exactmac.v1.ExecuteMacroRequest.options:type_name -> exactmac.v1.ExecutionOptions
 	136, // 60: exactmac.v1.ExecuteMacroResponse.execution_duration:type_name -> google.protobuf.Duration
-	137, // 61: exactmac.v1.ExecuteMacroResponse.log:type_name -> exactmac.v1.ExecutionLogEntry
+	137, // 61: exactmac.v1.ExecuteMacroResponse.log_entries:type_name -> exactmac.v1.ExecutionLogEntry
 	136, // 62: exactmac.v1.ExecuteMacroMetadata.elapsed_duration:type_name -> google.protobuf.Duration
 	6,   // 63: exactmac.v1.BeginTransactionRequest.isolation_level:type_name -> exactmac.v1.BeginTransactionRequest.IsolationLevel
 	134, // 64: exactmac.v1.BeginTransactionResponse.session:type_name -> exactmac.v1.Session
@@ -8724,7 +8864,7 @@ var file_exactmac_v1_exact_mac_proto_depIdxs = []int32{
 	136, // 88: exactmac.v1.ExecuteAppleScriptResponse.execution_duration:type_name -> google.protobuf.Duration
 	136, // 89: exactmac.v1.ExecuteJavaScriptRequest.timeout:type_name -> google.protobuf.Duration
 	136, // 90: exactmac.v1.ExecuteJavaScriptResponse.execution_duration:type_name -> google.protobuf.Duration
-	117, // 91: exactmac.v1.ExecuteShellCommandRequest.environment:type_name -> exactmac.v1.ExecuteShellCommandRequest.EnvironmentEntry
+	117, // 91: exactmac.v1.ExecuteShellCommandRequest.environment_variables:type_name -> exactmac.v1.ExecuteShellCommandRequest.EnvironmentVariablesEntry
 	136, // 92: exactmac.v1.ExecuteShellCommandRequest.timeout:type_name -> google.protobuf.Duration
 	136, // 93: exactmac.v1.ExecuteShellCommandResponse.execution_duration:type_name -> google.protobuf.Duration
 	142, // 94: exactmac.v1.ValidateScriptRequest.type:type_name -> exactmac.v1.ScriptType
@@ -8795,7 +8935,7 @@ var file_exactmac_v1_exact_mac_proto_depIdxs = []int32{
 	109, // 159: exactmac.v1.ExactMac.ExecuteJavaScript:input_type -> exactmac.v1.ExecuteJavaScriptRequest
 	111, // 160: exactmac.v1.ExactMac.ExecuteShellCommand:input_type -> exactmac.v1.ExecuteShellCommandRequest
 	113, // 161: exactmac.v1.ExactMac.ValidateScript:input_type -> exactmac.v1.ValidateScriptRequest
-	115, // 162: exactmac.v1.ExactMac.GetScriptingDictionaries:input_type -> exactmac.v1.GetScriptingDictionariesRequest
+	115, // 162: exactmac.v1.ExactMac.GetScriptingDictionaryCatalog:input_type -> exactmac.v1.GetScriptingDictionaryCatalogRequest
 	119, // 163: exactmac.v1.ExactMac.GetApplicationBundle:output_type -> exactmac.v1.ApplicationBundle
 	9,   // 164: exactmac.v1.ExactMac.ListApplicationBundles:output_type -> exactmac.v1.ListApplicationBundlesResponse
 	11,  // 165: exactmac.v1.ExactMac.OpenApplication:output_type -> exactmac.v1.OpenApplicationResponse
@@ -8863,7 +9003,7 @@ var file_exactmac_v1_exact_mac_proto_depIdxs = []int32{
 	110, // 227: exactmac.v1.ExactMac.ExecuteJavaScript:output_type -> exactmac.v1.ExecuteJavaScriptResponse
 	112, // 228: exactmac.v1.ExactMac.ExecuteShellCommand:output_type -> exactmac.v1.ExecuteShellCommandResponse
 	114, // 229: exactmac.v1.ExactMac.ValidateScript:output_type -> exactmac.v1.ValidateScriptResponse
-	155, // 230: exactmac.v1.ExactMac.GetScriptingDictionaries:output_type -> exactmac.v1.ScriptingDictionaries
+	155, // 230: exactmac.v1.ExactMac.GetScriptingDictionaryCatalog:output_type -> exactmac.v1.ScriptingDictionaryCatalog
 	163, // [163:231] is the sub-list for method output_type
 	95,  // [95:163] is the sub-list for method input_type
 	95,  // [95:95] is the sub-list for extension type_name
@@ -8907,8 +9047,8 @@ func file_exactmac_v1_exact_mac_proto_init() {
 	file_exactmac_v1_exact_mac_proto_msgTypes[40].OneofWrappers = []any{
 		(*StateCondition_Enabled)(nil),
 		(*StateCondition_Focused)(nil),
-		(*StateCondition_TextEquals)(nil),
-		(*StateCondition_TextContains)(nil),
+		(*StateCondition_Text)(nil),
+		(*StateCondition_TextSubstring)(nil),
 		(*StateCondition_Attribute)(nil),
 	}
 	file_exactmac_v1_exact_mac_proto_msgTypes[48].OneofWrappers = []any{}

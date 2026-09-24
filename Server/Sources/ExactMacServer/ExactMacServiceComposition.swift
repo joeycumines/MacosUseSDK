@@ -39,6 +39,7 @@ struct ExactMacServiceComposition {
         applicationCatalogProvider: any ApplicationCatalogProvider = ProductionApplicationCatalogProvider(),
         legacyPIDResourceNamesForTests: Bool = false,
         automationCoordinator: AutomationCoordinator? = nil,
+        elementDiscoveryExecutor: ElementDiscoveryExecutor? = nil,
         inputOverlayPresenter: InputOverlayPresenter = InputOverlayPresenter(),
         sessionManager: SessionManager = SessionManager(),
         clipboardPasteboard: any ClipboardPasteboard = SystemClipboardPasteboard(),
@@ -64,6 +65,7 @@ struct ExactMacServiceComposition {
             legacyPIDResourceNamesForTests: legacyPIDResourceNamesForTests,
             system: system,
             automationCoordinator: automationCoordinator,
+            discoveryExecutor: elementDiscoveryExecutor,
         )
         let observationManager = ObservationManager(
             windowRegistry: windowRegistry,

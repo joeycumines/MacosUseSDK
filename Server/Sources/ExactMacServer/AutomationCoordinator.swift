@@ -562,7 +562,7 @@ public actor AutomationCoordinator {
         }
         return PreparedInputAction(
             action: executionAction,
-            showAnimation: validatedAction.showAnimation,
+            visualFeedback: validatedAction.visualFeedback,
             animationDuration: validatedAction.animationDuration,
             keyboardSourceIdentity: sourceIdentity,
             textPasteKeyCode: textPasteKeyCode,
@@ -919,7 +919,7 @@ public actor AutomationCoordinator {
             }
 
             return Exactmac_V1_TraverseAccessibilityResponse.with {
-                $0.app = snapshot.appName
+                $0.application = snapshot.appName
                 $0.elements = elements
                 $0.stats = statistics
                 $0.processingTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
@@ -1044,7 +1044,7 @@ extension AutomationCoordinator {
             throw CoordinatorError.invalidKeyCombo("input action contains unknown fields")
         }
         switch action.inputType {
-        case let .click(mouseClick):
+        case let .mouseClick(mouseClick):
             guard mouseClick.unknownFields.data.isEmpty else {
                 throw CoordinatorError.invalidKeyCombo("click contains unknown fields")
             }
@@ -1067,12 +1067,12 @@ extension AutomationCoordinator {
                 clickCount: clickCount,
                 modifiers: convertModifiers(mouseClick.modifiers),
             )
-        case let .typeText(textInput):
+        case let .textInput(textInput):
             guard textInput.unknownFields.data.isEmpty else {
-                throw CoordinatorError.invalidKeyCombo("type_text contains unknown fields")
+                throw CoordinatorError.invalidKeyCombo("text_input contains unknown fields")
             }
             guard !textInput.text.isEmpty else {
-                throw CoordinatorError.invalidKeyCombo("type_text text is required")
+                throw CoordinatorError.invalidKeyCombo("text_input text is required")
             }
             try validateDuration(
                 textInput.charDelay,
@@ -1081,12 +1081,12 @@ extension AutomationCoordinator {
                 allowZero: true,
             )
             return .typeText(text: textInput.text, charDelay: textInput.charDelay)
-        case let .pressKey(keyPress):
+        case let .keyPress(keyPress):
             guard keyPress.unknownFields.data.isEmpty else {
-                throw CoordinatorError.invalidKeyCombo("press_key contains unknown fields")
+                throw CoordinatorError.invalidKeyCombo("key_press contains unknown fields")
             }
             guard !keyPress.key.isEmpty else {
-                throw CoordinatorError.invalidKeyCombo("press_key key is required")
+                throw CoordinatorError.invalidKeyCombo("key_press key is required")
             }
             guard ExactMac.layoutIndependentKeyCode(for: keyPress.key) != nil
                 || keyPress.key.count == 1
@@ -1104,9 +1104,9 @@ extension AutomationCoordinator {
                 return .pressHold(keyName: keyPress.key, flags: flags, duration: keyPress.holdDuration)
             }
             return .press(keyName: keyPress.key, flags: flags)
-        case let .moveMouse(mouseMove):
+        case let .mouseMove(mouseMove):
             guard mouseMove.unknownFields.data.isEmpty else {
-                throw CoordinatorError.invalidKeyCombo("move_mouse contains unknown fields")
+                throw CoordinatorError.invalidKeyCombo("mouse_move contains unknown fields")
             }
             guard mouseMove.hasPosition else {
                 throw CoordinatorError.invalidKeyCombo("move missing position")
@@ -1124,7 +1124,7 @@ extension AutomationCoordinator {
                 duration: mouseMove.duration,
                 modifiers: convertModifiers(mouseMove.modifiers),
             )
-        case let .drag(mouseDrag):
+        case let .mouseDrag(mouseDrag):
             guard mouseDrag.unknownFields.data.isEmpty else {
                 throw CoordinatorError.invalidKeyCombo("drag contains unknown fields")
             }
@@ -1135,16 +1135,16 @@ extension AutomationCoordinator {
                 allowZero: true,
             )
             let points: [CGPoint]
-            if !mouseDrag.path.isEmpty {
-                guard (2 ... 100).contains(mouseDrag.path.count) else {
-                    throw CoordinatorError.invalidKeyCombo("drag path must contain between 2 and 100 points")
+            if !mouseDrag.waypoints.isEmpty {
+                guard (2 ... 100).contains(mouseDrag.waypoints.count) else {
+                    throw CoordinatorError.invalidKeyCombo("mouse_drag waypoints must contain between 2 and 100 points")
                 }
-                points = try mouseDrag.path.enumerated().map { index, point in
+                points = try mouseDrag.waypoints.enumerated().map { index, point in
                     guard point.unknownFields.data.isEmpty else {
-                        throw CoordinatorError.invalidKeyCombo("drag path[\(index)] contains unknown fields")
+                        throw CoordinatorError.invalidKeyCombo("mouse_drag waypoints[\(index)] contains unknown fields")
                     }
-                    try validateCoordinate(point.x, field: "path[\(index)].x", inputType: "drag")
-                    try validateCoordinate(point.y, field: "path[\(index)].y", inputType: "drag")
+                    try validateCoordinate(point.x, field: "waypoints[\(index)].x", inputType: "drag")
+                    try validateCoordinate(point.y, field: "waypoints[\(index)].y", inputType: "drag")
                     return CGPoint(x: point.x, y: point.y)
                 }
                 if mouseDrag.hasStartPosition {
@@ -1153,7 +1153,7 @@ extension AutomationCoordinator {
                         y: mouseDrag.startPosition.y,
                     )
                     guard start == points.first else {
-                        throw CoordinatorError.invalidKeyCombo("drag start_position contradicts path")
+                        throw CoordinatorError.invalidKeyCombo("drag start_position contradicts waypoints")
                     }
                 }
                 if mouseDrag.hasEndPosition {
@@ -1162,12 +1162,12 @@ extension AutomationCoordinator {
                         y: mouseDrag.endPosition.y,
                     )
                     guard end == points.last else {
-                        throw CoordinatorError.invalidKeyCombo("drag end_position contradicts path")
+                        throw CoordinatorError.invalidKeyCombo("drag end_position contradicts waypoints")
                     }
                 }
             } else {
                 guard mouseDrag.hasStartPosition, mouseDrag.hasEndPosition else {
-                    throw CoordinatorError.invalidKeyCombo("drag requires path or start_position and end_position")
+                    throw CoordinatorError.invalidKeyCombo("drag requires waypoints or start_position and end_position")
                 }
                 try validateCoordinate(mouseDrag.startPosition.x, field: "start_x", inputType: "drag")
                 try validateCoordinate(mouseDrag.startPosition.y, field: "start_y", inputType: "drag")
@@ -1187,9 +1187,9 @@ extension AutomationCoordinator {
                 duration: mouseDrag.duration,
                 modifiers: convertModifiers(mouseDrag.modifiers),
             )
-        case let .scroll(scroll):
+        case let .scrollAction(scroll):
             guard scroll.unknownFields.data.isEmpty else {
-                throw CoordinatorError.invalidKeyCombo("scroll contains unknown fields")
+                throw CoordinatorError.invalidKeyCombo("scroll_action contains unknown fields")
             }
             let point: CGPoint? = if scroll.hasPosition {
                 try CGPoint(
@@ -1220,9 +1220,9 @@ extension AutomationCoordinator {
                 duration: scroll.duration,
                 modifiers: convertModifiers(scroll.modifiers),
             )
-        case let .hover(hover):
+        case let .hoverAction(hover):
             guard hover.unknownFields.data.isEmpty else {
-                throw CoordinatorError.invalidKeyCombo("hover contains unknown fields")
+                throw CoordinatorError.invalidKeyCombo("hover_action contains unknown fields")
             }
             guard hover.hasPosition else {
                 throw CoordinatorError.invalidKeyCombo("hover missing position")

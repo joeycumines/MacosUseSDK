@@ -434,7 +434,7 @@ final class AppStateStoreTests: XCTestCase {
 
     private func makeInputAction() -> Exactmac_V1_InputAction {
         .with {
-            $0.click.position = .with {
+            $0.mouseClick.position = .with {
                 $0.x = 10
                 $0.y = 20
             }

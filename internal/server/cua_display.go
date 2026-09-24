@@ -39,7 +39,7 @@ func (s *MCPServer) cuaHandleGetDisplay(call *ToolCall) (*ToolResult, error) {
 	var displayLines []string
 	for _, display := range displays {
 		mainMark := ""
-		if display.IsMain {
+		if display.Main {
 			mainMark = ", main"
 		}
 		displayLines = append(displayLines, fmt.Sprintf(

@@ -38,7 +38,7 @@ struct PublicStreamLifecycleGRPCTests {
                 return try await iterator.next()
             }
             let first = try #require(response)
-            #expect(first.added.count == 1)
+            #expect(first.addedElements.count == 1)
 
             try await pollPublicStreamCondition("watch traversal release") {
                 let traversals = await coordinator.activeTraversalCount()

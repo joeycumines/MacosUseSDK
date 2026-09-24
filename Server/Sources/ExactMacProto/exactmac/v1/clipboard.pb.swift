@@ -244,6 +244,9 @@ public nonisolated struct Exactmac_V1_ClipboardHistory: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
+  /// Resource name for the singleton clipboard history.
+  public var name: String = String()
+
   /// Historical clipboard entries (most recent first).
   public var entries: [Exactmac_V1_ClipboardHistoryEntry] = []
 
@@ -343,7 +346,7 @@ nonisolated extension Exactmac_V1_Clipboard: SwiftProtobuf.Message, SwiftProtobu
 
 nonisolated extension Exactmac_V1_ClipboardContent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClipboardContent"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}type\0\u{2}\u{9}text\0\u{1}rtf\0\u{1}html\0\u{1}image\0\u{1}files\0\u{1}url\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}type\0\u{1}text\0\u{1}rtf\0\u{1}html\0\u{1}image\0\u{1}files\0\u{1}url\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -352,7 +355,7 @@ nonisolated extension Exactmac_V1_ClipboardContent: SwiftProtobuf.Message, Swift
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularEnumField(value: &self._type) }()
-      case 10: try {
+      case 2: try {
         var v: String?
         try decoder.decodeSingularStringField(value: &v)
         if let v = v {
@@ -360,7 +363,7 @@ nonisolated extension Exactmac_V1_ClipboardContent: SwiftProtobuf.Message, Swift
           self.content = .text(v)
         }
       }()
-      case 11: try {
+      case 3: try {
         var v: Data?
         try decoder.decodeSingularBytesField(value: &v)
         if let v = v {
@@ -368,7 +371,7 @@ nonisolated extension Exactmac_V1_ClipboardContent: SwiftProtobuf.Message, Swift
           self.content = .rtf(v)
         }
       }()
-      case 12: try {
+      case 4: try {
         var v: String?
         try decoder.decodeSingularStringField(value: &v)
         if let v = v {
@@ -376,7 +379,7 @@ nonisolated extension Exactmac_V1_ClipboardContent: SwiftProtobuf.Message, Swift
           self.content = .html(v)
         }
       }()
-      case 13: try {
+      case 5: try {
         var v: Data?
         try decoder.decodeSingularBytesField(value: &v)
         if let v = v {
@@ -384,7 +387,7 @@ nonisolated extension Exactmac_V1_ClipboardContent: SwiftProtobuf.Message, Swift
           self.content = .image(v)
         }
       }()
-      case 14: try {
+      case 6: try {
         var v: Exactmac_V1_FilePaths?
         var hadOneofValue = false
         if let current = self.content {
@@ -397,7 +400,7 @@ nonisolated extension Exactmac_V1_ClipboardContent: SwiftProtobuf.Message, Swift
           self.content = .files(v)
         }
       }()
-      case 15: try {
+      case 7: try {
         var v: String?
         try decoder.decodeSingularStringField(value: &v)
         if let v = v {
@@ -421,27 +424,27 @@ nonisolated extension Exactmac_V1_ClipboardContent: SwiftProtobuf.Message, Swift
     switch self.content {
     case .text?: try {
       guard case .text(let v)? = self.content else { preconditionFailure() }
-      try visitor.visitSingularStringField(value: v, fieldNumber: 10)
+      try visitor.visitSingularStringField(value: v, fieldNumber: 2)
     }()
     case .rtf?: try {
       guard case .rtf(let v)? = self.content else { preconditionFailure() }
-      try visitor.visitSingularBytesField(value: v, fieldNumber: 11)
+      try visitor.visitSingularBytesField(value: v, fieldNumber: 3)
     }()
     case .html?: try {
       guard case .html(let v)? = self.content else { preconditionFailure() }
-      try visitor.visitSingularStringField(value: v, fieldNumber: 12)
+      try visitor.visitSingularStringField(value: v, fieldNumber: 4)
     }()
     case .image?: try {
       guard case .image(let v)? = self.content else { preconditionFailure() }
-      try visitor.visitSingularBytesField(value: v, fieldNumber: 13)
+      try visitor.visitSingularBytesField(value: v, fieldNumber: 5)
     }()
     case .files?: try {
       guard case .files(let v)? = self.content else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 14)
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
     }()
     case .url?: try {
       guard case .url(let v)? = self.content else { preconditionFailure() }
-      try visitor.visitSingularStringField(value: v, fieldNumber: 15)
+      try visitor.visitSingularStringField(value: v, fieldNumber: 7)
     }()
     case nil: break
     }
@@ -488,7 +491,7 @@ nonisolated extension Exactmac_V1_FilePaths: SwiftProtobuf.Message, SwiftProtobu
 
 nonisolated extension Exactmac_V1_ClipboardHistory: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClipboardHistory"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}entries\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}entries\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -496,20 +499,25 @@ nonisolated extension Exactmac_V1_ClipboardHistory: SwiftProtobuf.Message, Swift
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.entries) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeRepeatedMessageField(value: &self.entries) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
     if !self.entries.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.entries, fieldNumber: 1)
+      try visitor.visitRepeatedMessageField(value: self.entries, fieldNumber: 2)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Exactmac_V1_ClipboardHistory, rhs: Exactmac_V1_ClipboardHistory) -> Bool {
+    if lhs.name != rhs.name {return false}
     if lhs.entries != rhs.entries {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true

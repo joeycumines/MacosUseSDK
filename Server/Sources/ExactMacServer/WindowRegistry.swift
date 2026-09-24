@@ -239,6 +239,7 @@ actor WindowRegistry {
     func firstWindowPage(
         bindings: [WindowBinding],
         pageSize: Int,
+        skip: Int,
         queryBinding: String,
         applicationName: String,
         pid: pid_t,
@@ -247,11 +248,24 @@ actor WindowRegistry {
         guard pageSize > 0 else {
             throw RPCError(code: .internalError, message: "Window page size must be positive after validation")
         }
+        guard skip >= 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "skip must not be negative",
+                reason: "INVALID_SKIP",
+                field: "skip",
+                value: String(skip),
+            )
+        }
         let publicBindings = bindings.map(Self.publicSnapshotBinding)
-        let upperBound = min(pageSize, publicBindings.count)
+        let start = min(skip, publicBindings.count)
+        guard start < publicBindings.count else {
+            return WindowPage(bindings: [], nextPageToken: "")
+        }
+        let (candidateEnd, overflow) = start.addingReportingOverflow(pageSize)
+        let upperBound = overflow ? publicBindings.count : min(candidateEnd, publicBindings.count)
         guard upperBound < publicBindings.count else {
             return WindowPage(
-                bindings: Array(publicBindings[..<upperBound]),
+                bindings: Array(publicBindings[start ..< upperBound]),
                 nextPageToken: "",
             )
         }
@@ -284,7 +298,7 @@ actor WindowRegistry {
         )
         let token = try makePageToken(snapshotID: snapshotID, offset: upperBound)
         return WindowPage(
-            bindings: Array(publicBindings[..<upperBound]),
+            bindings: Array(publicBindings[start ..< upperBound]),
             nextPageToken: token,
         )
     }
@@ -292,6 +306,7 @@ actor WindowRegistry {
     func continuationWindowPage(
         token: String,
         pageSize: Int,
+        skip: Int,
         queryBinding: String,
         applicationName: String,
         pid: pid_t,
@@ -299,6 +314,14 @@ actor WindowRegistry {
     ) throws -> WindowPage {
         guard pageSize > 0 else {
             throw RPCError(code: .internalError, message: "Window page size must be positive after validation")
+        }
+        guard skip >= 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "skip must not be negative",
+                reason: "INVALID_SKIP",
+                field: "skip",
+                value: String(skip),
+            )
         }
         purgeExpiredPageSnapshots()
         guard let cursor = pageCursors[token],
@@ -314,16 +337,26 @@ actor WindowRegistry {
         else {
             throw invalidPageToken()
         }
-        let (candidateUpperBound, overflow) = cursor.offset.addingReportingOverflow(pageSize)
-        guard !overflow else {
-            throw invalidPageToken()
+        let (start, startOverflow) = cursor.offset.addingReportingOverflow(skip)
+        guard !startOverflow else {
+            throw RPCErrorHelpers.validationError(
+                message: "page_token offset plus skip overflows",
+                reason: "INVALID_SKIP",
+                field: "skip",
+            )
         }
-        let upperBound = min(candidateUpperBound, snapshot.bindings.count)
+        guard start < snapshot.bindings.count else {
+            return WindowPage(bindings: [], nextPageToken: "")
+        }
+        let (candidateUpperBound, upperOverflow) = start.addingReportingOverflow(pageSize)
+        let upperBound = upperOverflow
+            ? snapshot.bindings.count
+            : min(candidateUpperBound, snapshot.bindings.count)
         let nextToken = upperBound < snapshot.bindings.count
             ? try makePageToken(snapshotID: cursor.snapshotID, offset: upperBound)
             : ""
         return WindowPage(
-            bindings: Array(snapshot.bindings[cursor.offset ..< upperBound]),
+            bindings: Array(snapshot.bindings[start ..< upperBound]),
             nextPageToken: nextToken,
         )
     }

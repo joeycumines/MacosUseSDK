@@ -331,7 +331,7 @@ private func inputDisconnectCreateRequest() -> Exactmac_V1_CreateInputRequest {
         $0.parent = "applications/-"
         $0.inputID = "abrupt-disconnect"
         $0.input.target.desktop = true
-        $0.input.action.click.position = Exactmac_Type_Point.with {
+        $0.input.action.mouseClick.position = Exactmac_Type_Point.with {
             $0.x = 10
             $0.y = 20
         }

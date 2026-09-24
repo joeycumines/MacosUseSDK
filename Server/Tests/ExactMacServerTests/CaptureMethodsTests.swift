@@ -45,7 +45,7 @@ final class CaptureMethodsTests: XCTestCase {
         XCTAssertTrue(request.display.isEmpty)
         XCTAssertEqual(request.format, .unspecified)
         XCTAssertEqual(request.quality, 0)
-        XCTAssertFalse(request.includeOcrText)
+        XCTAssertFalse(request.ocrEnabled)
     }
 
     func testCaptureScreenshotRequestWithCustomValues() {
@@ -53,12 +53,12 @@ final class CaptureMethodsTests: XCTestCase {
         request.display = "displays/1"
         request.format = .jpeg
         request.quality = 85
-        request.includeOcrText = true
+        request.ocrEnabled = true
 
         XCTAssertEqual(request.display, "displays/1")
         XCTAssertEqual(request.format, .jpeg)
         XCTAssertEqual(request.quality, 85)
-        XCTAssertTrue(request.includeOcrText)
+        XCTAssertTrue(request.ocrEnabled)
     }
 
     func testCaptureScreenshotRequestWithPng() {
@@ -110,7 +110,7 @@ final class CaptureMethodsTests: XCTestCase {
         XCTAssertTrue(request.display.isEmpty)
         XCTAssertEqual(request.format, .unspecified)
         XCTAssertEqual(request.quality, 0)
-        XCTAssertFalse(request.includeOcrText)
+        XCTAssertFalse(request.ocrEnabled)
     }
 
     func testCaptureRegionScreenshotRequestWithRegion() {
@@ -151,7 +151,7 @@ final class CaptureMethodsTests: XCTestCase {
         XCTAssertEqual(request.padding, 0)
         XCTAssertEqual(request.format, .unspecified)
         XCTAssertEqual(request.quality, 0)
-        XCTAssertFalse(request.includeOcrText)
+        XCTAssertFalse(request.ocrEnabled)
     }
 
     func testCaptureElementScreenshotRequestWithValues() {
@@ -160,13 +160,13 @@ final class CaptureMethodsTests: XCTestCase {
         request.padding = 10
         request.format = .jpeg
         request.quality = 90
-        request.includeOcrText = true
+        request.ocrEnabled = true
 
         XCTAssertEqual(request.elementID, "elem_1234567890_123456")
         XCTAssertEqual(request.padding, 10)
         XCTAssertEqual(request.format, .jpeg)
         XCTAssertEqual(request.quality, 90)
-        XCTAssertTrue(request.includeOcrText)
+        XCTAssertTrue(request.ocrEnabled)
     }
 
     // MARK: - Region Type Tests
@@ -537,25 +537,25 @@ final class CaptureMethodsTests: XCTestCase {
     func testCaptureWindowScreenshotRequestDefaultValues() {
         let request = Exactmac_V1_CaptureWindowScreenshotRequest()
         XCTAssertTrue(request.window.isEmpty)
-        XCTAssertFalse(request.includeShadow)
+        XCTAssertFalse(request.shadowEnabled)
         XCTAssertEqual(request.format, .unspecified)
         XCTAssertEqual(request.quality, 0)
-        XCTAssertFalse(request.includeOcrText)
+        XCTAssertFalse(request.ocrEnabled)
     }
 
     func testCaptureWindowScreenshotRequestWithValues() {
         var request = Exactmac_V1_CaptureWindowScreenshotRequest()
         request.window = "applications/1234/windows/5678"
-        request.includeShadow = true
+        request.shadowEnabled = true
         request.format = .png
         request.quality = 100
-        request.includeOcrText = true
+        request.ocrEnabled = true
 
         XCTAssertEqual(request.window, "applications/1234/windows/5678")
-        XCTAssertTrue(request.includeShadow)
+        XCTAssertTrue(request.shadowEnabled)
         XCTAssertEqual(request.format, .png)
         XCTAssertEqual(request.quality, 100)
-        XCTAssertTrue(request.includeOcrText)
+        XCTAssertTrue(request.ocrEnabled)
     }
 
     // MARK: - Window Resource Name Parsing Tests

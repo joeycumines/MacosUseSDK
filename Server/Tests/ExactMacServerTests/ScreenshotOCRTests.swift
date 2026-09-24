@@ -427,27 +427,27 @@ final class ScreenshotOCRTests: XCTestCase {
     func testIncludeOcrTextFlagInRequest() {
         // CaptureScreenshotRequest
         var screenRequest = Exactmac_V1_CaptureScreenshotRequest()
-        XCTAssertFalse(screenRequest.includeOcrText)
-        screenRequest.includeOcrText = true
-        XCTAssertTrue(screenRequest.includeOcrText)
+        XCTAssertFalse(screenRequest.ocrEnabled)
+        screenRequest.ocrEnabled = true
+        XCTAssertTrue(screenRequest.ocrEnabled)
 
         // CaptureRegionScreenshotRequest
         var regionRequest = Exactmac_V1_CaptureRegionScreenshotRequest()
-        XCTAssertFalse(regionRequest.includeOcrText)
-        regionRequest.includeOcrText = true
-        XCTAssertTrue(regionRequest.includeOcrText)
+        XCTAssertFalse(regionRequest.ocrEnabled)
+        regionRequest.ocrEnabled = true
+        XCTAssertTrue(regionRequest.ocrEnabled)
 
         // CaptureElementScreenshotRequest
         var elementRequest = Exactmac_V1_CaptureElementScreenshotRequest()
-        XCTAssertFalse(elementRequest.includeOcrText)
-        elementRequest.includeOcrText = true
-        XCTAssertTrue(elementRequest.includeOcrText)
+        XCTAssertFalse(elementRequest.ocrEnabled)
+        elementRequest.ocrEnabled = true
+        XCTAssertTrue(elementRequest.ocrEnabled)
 
         // CaptureWindowScreenshotRequest
         var windowRequest = Exactmac_V1_CaptureWindowScreenshotRequest()
-        XCTAssertFalse(windowRequest.includeOcrText)
-        windowRequest.includeOcrText = true
-        XCTAssertTrue(windowRequest.includeOcrText)
+        XCTAssertFalse(windowRequest.ocrEnabled)
+        windowRequest.ocrEnabled = true
+        XCTAssertTrue(windowRequest.ocrEnabled)
     }
 
     func testOcrTextFieldExistsInAllResponseTypes() {
@@ -489,9 +489,9 @@ final class ScreenshotOCRTests: XCTestCase {
     }
 
     func testOcrTextEmptyWhenFlagFalse() {
-        // When includeOcrText is false, ocrText should remain empty in response
+        // When ocrEnabled is false, ocrText should remain empty in response
         let request = Exactmac_V1_CaptureScreenshotRequest()
-        XCTAssertFalse(request.includeOcrText)
+        XCTAssertFalse(request.ocrEnabled)
 
         // Response should have empty ocrText when flag is false
         let response = Exactmac_V1_CaptureScreenshotResponse()

@@ -7,10 +7,13 @@ package server
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"image"
+	"image/color"
+	"image/png"
 	"math"
 	"strings"
 	"testing"
@@ -59,6 +62,50 @@ func (c *screenshotTestClient) CaptureRegionScreenshot(
 		panic("unexpected CaptureRegionScreenshot call")
 	}
 	return c.captureRegionScreenshot(ctx, request)
+}
+
+func TestScreenshotResultPreservesAlphaThroughMCPBase64(t *testing.T) {
+	imageData := alphaPNGContractImage(t)
+	result := screenshotResult(
+		imageData,
+		pb.ImageFormat_IMAGE_FORMAT_PNG,
+		2,
+		1,
+		"alpha fixture",
+		screenshotOCRResult{},
+	)
+	if len(result.Content) == 0 || result.Content[0].Type != "image" {
+		t.Fatalf("screenshot result content = %+v, want image content", result.Content)
+	}
+	decodedData, err := base64.StdEncoding.DecodeString(result.Content[0].Data)
+	if err != nil {
+		t.Fatalf("decode MCP image content: %v", err)
+	}
+	if !bytes.Equal(decodedData, imageData) {
+		t.Fatal("MCP base64 transport changed alpha-bearing PNG bytes")
+	}
+
+	decoded, err := png.Decode(bytes.NewReader(decodedData))
+	if err != nil {
+		t.Fatalf("decode alpha-bearing PNG: %v", err)
+	}
+	_, _, _, transparentAlpha := decoded.At(0, 0).RGBA()
+	_, _, _, opaqueAlpha := decoded.At(1, 0).RGBA()
+	if transparentAlpha != 0 || opaqueAlpha == 0 {
+		t.Fatalf("decoded alpha values = (%d, %d), want one transparent and one opaque pixel", transparentAlpha, opaqueAlpha)
+	}
+}
+
+func alphaPNGContractImage(t *testing.T) []byte {
+	t.Helper()
+	image := image.NewNRGBA(image.Rect(0, 0, 2, 1))
+	image.SetNRGBA(0, 0, color.NRGBA{R: 255, G: 0, B: 0, A: 0})
+	image.SetNRGBA(1, 0, color.NRGBA{R: 0, G: 255, B: 0, A: 255})
+	var data bytes.Buffer
+	if err := png.Encode(&data, image); err != nil {
+		t.Fatalf("encode alpha-bearing PNG: %v", err)
+	}
+	return data.Bytes()
 }
 
 func TestCUAHandleScreenshotForwardsExactDisplayResource(t *testing.T) {
@@ -169,8 +216,8 @@ func TestCUAHandleScreenshotRejectsInvalidOrAmbiguousParameters(t *testing.T) {
 		{name: "partial region", arguments: `{"x":10}`, wantSubstr: "must all be provided"},
 		{name: "window and display", arguments: `{"window":"applications/1/windows/2","display":"displays/1"}`, wantSubstr: "cannot be combined"},
 		{name: "window and region", arguments: `{"window":"applications/1/windows/2","x":0,"y":0,"width":10,"height":10}`, wantSubstr: "cannot be combined"},
-		{name: "shadow true without window", arguments: `{"include_shadow":true}`, wantSubstr: "include_shadow requires window"},
-		{name: "shadow false without window", arguments: `{"include_shadow":false}`, wantSubstr: "include_shadow requires window"},
+		{name: "shadow true without window", arguments: `{"shadow_enabled":true}`, wantSubstr: "shadow_enabled requires window"},
+		{name: "shadow false without window", arguments: `{"shadow_enabled":false}`, wantSubstr: "shadow_enabled requires window"},
 		{name: "zero region width", arguments: `{"x":0,"y":0,"width":0,"height":10}`, wantSubstr: "positive finite numbers"},
 		{name: "collapsed region x endpoint", arguments: `{"x":1.7976931348623157e308,"y":0,"width":1,"height":10}`, wantSubstr: "representable endpoints"},
 		{name: "collapsed region y endpoint", arguments: `{"x":0,"y":1.7976931348623157e308,"width":10,"height":1}`, wantSubstr: "representable endpoints"},
@@ -300,7 +347,7 @@ func TestCUAHandleWindowScreenshotForwardsShadowAndUsesReturnedMetadata(t *testi
 
 	result, err := server.handleScreenshot(&ToolCall{
 		Name:      "screenshot",
-		Arguments: json.RawMessage(`{"window":"applications/opaque/windows/exact","include_shadow":true,"ocr":true}`),
+		Arguments: json.RawMessage(`{"window":"applications/opaque/windows/exact","shadow_enabled":true,"ocr_enabled":true}`),
 	})
 	if err != nil {
 		t.Fatalf("handleScreenshot returned error: %v", err)
@@ -308,8 +355,8 @@ func TestCUAHandleWindowScreenshotForwardsShadowAndUsesReturnedMetadata(t *testi
 	if resultIsError(result) {
 		t.Fatalf("handleScreenshot returned tool error: %s", resultText(result))
 	}
-	if captured == nil || !captured.IncludeShadow {
-		t.Fatalf("include_shadow was not forwarded exactly: %+v", captured)
+	if captured == nil || !captured.ShadowEnabled {
+		t.Fatalf("shadow_enabled was not forwarded exactly: %+v", captured)
 	}
 	text := resultText(result)
 	for _, want := range []string{
@@ -378,7 +425,7 @@ func TestCUAHandleWindowScreenshotRejectsInvalidBackendMetadata(t *testing.T) {
 
 			result, err := server.handleScreenshot(&ToolCall{
 				Name:      "screenshot",
-				Arguments: json.RawMessage(`{"window":"applications/opaque/windows/exact","include_shadow":true}`),
+				Arguments: json.RawMessage(`{"window":"applications/opaque/windows/exact","shadow_enabled":true}`),
 			})
 			if err != nil {
 				t.Fatalf("handleScreenshot returned error: %v", err)
@@ -435,9 +482,9 @@ func TestCUAHandleWindowScreenshotRejectsInconsistentOCR(t *testing.T) {
 					return response, nil
 				},
 			})
-			arguments := `{"window":"applications/opaque/windows/exact","include_shadow":true}`
+			arguments := `{"window":"applications/opaque/windows/exact","shadow_enabled":true}`
 			if test.requested {
-				arguments = `{"window":"applications/opaque/windows/exact","include_shadow":true,"ocr":true}`
+				arguments = `{"window":"applications/opaque/windows/exact","shadow_enabled":true,"ocr_enabled":true}`
 			}
 
 			result, err := server.handleScreenshot(&ToolCall{Name: "screenshot", Arguments: json.RawMessage(arguments)})
@@ -459,7 +506,7 @@ func TestCUAHandleWindowScreenshotPreservesSuccessfulEmptyOCR(t *testing.T) {
 	})
 	result, err := server.handleScreenshot(&ToolCall{
 		Name:      "screenshot",
-		Arguments: json.RawMessage(`{"window":"applications/opaque/windows/exact","include_shadow":true,"ocr":true}`),
+		Arguments: json.RawMessage(`{"window":"applications/opaque/windows/exact","shadow_enabled":true,"ocr_enabled":true}`),
 	})
 	if err != nil {
 		t.Fatalf("handleScreenshot returned error: %v", err)
@@ -489,7 +536,7 @@ func TestCUAHandleWindowScreenshotRejectsMalformedImagesAndRecovers(t *testing.T
 					return valid, nil
 				},
 			})
-			arguments := `{"window":"applications/opaque/windows/exact","include_shadow":true,"format":"` +
+			arguments := `{"window":"applications/opaque/windows/exact","shadow_enabled":true,"format":"` +
 				screenshotFormatArgument(format) + `"}`
 
 			first, err := server.handleScreenshot(&ToolCall{Name: "screenshot", Arguments: json.RawMessage(arguments)})
@@ -607,7 +654,7 @@ func TestScreenshotResultPreservesExplicitEmptyOCRSuccess(t *testing.T) {
 	server := newTestMCPServer(client)
 	result, err := server.handleScreenshot(&ToolCall{
 		Name:      "screenshot",
-		Arguments: json.RawMessage(`{"ocr":true}`),
+		Arguments: json.RawMessage(`{"ocr_enabled":true}`),
 	})
 	if err != nil {
 		t.Fatalf("handleScreenshot returned error: %v", err)
@@ -660,12 +707,12 @@ func TestScreenshotToolSchemaUsesExactDisplayResource(t *testing.T) {
 	if quality["minimum"] != 0 || quality["maximum"] != 100 {
 		t.Fatalf("quality range = [%v, %v], want [0, 100]", quality["minimum"], quality["maximum"])
 	}
-	shadow, ok := properties["include_shadow"].(map[string]any)
+	shadow, ok := properties["shadow_enabled"].(map[string]any)
 	if !ok {
-		t.Fatalf("include_shadow schema has type %T", properties["include_shadow"])
+		t.Fatalf("shadow_enabled schema has type %T", properties["shadow_enabled"])
 	}
 	if shadow["type"] != "boolean" {
-		t.Fatalf("include_shadow type = %v, want boolean", shadow["type"])
+		t.Fatalf("shadow_enabled type = %v, want boolean", shadow["type"])
 	}
 	for _, name := range []string{"width", "height"} {
 		property, ok := properties[name].(map[string]any)

@@ -119,7 +119,7 @@ func validateDisplayTopology(displays []*pb.Display) error {
 				display.Name,
 			)
 		}
-		if display.IsMain {
+		if display.Main {
 			mainCount++
 		}
 	}

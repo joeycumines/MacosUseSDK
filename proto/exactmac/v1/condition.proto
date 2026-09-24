@@ -1,34 +1,23 @@
 // Copyright 2025 Joseph Cumines
 //
-// Condition resource for defining criteria to trigger actions
+// Condition values for defining criteria to trigger actions
 
 syntax = "proto3";
 
 package exactmac.v1;
 
 import "google/api/field_behavior.proto";
-import "google/api/resource.proto";
 
-option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpb";
 option java_multiple_files = true;
 option java_outer_classname = "ConditionProto";
 option java_package = "io.github.joeycumines.exactmac.v1";
 
 // Attribute condition for waiting.
 message AttributeCondition {
-  option (google.api.resource) = {
-    type: "exactmac/AttributeCondition"
-    pattern: "attributeConditions/{attribute_condition}"
-    singular: "attributeCondition"
-    plural: "attributeConditions"
-  };
-
-  // Resource name.
-  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
-
   // Attribute name.
-  string attribute = 2 [(google.api.field_behavior) = REQUIRED];
+  string attribute = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Expected attribute value.
-  string value = 3 [(google.api.field_behavior) = REQUIRED];
+  string value = 2 [(google.api.field_behavior) = REQUIRED];
 }

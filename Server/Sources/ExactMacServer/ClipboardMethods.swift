@@ -106,8 +106,8 @@ extension ExactMacService {
         let req = request.message
         Self.logger.info("getClipboardHistory called")
 
-        // Validate resource name (singleton: "clipboard/history")
-        guard req.name == "clipboard/history" else {
+        // Validate resource name (singleton: "clipboardHistory")
+        guard req.name == "clipboardHistory" else {
             throw RPCError(
                 code: .invalidArgument, message: "Invalid clipboard history name: \(req.name)",
             )

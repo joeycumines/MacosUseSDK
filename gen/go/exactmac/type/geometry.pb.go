@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/type/geometry.proto
 
-package exactmactype
+package exactmactypepb
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -181,8 +181,8 @@ const file_exactmac_type_geometry_proto_rawDesc = "" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\x14\n" +
 	"\x05width\x18\x03 \x01(\x01R\x05width\x12\x16\n" +
-	"\x06height\x18\x04 \x01(\x01R\x06heightB\xcc\x01\n" +
-	"#io.github.joeycumines.exactmac.typeB\rGeometryProtoP\x01ZAgithub.com/joeycumines/ExactMac/gen/go/exactmac/type;exactmactype\xa2\x02\x03ETX\xaa\x02\rExactmac.Type\xca\x02\rExactmac\\Type\xe2\x02\x19Exactmac\\Type\\GPBMetadata\xea\x02\x0eExactmac::Typeb\x06proto3"
+	"\x06height\x18\x04 \x01(\x01R\x06heightB{\n" +
+	"#io.github.joeycumines.exactmac.typeB\rGeometryProtoP\x01ZCgithub.com/joeycumines/ExactMac/gen/go/exactmac/type;exactmactypepbb\x06proto3"
 
 var (
 	file_exactmac_type_geometry_proto_rawDescOnce sync.Once

@@ -102,8 +102,8 @@ struct InputIntentAdmissionGRPCTests {
         try await withInputIntentClient(composition) { client in
             for (index, probe) in probes.enumerated() {
                 var request = makeCreateInputRequest(
-                    action: makeInputAction(showAnimation: false, animationDuration: 0) {
-                        $0.click = makeClick()
+                    action: makeInputAction(visualFeedback: false, animationDuration: 0) {
+                        $0.mouseClick = makeClick()
                     },
                     id: "invalid-envelope-\(index)",
                 )
@@ -162,20 +162,20 @@ struct InputIntentAdmissionGRPCTests {
         let invalidActions: [(String, Exactmac_V1_InputAction)] = [
             (
                 "false animation with duration",
-                makeInputAction(showAnimation: false, animationDuration: 0.25) {
-                    $0.click = makeClick()
+                makeInputAction(visualFeedback: false, animationDuration: 0.25) {
+                    $0.mouseClick = makeClick()
                 },
             ),
             (
                 "text custom animation duration",
-                makeInputAction(showAnimation: true, animationDuration: 0.25) {
-                    $0.typeText = Exactmac_V1_TextInput.with { $0.text = "must-not-type" }
+                makeInputAction(visualFeedback: true, animationDuration: 0.25) {
+                    $0.textInput = Exactmac_V1_TextInput.with { $0.text = "must-not-type" }
                 },
             ),
             (
                 "held key visualization",
-                makeInputAction(showAnimation: true, animationDuration: 0) {
-                    $0.pressKey = Exactmac_V1_KeyPress.with {
+                makeInputAction(visualFeedback: true, animationDuration: 0) {
+                    $0.keyPress = Exactmac_V1_KeyPress.with {
                         $0.key = "return"
                         $0.holdDuration = 0.1
                     }
@@ -183,20 +183,20 @@ struct InputIntentAdmissionGRPCTests {
             ),
             (
                 "drag visualization",
-                makeInputAction(showAnimation: true, animationDuration: 0) {
-                    $0.drag = makeDrag()
+                makeInputAction(visualFeedback: true, animationDuration: 0) {
+                    $0.mouseDrag = makeDrag()
                 },
             ),
             (
                 "scroll visualization",
-                makeInputAction(showAnimation: true, animationDuration: 0) {
-                    $0.scroll = Exactmac_V1_Scroll.with { $0.vertical = 1 }
+                makeInputAction(visualFeedback: true, animationDuration: 0) {
+                    $0.scrollAction = Exactmac_V1_Scroll.with { $0.vertical = 1 }
                 },
             ),
             (
                 "hover visualization",
-                makeInputAction(showAnimation: true, animationDuration: 0) {
-                    $0.hover = Exactmac_V1_Hover.with {
+                makeInputAction(visualFeedback: true, animationDuration: 0) {
+                    $0.hoverAction = Exactmac_V1_Hover.with {
                         $0.position = Exactmac_Type_Point.with { $0.x = 1; $0.y = 2 }
                         $0.duration = 0.1
                     }
@@ -204,8 +204,8 @@ struct InputIntentAdmissionGRPCTests {
             ),
             (
                 "unknown key",
-                makeInputAction(showAnimation: false, animationDuration: 0) {
-                    $0.pressKey = Exactmac_V1_KeyPress.with { $0.key = "definitely-not-a-key" }
+                makeInputAction(visualFeedback: false, animationDuration: 0) {
+                    $0.keyPress = Exactmac_V1_KeyPress.with { $0.key = "definitely-not-a-key" }
                 },
             ),
         ]
@@ -326,24 +326,24 @@ struct InputIntentAdmissionGRPCTests {
             inputOverlayPresenter: overlayPresenter,
         )
         let actions: [Exactmac_V1_InputAction] = [
-            makeInputAction(showAnimation: true, animationDuration: 0.2) { $0.click = makeClick() },
-            makeInputAction(showAnimation: true, animationDuration: 0) {
-                $0.typeText = Exactmac_V1_TextInput.with { $0.text = "visible" }
+            makeInputAction(visualFeedback: true, animationDuration: 0.2) { $0.mouseClick = makeClick() },
+            makeInputAction(visualFeedback: true, animationDuration: 0) {
+                $0.textInput = Exactmac_V1_TextInput.with { $0.text = "visible" }
             },
-            makeInputAction(showAnimation: true, animationDuration: 0.3) {
-                $0.pressKey = Exactmac_V1_KeyPress.with { $0.key = "return" }
+            makeInputAction(visualFeedback: true, animationDuration: 0.3) {
+                $0.keyPress = Exactmac_V1_KeyPress.with { $0.key = "return" }
             },
-            makeInputAction(showAnimation: true, animationDuration: 0.4) {
-                $0.moveMouse = Exactmac_V1_MouseMove.with {
+            makeInputAction(visualFeedback: true, animationDuration: 0.4) {
+                $0.mouseMove = Exactmac_V1_MouseMove.with {
                     $0.position = Exactmac_Type_Point.with { $0.x = 3; $0.y = 4 }
                 }
             },
-            makeInputAction(showAnimation: false, animationDuration: 0) {
-                $0.click = Exactmac_V1_MouseClick.with {
+            makeInputAction(visualFeedback: false, animationDuration: 0) {
+                $0.mouseClick = Exactmac_V1_MouseClick.with {
                     $0.position = Exactmac_Type_Point.with { $0.x = 5; $0.y = 6 }
                 }
             },
-            makeInputAction(showAnimation: false, animationDuration: 0) { $0.drag = makeDrag() },
+            makeInputAction(visualFeedback: false, animationDuration: 0) { $0.mouseDrag = makeDrag() },
         ]
 
         try await withInputIntentClient(composition) { client in
@@ -411,8 +411,8 @@ struct InputIntentAdmissionGRPCTests {
                 let _: Exactmac_V1_Input = try await inputIntentUnary(
                     client: client,
                     request: makeCreateInputRequest(
-                        action: makeInputAction(showAnimation: false, animationDuration: 0) {
-                            $0.click = makeClick()
+                        action: makeInputAction(visualFeedback: false, animationDuration: 0) {
+                            $0.mouseClick = makeClick()
                         },
                         id: "denied",
                     ),
@@ -427,8 +427,8 @@ struct InputIntentAdmissionGRPCTests {
 
             await expectInvalidInput(
                 client: client,
-                action: makeInputAction(showAnimation: false, animationDuration: 0) {
-                    $0.pressKey = Exactmac_V1_KeyPress.with {
+                action: makeInputAction(visualFeedback: false, animationDuration: 0) {
+                    $0.keyPress = Exactmac_V1_KeyPress.with {
                         $0.key = "definitely-not-a-key"
                     }
                 },
@@ -483,12 +483,12 @@ private actor InputIntentOverlayRecorder {
 }
 
 private func makeInputAction(
-    showAnimation: Bool,
+    visualFeedback: Bool,
     animationDuration: Double,
     configure: (inout Exactmac_V1_InputAction) -> Void,
 ) -> Exactmac_V1_InputAction {
     var action = Exactmac_V1_InputAction()
-    action.showAnimation = showAnimation
+    action.visualFeedback = visualFeedback
     action.animationDuration = animationDuration
     configure(&action)
     return action

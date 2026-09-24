@@ -94,11 +94,13 @@ extension ExactMacService {
 
         // List macros with pagination
         let pageSize = try RequestNumericValidation.pageSize(req.pageSize, default: 50)
+        let skip = try RequestNumericValidation.skip(req.skip)
         let pageToken = req.pageToken.isEmpty ? nil : req.pageToken
 
         let (macros, nextToken) = try await self.macroRegistry.listMacros(
             pageSize: pageSize,
             pageToken: pageToken,
+            skip: skip,
         )
 
         let response = Exactmac_V1_ListMacrosResponse.with {
@@ -301,7 +303,7 @@ extension ExactMacService {
                         // Complete operation
                         let response = Exactmac_V1_ExecuteMacroResponse.with {
                             $0.success = true
-                            $0.actionsExecuted = Int32(macro.actions.count)
+                            $0.executedActionCount = Int32(macro.actions.count)
                         }
 
                         try await operationStore.finishOperation(

@@ -16,9 +16,9 @@ final class InputMethodsTests: XCTestCase {
         }
         click.clickType = .left
         click.clickCount = 1
-        action.click = click
+        action.mouseClick = click
 
-        if case let .click(mouseClick) = action.inputType {
+        if case let .mouseClick(mouseClick) = action.inputType {
             XCTAssertEqual(mouseClick.position.x, 100.0)
             XCTAssertEqual(mouseClick.position.y, 200.0)
             XCTAssertEqual(mouseClick.clickType, .left)
@@ -37,9 +37,9 @@ final class InputMethodsTests: XCTestCase {
         }
         click.clickType = .left
         click.clickCount = 2
-        action.click = click
+        action.mouseClick = click
 
-        if case let .click(mouseClick) = action.inputType {
+        if case let .mouseClick(mouseClick) = action.inputType {
             XCTAssertEqual(mouseClick.clickCount, 2)
         } else {
             XCTFail("Expected click input type")
@@ -50,9 +50,9 @@ final class InputMethodsTests: XCTestCase {
         var action = Exactmac_V1_InputAction()
         var click = Exactmac_V1_MouseClick()
         click.clickType = .right
-        action.click = click
+        action.mouseClick = click
 
-        if case let .click(mouseClick) = action.inputType {
+        if case let .mouseClick(mouseClick) = action.inputType {
             XCTAssertEqual(mouseClick.clickType, .right)
         } else {
             XCTFail("Expected click input type")
@@ -63,9 +63,9 @@ final class InputMethodsTests: XCTestCase {
         var action = Exactmac_V1_InputAction()
         var textInput = Exactmac_V1_TextInput()
         textInput.text = "Hello, World!"
-        action.typeText = textInput
+        action.textInput = textInput
 
-        if case let .typeText(input) = action.inputType {
+        if case let .textInput(input) = action.inputType {
             XCTAssertEqual(input.text, "Hello, World!")
         } else {
             XCTFail("Expected typeText input type")
@@ -77,9 +77,9 @@ final class InputMethodsTests: XCTestCase {
         var keyPress = Exactmac_V1_KeyPress()
         keyPress.key = "Return"
         keyPress.modifiers = [.command, .shift]
-        action.pressKey = keyPress
+        action.keyPress = keyPress
 
-        if case let .pressKey(press) = action.inputType {
+        if case let .keyPress(press) = action.inputType {
             XCTAssertEqual(press.key, "Return")
             XCTAssertEqual(press.modifiers.count, 2)
             XCTAssertTrue(press.modifiers.contains(.command))
@@ -96,9 +96,9 @@ final class InputMethodsTests: XCTestCase {
             $0.x = 500.0
             $0.y = 600.0
         }
-        action.moveMouse = move
+        action.mouseMove = move
 
-        if case let .moveMouse(mouseMove) = action.inputType {
+        if case let .mouseMove(mouseMove) = action.inputType {
             XCTAssertEqual(mouseMove.position.x, 500.0)
             XCTAssertEqual(mouseMove.position.y, 600.0)
         } else {
@@ -270,16 +270,16 @@ final class InputMethodsTests: XCTestCase {
 
     func testInputActionShowAnimationDefault() {
         let action = Exactmac_V1_InputAction()
-        XCTAssertFalse(action.showAnimation)
+        XCTAssertFalse(action.visualFeedback)
         XCTAssertEqual(action.animationDuration, 0.0)
     }
 
     func testInputActionShowAnimationCustom() {
         var action = Exactmac_V1_InputAction()
-        action.showAnimation = true
+        action.visualFeedback = true
         action.animationDuration = 1.5
 
-        XCTAssertTrue(action.showAnimation)
+        XCTAssertTrue(action.visualFeedback)
         XCTAssertEqual(action.animationDuration, 1.5, accuracy: 0.001)
     }
 }

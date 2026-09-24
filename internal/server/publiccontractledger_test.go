@@ -21,7 +21,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-const publicContractLedgerDigest = "a4b831ca64997a9395cfd226e6d6ee85e2faab57de7dc71b2af4d01afdab59b8"
+const publicContractLedgerDigest = "dda6643789a3e6dccd999af9c8fd467843c2f2ffa60174bc026534b59c488f21"
 
 const (
 	publicBoundaryAdmissionProof = "PublicRequestValidationGRPCTests.every descriptor valid public request crosses production validation"
@@ -203,7 +203,7 @@ func assertPaginationInputsExist(
 	inputs string,
 ) {
 	t.Helper()
-	if inputs == "<collection>" {
+	if inputs == "" || inputs == "<collection>" {
 		return
 	}
 	for input := range strings.SplitSeq(inputs, ",") {

@@ -225,81 +225,81 @@ final class ElementHelpersTests: XCTestCase {
         XCTAssertTrue(result)
     }
 
-    // MARK: - elementMatchesCondition: textEquals Tests
+    // MARK: - elementMatchesCondition: textExactMatch Tests
 
-    func testElementMatchesCondition_textEquals_exactMatch_returnsTrue() async {
+    func testElementMatchesCondition_textExactMatch_exactMatch_returnsTrue() async {
         let service = await makeService()
         let element = makeElement(text: "Hello World")
         var condition = Exactmac_V1_StateCondition()
-        condition.textEquals = "Hello World"
+        condition.text = "Hello World"
 
         let result = service.elementMatchesCondition(element, condition: condition)
 
         XCTAssertTrue(result)
     }
 
-    func testElementMatchesCondition_textEquals_mismatch_returnsFalse() async {
+    func testElementMatchesCondition_textExactMatch_mismatch_returnsFalse() async {
         let service = await makeService()
         let element = makeElement(text: "Hello World")
         var condition = Exactmac_V1_StateCondition()
-        condition.textEquals = "Goodbye World"
+        condition.text = "Goodbye World"
 
         let result = service.elementMatchesCondition(element, condition: condition)
 
         XCTAssertFalse(result)
     }
 
-    func testElementMatchesCondition_textEquals_emptyExpected_matchesEmptyText() async {
+    func testElementMatchesCondition_textExactMatch_emptyExpected_matchesEmptyText() async {
         let service = await makeService()
         let element = makeElement(text: "")
         var condition = Exactmac_V1_StateCondition()
-        condition.textEquals = ""
+        condition.text = ""
 
         let result = service.elementMatchesCondition(element, condition: condition)
 
         XCTAssertTrue(result)
     }
 
-    func testElementMatchesCondition_textEquals_caseSensitive() async {
+    func testElementMatchesCondition_textExactMatch_caseSensitive() async {
         let service = await makeService()
         let element = makeElement(text: "Hello")
         var condition = Exactmac_V1_StateCondition()
-        condition.textEquals = "hello"
+        condition.text = "hello"
 
         let result = service.elementMatchesCondition(element, condition: condition)
 
         XCTAssertFalse(result)
     }
 
-    // MARK: - elementMatchesCondition: textContains Tests
+    // MARK: - elementMatchesCondition: textSubstring Tests
 
-    func testElementMatchesCondition_textContains_substringFound_returnsTrue() async {
+    func testElementMatchesCondition_textSubstring_substringFound_returnsTrue() async {
         let service = await makeService()
         let element = makeElement(text: "Hello World")
         var condition = Exactmac_V1_StateCondition()
-        condition.textContains = "World"
+        condition.textSubstring = "World"
 
         let result = service.elementMatchesCondition(element, condition: condition)
 
         XCTAssertTrue(result)
     }
 
-    func testElementMatchesCondition_textContains_substringNotFound_returnsFalse() async {
+    func testElementMatchesCondition_textSubstring_substringNotFound_returnsFalse() async {
         let service = await makeService()
         let element = makeElement(text: "Hello World")
         var condition = Exactmac_V1_StateCondition()
-        condition.textContains = "Universe"
+        condition.textSubstring = "Universe"
 
         let result = service.elementMatchesCondition(element, condition: condition)
 
         XCTAssertFalse(result)
     }
 
-    func testElementMatchesCondition_textContains_elementHasNoText_returnsFalse() async {
+    func testElementMatchesCondition_textSubstring_elementHasNoText_returnsFalse() async {
         let service = await makeService()
         let element = makeElement() // No text
         var condition = Exactmac_V1_StateCondition()
-        condition.textContains = "Hello"
+        condition.textSubstring = "Hello"
 
         let result = service.elementMatchesCondition(element, condition: condition)
 
@@ -308,7 +308,7 @@ final class ElementHelpersTests: XCTestCase {
 
     // NOTE: Empty substring test removed - SwiftProtobuf's hasText behavior with optional
     // fields is implementation-specific and the empty substring case is an edge case that
-    // doesn't represent realistic usage of the textContains condition.
+    // doesn't represent realistic usage of the textSubstring condition.
 
     // MARK: - elementMatchesCondition: attribute Tests
 

@@ -52,7 +52,7 @@ enum ParsingHelpers {
         return pid_t(pidInt)
     }
 
-    /// Constant-time string comparison to prevent timing side-channel attacks on HMAC verification.
+    /// Constant-time string comparison for the authenticated query-binding hash.
     /// Returns true only if both strings have identical length and every character matches.
     private static func constantTimeEquals(_ a: String, _ b: String) -> Bool {
         let aBytes = Array(a.utf8)
@@ -70,6 +70,9 @@ enum ParsingHelpers {
 
     /// Per-process 256-bit key for the one public page-token format.
     private static let tokenSecret = SymmetricKey(size: .bits256)
+    private static let pageTokenVersion = "v2"
+    private static let pageTokenNonceLength = 12
+    private static let pageTokenTagLength = 16
 
     /// Builds an unambiguous query identity. Length-prefixing prevents values
     /// containing delimiters from colliding with another field layout.
@@ -84,50 +87,168 @@ enum ParsingHelpers {
         }.joined()
     }
 
-    /// Encode an offset into a token bound to the non-pagination parameters of
-    /// one list query. Reusing the token with a different query fails closed.
-    static func encodePageToken(offset: Int, queryBinding: String) -> String {
-        let queryHash = SHA256.hash(data: Data(queryBinding.utf8)).map { String(format: "%02x", $0) }.joined()
-        let payload = "v1:\(offset):\(queryHash)"
-        let hmac = CryptoKit.HMAC<SHA256>.authenticationCode(
-            for: Data(payload.utf8),
-            using: tokenSecret,
-        )
-        let hmacHex = Data(hmac).map { String(format: "%02x", $0) }.joined()
-        return Data("\(hmacHex):\(payload)".utf8).base64EncodedString()
+    /// Builds a stable semantic identity for an element selector. Protobuf map
+    /// fields have no wire-order guarantee, so serializing a selector directly
+    /// would make an equivalent continuation depend on map iteration order.
+    static func selectorQueryIdentity(
+        _ selector: Exactmac_Type_ElementSelector,
+    ) -> String {
+        let parameters: [(String, String)]
+        switch selector.criteria {
+        case let .role(value):
+            parameters = [("criteria", "role"), ("value", value)]
+        case let .text(value):
+            parameters = [("criteria", "text"), ("value", value)]
+        case let .textSubstring(value):
+            parameters = [("criteria", "text_substring"), ("value", value)]
+        case let .textRegex(value):
+            parameters = [("criteria", "text_regex"), ("value", value)]
+        case let .position(value):
+            parameters = [
+                ("criteria", "position"),
+                ("has_x", value.hasX ? "1" : "0"),
+                ("x", canonicalDouble(value.x)),
+                ("has_y", value.hasY ? "1" : "0"),
+                ("y", canonicalDouble(value.y)),
+                ("tolerance", canonicalDouble(value.tolerance)),
+            ]
+        case let .attributes(value):
+            var attributes = [("criteria", "attributes")]
+            attributes.append(contentsOf: value.attributes.keys.sorted().map { key in
+                ("attribute.\(key)", value.attributes[key] ?? "")
+            })
+            parameters = attributes
+        case let .compound(value):
+            var compound: [(String, String)] = [
+                ("criteria", "compound"),
+                ("logical_operator", String(value.logicalOperator.rawValue)),
+                ("count", String(value.selectors.count)),
+            ]
+            compound.append(contentsOf: value.selectors.enumerated().map { index, child in
+                ("selector.\(index)", selectorQueryIdentity(child))
+            })
+            parameters = compound
+        case nil:
+            parameters = [("criteria", "none")]
+        }
+        return pageTokenQuery(method: "ElementSelector", parameters: parameters)
     }
 
-    /// Decode a query-bound page token and verify both its HMAC and exact query
-    /// identity before returning the offset.
+    private static func canonicalDouble(_ value: Double) -> String {
+        String(UInt64(value.bitPattern), radix: 16)
+    }
+
+    /// Encode an offset into an authenticated-encrypted token bound to the
+    /// non-pagination parameters of one list query. Reusing the token with a
+    /// different query fails closed. The URL-safe token contains only the
+    /// encrypted payload, nonce, and authentication tag.
+    static func encodePageToken(offset: Int, queryBinding: String) -> String {
+        let queryHash = SHA256.hash(data: Data(queryBinding.utf8))
+            .map { String(format: "%02x", $0) }
+            .joined()
+        let payload = Data("\(pageTokenVersion):\(offset):\(queryHash)".utf8)
+        guard let sealed = try? AES.GCM.seal(payload, using: tokenSecret) else {
+            return ""
+        }
+        let combined = Data(sealed.nonce) + sealed.ciphertext + sealed.tag
+        return base64URLEncode(combined)
+    }
+
+    /// Decode an authenticated-encrypted query-bound page token and verify its
+    /// exact query identity before returning the offset.
     static func decodePageToken(_ token: String, queryBinding: String) throws -> Int {
-        guard let data = Data(base64Encoded: token),
-              let tokenString = String(data: data, encoding: .utf8)
+        guard let combined = base64URLDecode(token),
+              combined.count > pageTokenNonceLength + pageTokenTagLength,
+              let nonce = try? AES.GCM.Nonce(data: combined.prefix(pageTokenNonceLength)),
+              let box = try? AES.GCM.SealedBox(
+                  nonce: nonce,
+                  ciphertext: combined.dropFirst(pageTokenNonceLength).dropLast(pageTokenTagLength),
+                  tag: combined.suffix(pageTokenTagLength),
+              ),
+              let plaintext = try? AES.GCM.open(box, using: tokenSecret),
+              let tokenString = String(data: plaintext, encoding: .utf8)
         else {
             throw invalidPageToken()
         }
         let parts = tokenString.split(separator: ":", omittingEmptySubsequences: false)
-        guard parts.count == 4 else {
-            throw invalidPageToken()
-        }
-        let providedHMAC = String(parts[0])
-        let payload = parts.dropFirst().joined(separator: ":")
-        let expectedHMAC = CryptoKit.HMAC<SHA256>.authenticationCode(
-            for: Data(payload.utf8),
-            using: tokenSecret,
-        )
-        let expectedHex = Data(expectedHMAC).map { String(format: "%02x", $0) }.joined()
-        guard constantTimeEquals(providedHMAC, expectedHex),
-              parts[1] == "v1",
-              let parsedOffset = Int(parts[2]),
+        guard parts.count == 3,
+              parts[0] == pageTokenVersion,
+              let parsedOffset = Int(parts[1]),
               parsedOffset >= 0
         else {
             throw invalidPageToken()
         }
-        let expectedQueryHash = SHA256.hash(data: Data(queryBinding.utf8)).map { String(format: "%02x", $0) }.joined()
-        guard constantTimeEquals(String(parts[3]), expectedQueryHash) else {
+        let expectedQueryHash = SHA256.hash(data: Data(queryBinding.utf8))
+            .map { String(format: "%02x", $0) }
+            .joined()
+        guard constantTimeEquals(String(parts[2]), expectedQueryHash) else {
             throw invalidPageToken(message: "page_token does not match this query")
         }
         return parsedOffset
+    }
+
+    private static func base64URLEncode(_ data: Data) -> String {
+        data.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+
+    private static func base64URLDecode(_ value: String) -> Data? {
+        guard !value.isEmpty,
+              value.utf8.allSatisfy({ byte in
+                  (byte >= 65 && byte <= 90) ||
+                      (byte >= 97 && byte <= 122) ||
+                      (byte >= 48 && byte <= 57) ||
+                      byte == 45 ||
+                      byte == 95
+              })
+        else {
+            return nil
+        }
+        var normalized = value
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        let remainder = normalized.count % 4
+        if remainder != 0 {
+            normalized += String(repeating: "=", count: 4 - remainder)
+        }
+        guard let data = Data(base64Encoded: normalized),
+              base64URLEncode(data) == value
+        else {
+            return nil
+        }
+        return data
+    }
+
+    struct PageCursor {
+        let tokenOffset: Int
+        let offset: Int
+    }
+
+    static func pageCursor(
+        token: String,
+        skip: Int,
+        queryBinding: String,
+    ) throws -> PageCursor {
+        guard skip >= 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "skip must not be negative",
+                reason: "INVALID_SKIP",
+                field: "skip",
+                value: String(skip),
+            )
+        }
+        let tokenOffset = try pageOffset(token: token, queryBinding: queryBinding)
+        let (offset, overflow) = tokenOffset.addingReportingOverflow(skip)
+        guard !overflow else {
+            throw RPCErrorHelpers.validationError(
+                message: "page_token offset plus skip overflows",
+                reason: "INVALID_SKIP",
+                field: "skip",
+            )
+        }
+        return PageCursor(tokenOffset: tokenOffset, offset: offset)
     }
 
     static func pageOffset(
@@ -135,6 +256,29 @@ enum ParsingHelpers {
         queryBinding: String,
     ) throws -> Int {
         token.isEmpty ? 0 : try decodePageToken(token, queryBinding: queryBinding)
+    }
+
+    static func pageRange(
+        cursor: PageCursor,
+        pageSize: Int,
+        totalCount: Int,
+    ) throws -> Range<Int> {
+        guard pageSize > 0,
+              totalCount >= 0,
+              cursor.tokenOffset >= 0,
+              cursor.offset >= cursor.tokenOffset
+        else {
+            throw invalidPageToken()
+        }
+        guard cursor.tokenOffset <= totalCount else {
+            throw invalidPageToken(message: "page_token offset is outside the current collection")
+        }
+        guard cursor.offset < totalCount else {
+            return totalCount ..< totalCount
+        }
+        let (candidateEnd, overflow) = cursor.offset.addingReportingOverflow(pageSize)
+        let upperBound = overflow ? totalCount : min(candidateEnd, totalCount)
+        return cursor.offset ..< upperBound
     }
 
     static func pageRange(

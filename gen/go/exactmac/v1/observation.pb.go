@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/v1/observation.proto
 
-package exactmacv1
+package exactmacpb
 
 import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -321,7 +321,7 @@ type Observation struct {
 	// Whether observation polling should activate (bring to foreground) the
 	// target application on each poll cycle. When false (the default), polling
 	// is performed passively without disturbing window ordering.
-	Activate      bool `protobuf:"varint,8,opt,name=activate,proto3" json:"activate,omitempty"`
+	Activation    bool `protobuf:"varint,8,opt,name=activation,proto3" json:"activation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -405,9 +405,9 @@ func (x *Observation) GetFilter() *ObservationFilter {
 	return nil
 }
 
-func (x *Observation) GetActivate() bool {
+func (x *Observation) GetActivation() bool {
 	if x != nil {
-		return x.Activate
+		return x.Activation
 	}
 	return false
 }
@@ -526,9 +526,9 @@ type ObservationEvent struct {
 	//
 	// Types that are valid to be assigned to EventType:
 	//
-	//	*ObservationEvent_ElementAdded
-	//	*ObservationEvent_ElementRemoved
-	//	*ObservationEvent_ElementModified
+	//	*ObservationEvent_ElementAddition
+	//	*ObservationEvent_ElementRemoval
+	//	*ObservationEvent_ElementModification
 	//	*ObservationEvent_WindowEvent
 	//	*ObservationEvent_ApplicationEvent
 	EventType     isObservationEvent_EventType `protobuf_oneof:"event_type"`
@@ -594,28 +594,28 @@ func (x *ObservationEvent) GetEventType() isObservationEvent_EventType {
 	return nil
 }
 
-func (x *ObservationEvent) GetElementAdded() *ElementEvent {
+func (x *ObservationEvent) GetElementAddition() *ElementEvent {
 	if x != nil {
-		if x, ok := x.EventType.(*ObservationEvent_ElementAdded); ok {
-			return x.ElementAdded
+		if x, ok := x.EventType.(*ObservationEvent_ElementAddition); ok {
+			return x.ElementAddition
 		}
 	}
 	return nil
 }
 
-func (x *ObservationEvent) GetElementRemoved() *ElementEvent {
+func (x *ObservationEvent) GetElementRemoval() *ElementEvent {
 	if x != nil {
-		if x, ok := x.EventType.(*ObservationEvent_ElementRemoved); ok {
-			return x.ElementRemoved
+		if x, ok := x.EventType.(*ObservationEvent_ElementRemoval); ok {
+			return x.ElementRemoval
 		}
 	}
 	return nil
 }
 
-func (x *ObservationEvent) GetElementModified() *ElementModified {
+func (x *ObservationEvent) GetElementModification() *ElementModified {
 	if x != nil {
-		if x, ok := x.EventType.(*ObservationEvent_ElementModified); ok {
-			return x.ElementModified
+		if x, ok := x.EventType.(*ObservationEvent_ElementModification); ok {
+			return x.ElementModification
 		}
 	}
 	return nil
@@ -643,36 +643,36 @@ type isObservationEvent_EventType interface {
 	isObservationEvent_EventType()
 }
 
-type ObservationEvent_ElementAdded struct {
-	// Element was added.
-	ElementAdded *ElementEvent `protobuf:"bytes,10,opt,name=element_added,json=elementAdded,proto3,oneof"`
+type ObservationEvent_ElementAddition struct {
+	// Element addition.
+	ElementAddition *ElementEvent `protobuf:"bytes,4,opt,name=element_addition,json=elementAddition,proto3,oneof"`
 }
 
-type ObservationEvent_ElementRemoved struct {
-	// Element was removed.
-	ElementRemoved *ElementEvent `protobuf:"bytes,11,opt,name=element_removed,json=elementRemoved,proto3,oneof"`
+type ObservationEvent_ElementRemoval struct {
+	// Element removal.
+	ElementRemoval *ElementEvent `protobuf:"bytes,5,opt,name=element_removal,json=elementRemoval,proto3,oneof"`
 }
 
-type ObservationEvent_ElementModified struct {
-	// Element was modified.
-	ElementModified *ElementModified `protobuf:"bytes,12,opt,name=element_modified,json=elementModified,proto3,oneof"`
+type ObservationEvent_ElementModification struct {
+	// Element modification.
+	ElementModification *ElementModified `protobuf:"bytes,6,opt,name=element_modification,json=elementModification,proto3,oneof"`
 }
 
 type ObservationEvent_WindowEvent struct {
 	// Window event occurred.
-	WindowEvent *WindowEvent `protobuf:"bytes,13,opt,name=window_event,json=windowEvent,proto3,oneof"`
+	WindowEvent *WindowEvent `protobuf:"bytes,7,opt,name=window_event,json=windowEvent,proto3,oneof"`
 }
 
 type ObservationEvent_ApplicationEvent struct {
 	// Application event occurred.
-	ApplicationEvent *ApplicationEvent `protobuf:"bytes,14,opt,name=application_event,json=applicationEvent,proto3,oneof"`
+	ApplicationEvent *ApplicationEvent `protobuf:"bytes,8,opt,name=application_event,json=applicationEvent,proto3,oneof"`
 }
 
-func (*ObservationEvent_ElementAdded) isObservationEvent_EventType() {}
+func (*ObservationEvent_ElementAddition) isObservationEvent_EventType() {}
 
-func (*ObservationEvent_ElementRemoved) isObservationEvent_EventType() {}
+func (*ObservationEvent_ElementRemoval) isObservationEvent_EventType() {}
 
-func (*ObservationEvent_ElementModified) isObservationEvent_EventType() {}
+func (*ObservationEvent_ElementModification) isObservationEvent_EventType() {}
 
 func (*ObservationEvent_WindowEvent) isObservationEvent_EventType() {}
 
@@ -966,7 +966,7 @@ var File_exactmac_v1_observation_proto protoreflect.FileDescriptor
 
 const file_exactmac_v1_observation_proto_rawDesc = "" +
 	"\n" +
-	"\x1dexactmac/v1/observation.proto\x12\vexactmac.v1\x1a\x19exactmac/v1/element.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa2\x05\n" +
+	"\x1dexactmac/v1/observation.proto\x12\vexactmac.v1\x1a\x19exactmac/v1/element.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa6\x05\n" +
 	"\vObservation\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x125\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x1c.exactmac.v1.ObservationTypeB\x03\xe0A\x02R\x04type\x129\n" +
@@ -976,8 +976,10 @@ const file_exactmac_v1_observation_proto_rawDesc = "" +
 	"\n" +
 	"start_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\tstartTime\x12:\n" +
 	"\bend_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\aendTime\x12;\n" +
-	"\x06filter\x18\a \x01(\v2\x1e.exactmac.v1.ObservationFilterB\x03\xe0A\x01R\x06filter\x12\x1f\n" +
-	"\bactivate\x18\b \x01(\bB\x03\xe0A\x01R\bactivate\"\x7f\n" +
+	"\x06filter\x18\a \x01(\v2\x1e.exactmac.v1.ObservationFilterB\x03\xe0A\x01R\x06filter\x12#\n" +
+	"\n" +
+	"activation\x18\b \x01(\bB\x03\xe0A\x01R\n" +
+	"activation\"\x7f\n" +
 	"\x05State\x12\x15\n" +
 	"\x11STATE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSTATE_PENDING\x10\x01\x12\x10\n" +
@@ -998,19 +1000,18 @@ const file_exactmac_v1_observation_proto_rawDesc = "" +
 	"\bgeometry\x18\x06 \x01(\bB\x03\xe0A\x01R\bgeometry\x12#\n" +
 	"\n" +
 	"activation\x18\a \x01(\bB\x03\xe0A\x01R\n" +
-	"activation\"\xa1\x04\n" +
+	"activation\"\xaf\x04\n" +
 	"\x10ObservationEvent\x12>\n" +
 	"\vobservation\x18\x01 \x01(\tB\x1c\xe0A\x03\xfaA\x16\n" +
 	"\x14exactmac/ObservationR\vobservation\x12>\n" +
 	"\n" +
 	"event_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\teventTime\x12\x1f\n" +
-	"\bsequence\x18\x03 \x01(\x03B\x03\xe0A\x03R\bsequence\x12@\n" +
-	"\relement_added\x18\n" +
-	" \x01(\v2\x19.exactmac.v1.ElementEventH\x00R\felementAdded\x12D\n" +
-	"\x0felement_removed\x18\v \x01(\v2\x19.exactmac.v1.ElementEventH\x00R\x0eelementRemoved\x12I\n" +
-	"\x10element_modified\x18\f \x01(\v2\x1c.exactmac.v1.ElementModifiedH\x00R\x0felementModified\x12=\n" +
-	"\fwindow_event\x18\r \x01(\v2\x18.exactmac.v1.WindowEventH\x00R\vwindowEvent\x12L\n" +
-	"\x11application_event\x18\x0e \x01(\v2\x1d.exactmac.v1.ApplicationEventH\x00R\x10applicationEventB\f\n" +
+	"\bsequence\x18\x03 \x01(\x03B\x03\xe0A\x03R\bsequence\x12F\n" +
+	"\x10element_addition\x18\x04 \x01(\v2\x19.exactmac.v1.ElementEventH\x00R\x0felementAddition\x12D\n" +
+	"\x0felement_removal\x18\x05 \x01(\v2\x19.exactmac.v1.ElementEventH\x00R\x0eelementRemoval\x12Q\n" +
+	"\x14element_modification\x18\x06 \x01(\v2\x1c.exactmac.v1.ElementModifiedH\x00R\x13elementModification\x12=\n" +
+	"\fwindow_event\x18\a \x01(\v2\x18.exactmac.v1.WindowEventH\x00R\vwindowEvent\x12L\n" +
+	"\x11application_event\x18\b \x01(\v2\x1d.exactmac.v1.ApplicationEventH\x00R\x10applicationEventB\f\n" +
 	"\n" +
 	"event_type\"C\n" +
 	"\fElementEvent\x123\n" +
@@ -1056,8 +1057,8 @@ const file_exactmac_v1_observation_proto_rawDesc = "" +
 	"\x1fOBSERVATION_TYPE_WINDOW_CHANGES\x10\x02\x12(\n" +
 	"$OBSERVATION_TYPE_APPLICATION_CHANGES\x10\x03\x12&\n" +
 	"\"OBSERVATION_TYPE_ATTRIBUTE_CHANGES\x10\x04\x12!\n" +
-	"\x1dOBSERVATION_TYPE_TREE_CHANGES\x10\x05B\xc1\x01\n" +
-	"!io.github.joeycumines.exactmac.v1B\x10ObservationProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1\xa2\x02\x03EXX\xaa\x02\vExactmac.V1\xca\x02\vExactmac\\V1\xe2\x02\x17Exactmac\\V1\\GPBMetadata\xea\x02\fExactmac::V1b\x06proto3"
+	"\x1dOBSERVATION_TYPE_TREE_CHANGES\x10\x05Bv\n" +
+	"!io.github.joeycumines.exactmac.v1B\x10ObservationProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpbb\x06proto3"
 
 var (
 	file_exactmac_v1_observation_proto_rawDescOnce sync.Once
@@ -1097,9 +1098,9 @@ var file_exactmac_v1_observation_proto_depIdxs = []int32{
 	12, // 4: exactmac.v1.Observation.end_time:type_name -> google.protobuf.Timestamp
 	5,  // 5: exactmac.v1.Observation.filter:type_name -> exactmac.v1.ObservationFilter
 	12, // 6: exactmac.v1.ObservationEvent.event_time:type_name -> google.protobuf.Timestamp
-	7,  // 7: exactmac.v1.ObservationEvent.element_added:type_name -> exactmac.v1.ElementEvent
-	7,  // 8: exactmac.v1.ObservationEvent.element_removed:type_name -> exactmac.v1.ElementEvent
-	8,  // 9: exactmac.v1.ObservationEvent.element_modified:type_name -> exactmac.v1.ElementModified
+	7,  // 7: exactmac.v1.ObservationEvent.element_addition:type_name -> exactmac.v1.ElementEvent
+	7,  // 8: exactmac.v1.ObservationEvent.element_removal:type_name -> exactmac.v1.ElementEvent
+	8,  // 9: exactmac.v1.ObservationEvent.element_modification:type_name -> exactmac.v1.ElementModified
 	10, // 10: exactmac.v1.ObservationEvent.window_event:type_name -> exactmac.v1.WindowEvent
 	11, // 11: exactmac.v1.ObservationEvent.application_event:type_name -> exactmac.v1.ApplicationEvent
 	13, // 12: exactmac.v1.ElementEvent.element:type_name -> exactmac.v1.Element
@@ -1122,9 +1123,9 @@ func file_exactmac_v1_observation_proto_init() {
 	}
 	file_exactmac_v1_element_proto_init()
 	file_exactmac_v1_observation_proto_msgTypes[2].OneofWrappers = []any{
-		(*ObservationEvent_ElementAdded)(nil),
-		(*ObservationEvent_ElementRemoved)(nil),
-		(*ObservationEvent_ElementModified)(nil),
+		(*ObservationEvent_ElementAddition)(nil),
+		(*ObservationEvent_ElementRemoval)(nil),
+		(*ObservationEvent_ElementModification)(nil),
 		(*ObservationEvent_WindowEvent)(nil),
 		(*ObservationEvent_ApplicationEvent)(nil),
 	}

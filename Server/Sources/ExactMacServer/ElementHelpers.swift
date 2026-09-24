@@ -53,10 +53,10 @@ extension ExactMacService {
         case let .focused(expectedFocused):
             return element.focused == expectedFocused
 
-        case let .textEquals(expectedText):
+        case let .text(expectedText):
             return element.text == expectedText
 
-        case let .textContains(substring):
+        case let .textSubstring(substring):
             guard element.hasText else { return false }
             let text = element.text
             return text.contains(substring)

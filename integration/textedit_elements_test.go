@@ -146,7 +146,7 @@ func openOwnedTextEditElementFixture(
 	if textArea.ElementId == "" {
 		t.Fatal("owned TextEdit traversal returned an empty element_id")
 	}
-	if len(textArea.Path) == 0 {
+	if len(textArea.PathIndices) == 0 {
 		t.Fatal("owned TextEdit traversal returned an empty hierarchy path")
 	}
 
@@ -176,7 +176,7 @@ func elementIsOwnedTextArea(element *pb.Element, window *pb.Window, expectedPath
 		element.GetWidth() <= 0 || element.GetHeight() <= 0 {
 		return false
 	}
-	if expectedPath != nil && !elementPathEqual(element.Path, expectedPath) {
+	if expectedPath != nil && !elementPathEqual(element.PathIndices, expectedPath) {
 		return false
 	}
 	centerX := element.GetX() + element.GetWidth()/2
@@ -187,7 +187,7 @@ func elementIsOwnedTextArea(element *pb.Element, window *pb.Window, expectedPath
 func ownedTextAreaSelector(fixture *textEditElementFixture) *typepb.ElementSelector {
 	return &typepb.ElementSelector{
 		Criteria: &typepb.ElementSelector_Compound{Compound: &typepb.CompoundSelector{
-			Operator: typepb.CompoundSelector_OPERATOR_AND,
+			LogicalOperator: typepb.CompoundSelector_OPERATOR_AND,
 			Selectors: []*typepb.ElementSelector{
 				{Criteria: &typepb.ElementSelector_Role{Role: fixture.textArea.Role}},
 				{Criteria: &typepb.ElementSelector_Text{Text: fixture.marker}},
@@ -211,7 +211,7 @@ func pollOwnedTextAreaValue(
 			return false, nil
 		}
 		for _, element := range response.Elements {
-			if !elementIsOwnedTextArea(element, fixture.window, fixture.textArea.Path) {
+			if !elementIsOwnedTextArea(element, fixture.window, fixture.textArea.PathIndices) {
 				continue
 			}
 			observed = element.GetText()
@@ -262,7 +262,7 @@ func TestTextEditElements_TraverseAndFindTextArea(t *testing.T) {
 			return false, nil
 		}
 		for _, element := range response.Elements {
-			if elementIsOwnedTextArea(element, fixture.window, fixture.textArea.Path) &&
+			if elementIsOwnedTextArea(element, fixture.window, fixture.textArea.PathIndices) &&
 				element.GetText() == fixture.marker {
 				found = element
 				return true, nil
@@ -325,8 +325,8 @@ func TestTextEditElements_FindElementsBySelector(t *testing.T) {
 		t.Fatalf("owned compound selector returned %d elements, want exactly 1", len(response.Elements))
 	}
 	found := response.Elements[0]
-	if !elementIsOwnedTextArea(found, fixture.window, fixture.textArea.Path) || found.GetText() != fixture.marker {
-		t.Fatalf("selector returned wrong element: role=%q text=%q path=%v", found.Role, found.GetText(), found.Path)
+	if !elementIsOwnedTextArea(found, fixture.window, fixture.textArea.PathIndices) || found.GetText() != fixture.marker {
+		t.Fatalf("selector returned wrong element: role=%q text=%q path=%v", found.Role, found.GetText(), found.PathIndices)
 	}
 }
 

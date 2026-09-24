@@ -117,8 +117,8 @@ func TestCmdHHiddenStateBehavior(t *testing.T) {
 			app.GetName(),
 			applicationInputTarget(app.GetName()),
 			&pb.InputAction{
-				InputType: &pb.InputAction_PressKey{
-					PressKey: &pb.KeyPress{
+				InputType: &pb.InputAction_KeyPress{
+					KeyPress: &pb.KeyPress{
 						Key:       "h",
 						Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 					},

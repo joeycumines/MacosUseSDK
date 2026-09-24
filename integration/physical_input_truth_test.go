@@ -180,7 +180,7 @@ func TestPhysicalInputTruth_ProductionRoutes(t *testing.T) {
 	sevenPosition := elementCenter(buttonSeven)
 	clickCount := int32(1)
 	clickAction := &pb.InputAction{
-		InputType: &pb.InputAction_Click{Click: &pb.MouseClick{
+		InputType: &pb.InputAction_MouseClick{MouseClick: &pb.MouseClick{
 			Position:   sevenPosition,
 			ClickType:  pb.MouseClick_CLICK_TYPE_LEFT.Enum(),
 			ClickCount: &clickCount,
@@ -197,8 +197,8 @@ func TestPhysicalInputTruth_ProductionRoutes(t *testing.T) {
 			clickParent,
 			clickTarget,
 			&pb.InputAction{
-				InputType: &pb.InputAction_MoveMouse{
-					MoveMouse: &pb.MouseMove{Position: proto.Clone(sevenPosition).(*typepb.Point)},
+				InputType: &pb.InputAction_MouseMove{
+					MouseMove: &pb.MouseMove{Position: proto.Clone(sevenPosition).(*typepb.Point)},
 				},
 			},
 		),
@@ -262,7 +262,7 @@ func TestPhysicalInputTruth_ProductionRoutes(t *testing.T) {
 	eightPosition := elementCenter(buttonEight)
 	doubleCount := int32(2)
 	doubleAction := &pb.InputAction{
-		InputType: &pb.InputAction_Click{Click: &pb.MouseClick{
+		InputType: &pb.InputAction_MouseClick{MouseClick: &pb.MouseClick{
 			Position:   eightPosition,
 			ClickType:  pb.MouseClick_CLICK_TYPE_LEFT.Enum(),
 			ClickCount: &doubleCount,
@@ -317,7 +317,7 @@ func TestPhysicalInputTruth_ProductionRoutes(t *testing.T) {
 	unicodeSuffix := "\nλ界🙂"
 	typeDelay := 0.01
 	typeAction := &pb.InputAction{
-		InputType: &pb.InputAction_TypeText{TypeText: &pb.TextInput{
+		InputType: &pb.InputAction_TextInput{TextInput: &pb.TextInput{
 			Text:      unicodeSuffix,
 			CharDelay: typeDelay,
 		}},
@@ -353,7 +353,7 @@ func TestPhysicalInputTruth_ProductionRoutes(t *testing.T) {
 	requireTextEditRawContent(t, ctx, client, textFixture, fullDocument)
 
 	selectAllAction := &pb.InputAction{
-		InputType: &pb.InputAction_PressKey{PressKey: &pb.KeyPress{
+		InputType: &pb.InputAction_KeyPress{KeyPress: &pb.KeyPress{
 			Key:       "a",
 			Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 		}},
@@ -395,7 +395,7 @@ func TestPhysicalInputTruth_ProductionRoutes(t *testing.T) {
 	scrollDelta := 12.0
 	scrollDuration := 0.4
 	scrollAction := &pb.InputAction{
-		InputType: &pb.InputAction_Scroll{Scroll: &pb.Scroll{
+		InputType: &pb.InputAction_ScrollAction{ScrollAction: &pb.Scroll{
 			Position: scrollPoint,
 			Vertical: -scrollDelta,
 			Duration: scrollDuration,
@@ -478,7 +478,7 @@ func TestPhysicalInputTruth_ProductionRoutes(t *testing.T) {
 			Destination: &pb.InputTarget_Desktop{Desktop: true},
 		},
 		&pb.InputAction{
-			InputType: &pb.InputAction_Hover{Hover: &pb.Hover{
+			InputType: &pb.InputAction_HoverAction{HoverAction: &pb.Hover{
 				Position: hoverPoint,
 				Duration: hoverDuration,
 			}},
@@ -571,7 +571,7 @@ func TestPhysicalInputTruth_ProductionRoutes(t *testing.T) {
 	movePoint := requireUniqueDisplayPoint(t, mainDisplay, displays, 0.45, 0.45)
 	moveDuration := 0.4
 	moveAction := &pb.InputAction{
-		InputType: &pb.InputAction_MoveMouse{MoveMouse: &pb.MouseMove{
+		InputType: &pb.InputAction_MouseMove{MouseMove: &pb.MouseMove{
 			Position: movePoint,
 			Duration: moveDuration,
 		}},
@@ -645,7 +645,7 @@ func TestPhysicalInputTruth_ProductionRoutes(t *testing.T) {
 	beforeHeldKeyText := getTextEditContent(t, ctx, client, textFixture)
 	keyHoldDuration := 8.0
 	heldKeyAction := &pb.InputAction{
-		InputType: &pb.InputAction_PressKey{PressKey: &pb.KeyPress{
+		InputType: &pb.InputAction_KeyPress{KeyPress: &pb.KeyPress{
 			Key:          "x",
 			HoldDuration: keyHoldDuration,
 		}},
@@ -692,7 +692,7 @@ func TestPhysicalInputTruth_ProductionRoutes(t *testing.T) {
 
 	recoveryText := "Q"
 	recoveryAction := &pb.InputAction{
-		InputType: &pb.InputAction_TypeText{TypeText: &pb.TextInput{
+		InputType: &pb.InputAction_TextInput{TextInput: &pb.TextInput{
 			Text: recoveryText,
 		}},
 	}
@@ -772,12 +772,12 @@ func requireOwnedTextEditDrag(
 			"duration": duration,
 		},
 		expected: &pb.InputAction{
-			InputType: &pb.InputAction_Drag{Drag: &pb.MouseDrag{
+			InputType: &pb.InputAction_MouseDrag{MouseDrag: &pb.MouseDrag{
 				StartPosition: proto.Clone(protoPath[0]).(*typepb.Point),
 				EndPosition:   proto.Clone(protoPath[len(protoPath)-1]).(*typepb.Point),
 				Duration:      duration,
 				Button:        &left,
-				Path:          protoPath,
+				Waypoints:     protoPath,
 			}},
 		},
 		maximumEvents: int32(len(path) + 1),
@@ -813,7 +813,7 @@ func requireCurrentOwnedTextEditGeometry(
 	// genuine identity change when the frozen path matched at fixture creation.
 	textArea := resolveOwnedTextEditTextArea(response.GetElements(), fixture)
 	if textArea != nil &&
-		elementPathEqual(textArea.GetPath(), fixture.elementPath) &&
+		elementPathEqual(textArea.GetPathIndices(), fixture.elementPath) &&
 		fixture.textArea.GetName() != "" &&
 		textArea.GetName() != fixture.textArea.GetName() {
 		t.Fatalf(

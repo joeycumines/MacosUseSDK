@@ -8,6 +8,7 @@ package integration
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -47,6 +48,11 @@ func TestMCPPaginationTokenOpacity_ListApplications(t *testing.T) {
 	cancelTextEdit()
 	defer cleanupPaginationApplication(t, client, app2)
 
+	finderCtx, cancelFinder := context.WithTimeout(ctx, 30*time.Second)
+	app3 := OpenApplicationObserved(t, finderCtx, client, "com.apple.finder")
+	cancelFinder()
+	defer cleanupPaginationApplication(t, client, app3)
+
 	queryCtx, cancelQuery := context.WithTimeout(ctx, 15*time.Second)
 	defer cancelQuery()
 	resp, err := client.ListApplications(queryCtx, &pb.ListApplicationsRequest{
@@ -80,6 +86,15 @@ func TestMCPPaginationTokenOpacity_ListApplications(t *testing.T) {
 		t.Error("Token appears to be valid JSON - not opaque enough")
 	}
 
+	decoded, err := base64.RawURLEncoding.DecodeString(token)
+	if err != nil {
+		t.Fatalf("token is not URL-safe base64: %v", err)
+	}
+	decodedText := string(decoded)
+	if strings.Contains(decodedText, "offset") || strings.Contains(decodedText, "ListApplications") {
+		t.Errorf("decoded token exposes pagination structure: %q", decodedText)
+	}
+
 	// 4. Using the token should work correctly
 	resp2, err := client.ListApplications(queryCtx, &pb.ListApplicationsRequest{
 		PageSize:  1,
@@ -94,6 +109,17 @@ func TestMCPPaginationTokenOpacity_ListApplications(t *testing.T) {
 		if resp.Applications[0].Name == resp2.Applications[0].Name {
 			t.Error("Same application returned on different pages - pagination broken")
 		}
+	}
+
+	changedSize, err := client.ListApplications(queryCtx, &pb.ListApplicationsRequest{
+		PageSize:  2,
+		PageToken: token,
+	})
+	if err != nil {
+		t.Fatalf("ListApplications rejected a changed continuation page size: %v", err)
+	}
+	if len(changedSize.Applications) != 2 {
+		t.Fatalf("changed continuation page size returned %d applications, want 2", len(changedSize.Applications))
 	}
 
 	// 6. Corrupted token should be rejected
@@ -263,7 +289,7 @@ func TestMCPPaginationTokenOpacity_ViaHTTP(t *testing.T) {
 		t.Fatalf("initialize production MCP process: %+v", initialize.Error)
 	}
 
-	// list_windows accepts page_size/page_token and returns the signed page token in text.
+	// list_windows accepts page_size/page_token and returns the authenticated-encrypted page token in text.
 	request := fmt.Sprintf(`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"list_windows","arguments":{"app":%q,"page_size":1}}}`, app.Name)
 	response := postMCPRequest(t, baseURL, request)
 	if response.Error != nil {

@@ -333,7 +333,7 @@ Set `shouldActivate: true` only when the caller explicitly intends to bring the 
 | Accessibility tree traversal (background tool call) | `false` |
 | Interactive element action requiring foreground | `true` (via caller) |
 
-> **Note:** Observation requests can pass `activate: true`, which reaches
+> **Note:** Observation requests can pass `activation: true`, which reaches
 > `handleTraverse` and activates the target. The current path does not call
 > `markSDKActivation`, so those workspace notifications are not suppressed by
 > the self-activation tracker. Background observation remains passive by default.
@@ -350,7 +350,7 @@ The circuit breaker operates in `shouldCircuitBreak(pid:)` and is checked in bot
 
 ### 8.5 Self-Activation Tracking
 
-When an observation explicitly uses `activate: true`, the current traversal path activates the target application, but it does not call `markSDKActivation`; the resulting workspace notifications therefore are not currently suppressed by the self-activation tracker. `ChangeDetector` exposes activation-marking helpers for a future wiring correction:
+When an observation explicitly uses `activation: true`, the current traversal path activates the target application, but it does not call `markSDKActivation`; the resulting workspace notifications therefore are not currently suppressed by the self-activation tracker. `ChangeDetector` exposes activation-marking helpers for a future wiring correction:
 
 - **`markSDKActivation(pid:)`**: Records a timestamp for the PID before activation. It is available to a future activation caller but is not currently invoked by `handleTraverse`.
 - **`isSDKActivation(pid:)`**: Returns `true` if the *specific PID* was activated by the SDK within the last 500ms. Used by the activation handler.
@@ -359,7 +359,7 @@ When an observation explicitly uses `activate: true`, the current traversal path
 
 When the activation-marking helper is wired into an activation caller, it
 prevents SDK-initiated focus changes from being echoed back as change events.
-That suppression is not currently active for the observation `activate: true`
+That suppression is not currently active for the observation `activation: true`
 path.
 
 -----

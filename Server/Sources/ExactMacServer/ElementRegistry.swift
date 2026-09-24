@@ -160,8 +160,8 @@ public actor ElementRegistry {
         var registeredElement = element
         registeredElement.elementID = elementId
         registeredElement.name = resourceName(elementID: elementId, pid: pid)
-        if registeredElement.parent.isEmpty {
-            registeredElement.parent = applicationNamesByPID[pid] ?? "applications/\(pid)"
+        if registeredElement.application.isEmpty {
+            registeredElement.application = applicationNamesByPID[pid] ?? "applications/\(pid)"
         }
         let cachedElement = CachedElement(
             element: registeredElement,
@@ -281,7 +281,7 @@ public actor ElementRegistry {
         parentApplication: String,
     ) -> Exactmac_V1_Element {
         Exactmac_V1_Element.with {
-            $0.parent = parentApplication
+            $0.application = parentApplication
             $0.role = elementData.role
             if let text = elementData.text {
                 $0.text = text
@@ -305,7 +305,7 @@ public actor ElementRegistry {
                 $0.focused = focused
             }
             $0.attributes = elementData.attributes
-            $0.path = elementData.path
+            $0.pathIndices = elementData.path
         }
     }
 

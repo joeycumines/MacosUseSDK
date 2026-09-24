@@ -53,7 +53,7 @@ func TestMCPTools_HTTPRoundTrip(t *testing.T) {
 		{
 			name:      "screenshot returns image data",
 			tool:      "screenshot",
-			args:      `{"format": "png", "ocr": false}`,
+			args:      `{"format": "png", "ocr_enabled": false}`,
 			wantError: false,
 		},
 		{
@@ -154,7 +154,7 @@ func TestMCPTools_Screenshot_HTTPRoundTrip(t *testing.T) {
 	initResp, _ := postProductionMCP(ctx, baseURL, bytes.NewBufferString(initReq))
 	initResp.Body.Close()
 
-	request := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"screenshot","arguments":{"format":"png","ocr":false}}}`
+	request := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"screenshot","arguments":{"format":"png","ocr_enabled":false}}}`
 	resp, err := postProductionMCP(ctx, baseURL, bytes.NewBufferString(request))
 	if err != nil {
 		t.Fatalf("Screenshot request failed: %v", err)
@@ -682,8 +682,8 @@ func requireCalculatorCopiedResult(t *testing.T, ctx context.Context, client pb.
 			app.GetName(),
 			applicationInputTarget(app.GetName()),
 			&pb.InputAction{
-				InputType: &pb.InputAction_PressKey{
-					PressKey: &pb.KeyPress{
+				InputType: &pb.InputAction_KeyPress{
+					KeyPress: &pb.KeyPress{
 						Key:       "c",
 						Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 					},

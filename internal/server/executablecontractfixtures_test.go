@@ -211,7 +211,7 @@ var rpcFamilyContracts = []rpcFamilyContract{
 	},
 	{
 		provider: "ScriptingMethods.swift", effect: "script validation, query, or execution", proof: "result and owned side effect",
-		methods: []string{"ExecuteAppleScript", "ExecuteJavaScript", "ExecuteShellCommand", "ValidateScript", "GetScriptingDictionaries"},
+		methods: []string{"ExecuteAppleScript", "ExecuteJavaScript", "ExecuteShellCommand", "ValidateScript", "GetScriptingDictionaryCatalog"},
 	},
 }
 

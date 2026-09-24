@@ -519,7 +519,7 @@ final class InputTransactionExecutor: Sendable {
     private func reserveInputOverlay(
         for lease: InputExecutionTargetLease,
     ) async throws -> InputOverlayReservation? {
-        guard lease.preparedAction.showAnimation else {
+        guard lease.preparedAction.visualFeedback else {
             return nil
         }
         let presentation = try InputOverlayPlanning.presentation(
@@ -1698,16 +1698,17 @@ extension ExactMacService {
         }
         let stateFilter = try parseInputStateFilter(req.filter)
         let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let skip = try RequestNumericValidation.skip(req.skip)
         let queryBinding = ParsingHelpers.pageTokenQuery(
             method: "ListInputs",
             parameters: [
                 ("parent", req.parent),
                 ("filter_state", stateFilter.map { String($0.rawValue) } ?? ""),
-                ("page_size", String(pageSize)),
             ],
         )
-        let offset = try ParsingHelpers.pageOffset(
+        let cursor = try ParsingHelpers.pageCursor(
             token: req.pageToken,
+            skip: skip,
             queryBinding: queryBinding,
         )
         let allInputs = await stateStore.listInputs(parent: req.parent)
@@ -1722,7 +1723,7 @@ extension ExactMacService {
 
         let totalCount = sortedInputs.count
         let range = try ParsingHelpers.pageRange(
-            offset: offset,
+            cursor: cursor,
             pageSize: pageSize,
             totalCount: totalCount,
         )

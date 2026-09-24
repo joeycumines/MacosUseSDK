@@ -44,9 +44,9 @@ public struct SelectorParser {
             // Text can be empty (match elements with no text)
             break
 
-        case let .textContains(substring):
+        case let .textSubstring(substring):
             if substring.isEmpty {
-                throw RPCError(code: .invalidArgument, message: "Text contains selector cannot be empty")
+                throw RPCError(code: .invalidArgument, message: "Text substring selector cannot be empty")
             }
 
         case let .textRegex(pattern):
@@ -74,8 +74,19 @@ public struct SelectorParser {
                 throw RPCError(code: .invalidArgument, message: "Compound selector cannot be empty")
             }
 
+            // The logical operator is required; unspecified values must not
+            // silently acquire an AND-like default.
+            switch compoundSelector.logicalOperator {
+            case .and, .or, .not:
+                break
+            case .unspecified, .UNRECOGNIZED:
+                throw RPCError(
+                    code: .invalidArgument, message: "Compound selector logical_operator is required",
+                )
+            }
+
             // Validate NOT operator has exactly one selector
-            if compoundSelector.operator == .not, compoundSelector.selectors.count != 1 {
+            if compoundSelector.logicalOperator == .not, compoundSelector.selectors.count != 1 {
                 throw RPCError(
                     code: .invalidArgument, message: "NOT operator requires exactly one selector",
                 )
@@ -97,7 +108,7 @@ public struct SelectorParser {
     /// - Returns: True if the selector is simple
     public func isSimpleSelector(_ selector: Exactmac_Type_ElementSelector) -> Bool {
         switch selector.criteria {
-        case .role, .text, .textContains, .position:
+        case .role, .text, .textSubstring, .position:
             true
         case .textRegex, .attributes, .compound:
             false
@@ -115,8 +126,8 @@ public struct SelectorParser {
             return "role='\(role)'"
         case let .text(text):
             return "text='\(text)'"
-        case let .textContains(substring):
-            return "textContains='\(substring)'"
+        case let .textSubstring(substring):
+            return "textSubstring='\(substring)'"
         case let .textRegex(pattern):
             return "textRegex='\(pattern)'"
         case let .position(position):
@@ -126,8 +137,8 @@ public struct SelectorParser {
             return "attributes={\(attrStr)}"
         case let .compound(compound):
             let opStr =
-                compound.operator == .and
-                    ? "AND" : compound.operator == .or ? "OR" : compound.operator == .not ? "NOT" : "UNKNOWN"
+                compound.logicalOperator == .and
+                    ? "AND" : compound.logicalOperator == .or ? "OR" : compound.logicalOperator == .not ? "NOT" : "UNKNOWN"
             return "compound(\(opStr), \(compound.selectors.count) selectors)"
         case .none:
             return "matchAll"

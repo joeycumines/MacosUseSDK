@@ -137,7 +137,7 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 		t.Logf(
 			"Display %s main=%t frame=(%.1f,%.1f %.1fx%.1f) visible=(%.1f,%.1f %.1fx%.1f)",
 			display.Name,
-			display.IsMain,
+			display.Main,
 			display.GetFrame().GetX(),
 			display.GetFrame().GetY(),
 			display.GetFrame().GetWidth(),
@@ -185,7 +185,7 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 
 	centerX := textArea.GetX() + (textArea.GetWidth() / 2.0)
 	textAreaY := textArea.GetY() + (textArea.GetHeight() / 2.0)
-	textAreaPath := append([]int32(nil), textArea.Path...)
+	textAreaPath := append([]int32(nil), textArea.PathIndices...)
 	if !pointInWindow(centerX, textAreaY, targetWindow.Bounds) {
 		t.Fatalf(
 			"Owned TextEdit text area center (%.1f,%.1f) is outside window bounds (%.1f,%.1f %.1fx%.1f)",
@@ -229,8 +229,8 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 			app.GetName(),
 			windowInputTarget(targetWindow.GetName()),
 			&pb.InputAction{
-				InputType: &pb.InputAction_Click{
-					Click: &pb.MouseClick{
+				InputType: &pb.InputAction_MouseClick{
+					MouseClick: &pb.MouseClick{
 						Position:   &pbtype.Point{X: centerX, Y: textAreaY},
 						ClickCount: &clickCount,
 					},
@@ -257,7 +257,7 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 			if element != nil &&
 				isTextEditTextArea(element.Role) &&
 				element.GetFocused() &&
-				elementPathEqual(element.Path, textAreaPath) &&
+				elementPathEqual(element.PathIndices, textAreaPath) &&
 				strings.Contains(element.GetText(), placeholderText) {
 				return true, nil
 			}
@@ -278,8 +278,8 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 			app.GetName(),
 			applicationInputTarget(app.GetName()),
 			&pb.InputAction{
-				InputType: &pb.InputAction_PressKey{
-					PressKey: &pb.KeyPress{
+				InputType: &pb.InputAction_KeyPress{
+					KeyPress: &pb.KeyPress{
 						Key:       "a",
 						Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 					},
@@ -300,8 +300,8 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 			app.GetName(),
 			applicationInputTarget(app.GetName()),
 			&pb.InputAction{
-				InputType: &pb.InputAction_PressKey{
-					PressKey: &pb.KeyPress{
+				InputType: &pb.InputAction_KeyPress{
+					KeyPress: &pb.KeyPress{
 						Key:       "v",
 						Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 					},
@@ -328,7 +328,7 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 		for _, element := range resp.Elements {
 			if element == nil ||
 				!isTextEditTextArea(element.Role) ||
-				!elementPathEqual(element.Path, textAreaPath) {
+				!elementPathEqual(element.PathIndices, textAreaPath) {
 				continue
 			}
 			observedText = element.GetText()
@@ -365,8 +365,8 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 			app.GetName(),
 			applicationInputTarget(app.GetName()),
 			&pb.InputAction{
-				InputType: &pb.InputAction_PressKey{
-					PressKey: &pb.KeyPress{
+				InputType: &pb.InputAction_KeyPress{
+					KeyPress: &pb.KeyPress{
 						Key:       "s",
 						Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 					},

@@ -4,15 +4,19 @@
 // Verifies the point-to-pixel conversion used by captureRegion on Retina.
 
 import CoreGraphics
+@testable import ExactMacProto
 @testable import ExactMacServer
 import Foundation
 import GRPCCore
+import ImageIO
+import ScreenCaptureKit
 import XCTest
 
 /// Unit tests for the pixel scale factor computation in ScreenshotCapture.
 /// These tests do NOT require ScreenCaptureKit or TCC permissions — they
 /// verify the pure math that converts screen-point coordinates to image-pixel
 /// coordinates for cropping.
+@MainActor
 final class ScreenshotScaleTests: XCTestCase {
     func testPixelScaleFactors_Retina_2x() throws {
         // 1512×982 point display captured at 3024×1964 pixels (2x Retina)
@@ -138,5 +142,84 @@ final class ScreenshotScaleTests: XCTestCase {
         XCTAssertEqual(cropRect.origin.y, 100, accuracy: 0.1)
         XCTAssertEqual(cropRect.width, 400, accuracy: 0.1)
         XCTAssertEqual(cropRect.height, 200, accuracy: 0.1)
+    }
+
+    func testCaptureConfigurationDoesNotDisableAlpha() {
+        for includeShadow in [false, true] {
+            let configuration = ScreenshotCapture.windowCaptureConfiguration(
+                includeShadow: includeShadow,
+            )
+            XCTAssertFalse(
+                configuration.shouldBeOpaque,
+                "Alpha must not depend on shadow selection (includeShadow=\(includeShadow))",
+            )
+        }
+    }
+
+    func testPNGAndTIFFPreserveAlphaWhileJPEGIsOpaque() throws {
+        let source = try makeAlphaImage()
+
+        let lossless = try [Exactmac_V1_ImageFormat.png, .tiff].map { format in
+            try ScreenshotCapture.encodeImage(source, format: format, quality: 0)
+        }
+        for data in lossless {
+            let decoded = try decodeImage(data)
+            let alpha = try alphaValues(decoded)
+            XCTAssertTrue(alpha.contains(0), "Lossless output must retain transparent pixels")
+            XCTAssertTrue(alpha.contains(255), "Lossless output must retain opaque pixels")
+        }
+
+        let jpeg = try ScreenshotCapture.encodeImage(source, format: .jpeg, quality: 85)
+        let jpegAlpha = try alphaValues(decodeImage(jpeg))
+        XCTAssertTrue(
+            jpegAlpha.allSatisfy { $0 == 255 },
+            "JPEG output must be opaque because JPEG has no alpha channel",
+        )
+    }
+
+    private func makeAlphaImage() throws -> CGImage {
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
+        let context = try XCTUnwrap(
+            CGContext(
+                data: nil,
+                width: 2,
+                height: 1,
+                bitsPerComponent: 8,
+                bytesPerRow: 8,
+                space: colorSpace,
+                bitmapInfo: bitmapInfo.rawValue,
+            ),
+        )
+        context.setFillColor(CGColor(red: 1, green: 0, blue: 0, alpha: 0))
+        context.fill(CGRect(x: 0, y: 0, width: 1, height: 1))
+        context.setFillColor(CGColor(red: 0, green: 1, blue: 0, alpha: 1))
+        context.fill(CGRect(x: 1, y: 0, width: 1, height: 1))
+        return try XCTUnwrap(context.makeImage())
+    }
+
+    private func decodeImage(_ data: Data) throws -> CGImage {
+        let source = try XCTUnwrap(CGImageSourceCreateWithData(data as CFData, nil))
+        return try XCTUnwrap(CGImageSourceCreateImageAtIndex(source, 0, nil))
+    }
+
+    private func alphaValues(_ image: CGImage) throws -> [UInt8] {
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
+        let context = try XCTUnwrap(
+            CGContext(
+                data: nil,
+                width: image.width,
+                height: image.height,
+                bitsPerComponent: 8,
+                bytesPerRow: image.width * 4,
+                space: colorSpace,
+                bitmapInfo: bitmapInfo.rawValue,
+            ),
+        )
+        context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        let pointer = try XCTUnwrap(context.data)
+        let bytes = pointer.bindMemory(to: UInt8.self, capacity: image.width * image.height * 4)
+        return (0 ..< image.width * image.height).map { bytes[$0 * 4 + 3] }
     }
 }

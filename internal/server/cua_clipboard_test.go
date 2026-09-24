@@ -322,3 +322,47 @@ func clipboardTruthTextResource(text string) *pb.Clipboard {
 		AvailableTypes: []pb.ContentType{pb.ContentType_CONTENT_TYPE_TEXT},
 	}
 }
+
+// --- handleClipboard — unified clipboard action discriminator ---
+
+func TestCUAHandleClipboard_InvalidParams(t *testing.T) {
+	s := newTestServer()
+
+	tests := []struct {
+		name       string
+		args       string
+		wantError  bool
+		wantSubstr string
+	}{
+		{
+			name:       "missing action",
+			args:       `{}`,
+			wantError:  true,
+			wantSubstr: "action parameter is required",
+		},
+		{
+			name:       "unknown action",
+			args:       `{"action":"paste"}`,
+			wantError:  true,
+			wantSubstr: "Unknown action: paste",
+		},
+		{
+			name:       "set without text",
+			args:       `{"action":"set"}`,
+			wantError:  true,
+			wantSubstr: "text parameter is required for set action",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, _ := s.handleClipboard(&ToolCall{Arguments: json.RawMessage(tt.args)})
+			if !tt.wantError {
+				t.Fatalf("expected no error, got isError=%v", result.IsError)
+			}
+			if result.IsError && !strings.Contains(resultText(result), tt.wantSubstr) {
+				t.Errorf("expected result to contain %q, got: %q", tt.wantSubstr, resultText(result))
+			}
+		})
+	}
+}

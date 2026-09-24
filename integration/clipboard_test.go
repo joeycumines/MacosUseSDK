@@ -126,7 +126,7 @@ func TestClipboardHistory(t *testing.T) {
 	defer histCancel()
 
 	err = PollUntilContext(histCtx, 50*time.Millisecond, func() (bool, error) {
-		hist, err := client.GetClipboardHistory(ctx, &pb.GetClipboardHistoryRequest{Name: "clipboard/history"})
+		hist, err := client.GetClipboardHistory(ctx, &pb.GetClipboardHistoryRequest{Name: "clipboardHistory"})
 		if err != nil {
 			return false, nil
 		}
@@ -137,7 +137,7 @@ func TestClipboardHistory(t *testing.T) {
 	}
 
 	// Fetch final history for assertions
-	hist, err := client.GetClipboardHistory(ctx, &pb.GetClipboardHistoryRequest{Name: "clipboard/history"})
+	hist, err := client.GetClipboardHistory(ctx, &pb.GetClipboardHistoryRequest{Name: "clipboardHistory"})
 	if err != nil {
 		t.Fatalf("GetClipboardHistory failed: %v", err)
 	}

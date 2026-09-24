@@ -11,7 +11,7 @@ import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpb";
 option java_multiple_files = true;
 option java_outer_classname = "ObservationProto";
 option java_package = "io.github.joeycumines.exactmac.v1";
@@ -51,7 +51,7 @@ message Observation {
   // Whether observation polling should activate (bring to foreground) the
   // target application on each poll cycle. When false (the default), polling
   // is performed passively without disturbing window ordering.
-  bool activate = 8 [(google.api.field_behavior) = OPTIONAL];
+  bool activation = 8 [(google.api.field_behavior) = OPTIONAL];
 
   // State of an observation.
   enum State {
@@ -116,20 +116,20 @@ message ObservationEvent {
 
   // The specific event type and data.
   oneof event_type {
-    // Element was added.
-    ElementEvent element_added = 10;
+    // Element addition.
+    ElementEvent element_addition = 4;
 
-    // Element was removed.
-    ElementEvent element_removed = 11;
+    // Element removal.
+    ElementEvent element_removal = 5;
 
-    // Element was modified.
-    ElementModified element_modified = 12;
+    // Element modification.
+    ElementModified element_modification = 6;
 
     // Window event occurred.
-    WindowEvent window_event = 13;
+    WindowEvent window_event = 7;
 
     // Application event occurred.
-    ApplicationEvent application_event = 14;
+    ApplicationEvent application_event = 8;
   }
 }
 

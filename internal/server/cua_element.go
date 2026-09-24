@@ -28,11 +28,11 @@ func (s *MCPServer) cuaHandleFindElements(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
-		Parent       string `json:"parent"`
-		Selector     string `json:"selector"`
-		ForceRefresh bool   `json:"force_refresh"`
-		PageSize     int32  `json:"page_size"`
-		PageToken    string `json:"page_token"`
+		Parent      string `json:"parent"`
+		Selector    string `json:"selector"`
+		CacheBypass bool   `json:"cache_bypass"`
+		PageSize    int32  `json:"page_size"`
+		PageToken   string `json:"page_token"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -54,11 +54,11 @@ func (s *MCPServer) cuaHandleFindElements(call *ToolCall) (*ToolResult, error) {
 	}
 
 	resp, err := s.client.FindElements(ctx, &pb.FindElementsRequest{
-		Parent:       params.Parent,
-		Selector:     selector,
-		ForceRefresh: params.ForceRefresh,
-		PageSize:     params.PageSize,
-		PageToken:    params.PageToken,
+		Parent:      params.Parent,
+		Selector:    selector,
+		CacheBypass: params.CacheBypass,
+		PageSize:    params.PageSize,
+		PageToken:   params.PageToken,
 	})
 	if err != nil {
 		return grpcErrorResult(err, "find_elements"), nil
@@ -268,8 +268,8 @@ func elementResourceName(parent, elementID string) string {
 }
 
 // parseElementSelector converts a simple "key:value" selector string into a proto
-// ElementSelector. Supported keys: role, text, text_contains (and textcontains).
-// Example: "role:AXTextArea", "text:hello", "text_contains:world".
+// ElementSelector. Supported keys: role, text, text_substring.
+// Example: "role:AXTextArea", "text:hello", "text_substring:world".
 func parseElementSelector(selector string) (*typepb.ElementSelector, error) {
 	before, after, ok := strings.Cut(selector, ":")
 	if !ok {
@@ -285,10 +285,10 @@ func parseElementSelector(selector string) (*typepb.ElementSelector, error) {
 		return &typepb.ElementSelector{Criteria: &typepb.ElementSelector_Role{Role: value}}, nil
 	case "text":
 		return &typepb.ElementSelector{Criteria: &typepb.ElementSelector_Text{Text: value}}, nil
-	case "textcontains", "text_contains":
-		return &typepb.ElementSelector{Criteria: &typepb.ElementSelector_TextContains{TextContains: value}}, nil
+	case "text_substring":
+		return &typepb.ElementSelector{Criteria: &typepb.ElementSelector_TextSubstring{TextSubstring: value}}, nil
 	default:
-		return nil, fmt.Errorf("unsupported selector key %q; use role, text, or text_contains", key)
+		return nil, fmt.Errorf("unsupported selector key %q; use role, text, or text_substring", key)
 	}
 }
 

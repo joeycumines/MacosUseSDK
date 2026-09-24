@@ -46,8 +46,8 @@ func physicalInputHandlerCases() []physicalInputHandlerCase {
 				},
 			},
 			wantAction: &pb.InputAction{
-				InputType: &pb.InputAction_Click{
-					Click: &pb.MouseClick{
+				InputType: &pb.InputAction_MouseClick{
+					MouseClick: &pb.MouseClick{
 						Position:   &typepb.Point{X: 10.25, Y: -20.5},
 						ClickType:  &right,
 						ClickCount: &triple,
@@ -70,8 +70,8 @@ func physicalInputHandlerCases() []physicalInputHandlerCase {
 				Destination: &pb.InputTarget_Display{Display: "displays/7"},
 			},
 			wantAction: &pb.InputAction{
-				InputType: &pb.InputAction_Click{
-					Click: &pb.MouseClick{
+				InputType: &pb.InputAction_MouseClick{
+					MouseClick: &pb.MouseClick{
 						Position:   &typepb.Point{X: 0.25, Y: 1.5},
 						ClickType:  &middle,
 						ClickCount: &double,
@@ -91,8 +91,8 @@ func physicalInputHandlerCases() []physicalInputHandlerCase {
 				Destination: &pb.InputTarget_Application{Application: "applications/editor"},
 			},
 			wantAction: &pb.InputAction{
-				InputType: &pb.InputAction_TypeText{
-					TypeText: &pb.TextInput{
+				InputType: &pb.InputAction_TextInput{
+					TextInput: &pb.TextInput{
 						Text:      "é👨‍👩‍👧‍👦",
 						CharDelay: 0.125,
 					},
@@ -112,8 +112,8 @@ func physicalInputHandlerCases() []physicalInputHandlerCase {
 				},
 			},
 			wantAction: &pb.InputAction{
-				InputType: &pb.InputAction_PressKey{
-					PressKey: &pb.KeyPress{
+				InputType: &pb.InputAction_KeyPress{
+					KeyPress: &pb.KeyPress{
 						Key:          "é",
 						Modifiers:    []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_CONTROL},
 						HoldDuration: 0.375,
@@ -132,8 +132,8 @@ func physicalInputHandlerCases() []physicalInputHandlerCase {
 				Destination: &pb.InputTarget_Desktop{Desktop: true},
 			},
 			wantAction: &pb.InputAction{
-				InputType: &pb.InputAction_Scroll{
-					Scroll: &pb.Scroll{
+				InputType: &pb.InputAction_ScrollAction{
+					ScrollAction: &pb.Scroll{
 						Position:   &typepb.Point{X: 1.25, Y: 2.5},
 						Horizontal: 2.5,
 						Vertical:   3.5,
@@ -156,14 +156,14 @@ func physicalInputHandlerCases() []physicalInputHandlerCase {
 				},
 			},
 			wantAction: &pb.InputAction{
-				InputType: &pb.InputAction_Drag{
-					Drag: &pb.MouseDrag{
+				InputType: &pb.InputAction_MouseDrag{
+					MouseDrag: &pb.MouseDrag{
 						StartPosition: &typepb.Point{X: -1.25, Y: 2.5},
 						EndPosition:   &typepb.Point{X: 8.5, Y: 9.25},
 						Duration:      0.75,
 						Button:        &right,
 						Modifiers:     []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_SHIFT},
-						Path: []*typepb.Point{
+						Waypoints: []*typepb.Point{
 							{X: -1.25, Y: 2.5},
 							{X: 3.75, Y: 4.125},
 							{X: 8.5, Y: 9.25},
@@ -183,8 +183,8 @@ func physicalInputHandlerCases() []physicalInputHandlerCase {
 				Destination: &pb.InputTarget_Display{Display: "displays/9"},
 			},
 			wantAction: &pb.InputAction{
-				InputType: &pb.InputAction_MoveMouse{
-					MoveMouse: &pb.MouseMove{
+				InputType: &pb.InputAction_MouseMove{
+					MouseMove: &pb.MouseMove{
 						Position:  &typepb.Point{X: -0.25, Y: 1.5},
 						Duration:  0.5,
 						Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},

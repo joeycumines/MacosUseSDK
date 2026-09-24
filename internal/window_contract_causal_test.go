@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-func TestWindowPublishesLayerAndReservesMisleadingZIndex(t *testing.T) {
+func TestWindowPublishesLayerAndRemovesMisleadingZIndex(t *testing.T) {
 	message := (&pb.Window{}).ProtoReflect().Descriptor()
 	fields := message.Fields()
 	if field := fields.ByName("z_index"); field != nil {
@@ -22,8 +22,8 @@ func TestWindowPublishesLayerAndReservesMisleadingZIndex(t *testing.T) {
 	if layer == nil {
 		t.Fatal("Window.layer is missing")
 	}
-	if layer.Number() != 11 || layer.Kind() != protoreflect.Int32Kind {
-		t.Fatalf("Window.layer = field %d kind %s, want field 11 int32", layer.Number(), layer.Kind())
+	if layer.Number() != 6 || layer.Kind() != protoreflect.Int32Kind {
+		t.Fatalf("Window.layer = field %d kind %s, want field 6 int32", layer.Number(), layer.Kind())
 	}
 	options, ok := layer.Options().(*descriptorpb.FieldOptions)
 	if !ok || !proto.HasExtension(options, annotations.E_FieldBehavior) {
@@ -41,42 +41,17 @@ func TestWindowPublishesLayerAndReservesMisleadingZIndex(t *testing.T) {
 		t.Fatal("Window.layer must be output-only")
 	}
 
-	reservedName := false
-	for index := 0; index < message.ReservedNames().Len(); index++ {
-		reservedName = reservedName || message.ReservedNames().Get(index) == "z_index"
-	}
-	if !reservedName {
-		t.Fatal("Window must reserve removed name z_index")
-	}
-
-	reservedNumber := false
-	for index := 0; index < message.ReservedRanges().Len(); index++ {
-		fieldRange := message.ReservedRanges().Get(index)
-		reservedNumber = reservedNumber || fieldRange[0] <= 4 && 4 < fieldRange[1]
-	}
-	if !reservedNumber {
-		t.Fatal("Window must reserve removed field number 4")
+	if message.ReservedNames().Len() != 0 || message.ReservedRanges().Len() != 0 {
+		t.Fatal("Window must not retain reservations after the final declaration-order contract")
 	}
 }
 
-func TestWindowStateReservesUnimplementedFullscreen(t *testing.T) {
+func TestWindowStateRemovesUnimplementedFullscreen(t *testing.T) {
 	message := (&pb.WindowState{}).ProtoReflect().Descriptor()
 	if field := message.Fields().ByName("fullscreen"); field != nil {
 		t.Fatalf("WindowState.fullscreen remains live at field %d", field.Number())
 	}
-	reservedName := false
-	for index := 0; index < message.ReservedNames().Len(); index++ {
-		reservedName = reservedName || message.ReservedNames().Get(index) == "fullscreen"
-	}
-	if !reservedName {
-		t.Fatal("WindowState must reserve removed name fullscreen")
-	}
-	reservedNumber := false
-	for index := 0; index < message.ReservedRanges().Len(); index++ {
-		fieldRange := message.ReservedRanges().Get(index)
-		reservedNumber = reservedNumber || fieldRange[0] <= 10 && 10 < fieldRange[1]
-	}
-	if !reservedNumber {
-		t.Fatal("WindowState must reserve removed field number 10")
+	if message.ReservedNames().Len() != 0 || message.ReservedRanges().Len() != 0 {
+		t.Fatal("WindowState must not retain reservations after the final declaration-order contract")
 	}
 }

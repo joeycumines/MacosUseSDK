@@ -35,6 +35,7 @@ extension ExactMacService {
         try Self.rejectUnknownFields(req.unknownFields, requestName: "ListApplicationBundlesRequest")
         let fullView = try Self.validateApplicationView(req.view)
         let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let skip = try RequestNumericValidation.skip(req.skip)
         let order = try Self.parseApplicationOrder(
             req.orderBy,
             defaultField: "name",
@@ -50,17 +51,20 @@ extension ExactMacService {
                 ("order_by", req.orderBy),
                 ("filter", req.filter),
                 ("view", String(req.view.rawValue)),
-                ("page_size", String(pageSize)),
             ],
         )
-        let offset = try Self.applicationPageOffset(req.pageToken, queryBinding: queryBinding)
+        let cursor = try ParsingHelpers.pageCursor(
+            token: req.pageToken,
+            skip: skip,
+            queryBinding: queryBinding,
+        )
 
         let discovered = await applicationCatalogProvider.applicationBundles()
         let bundles = Self.validApplicationBundles(discovered)
             .filter { Self.applicationBundle($0, matches: filters) }
             .sorted { Self.applicationBundle($0, precedes: $1, order: order) }
         let range = try ParsingHelpers.pageRange(
-            offset: offset,
+            cursor: cursor,
             pageSize: pageSize,
             totalCount: bundles.count,
         )
@@ -201,6 +205,7 @@ extension ExactMacService {
         try Self.rejectUnknownFields(req.unknownFields, requestName: "ListApplicationsRequest")
         let fullView = try Self.validateApplicationView(req.view)
         let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let skip = try RequestNumericValidation.skip(req.skip)
         let order = try Self.parseApplicationOrder(
             req.orderBy,
             defaultField: "name",
@@ -216,10 +221,13 @@ extension ExactMacService {
                 ("order_by", req.orderBy),
                 ("filter", req.filter),
                 ("view", String(req.view.rawValue)),
-                ("page_size", String(pageSize)),
             ],
         )
-        let offset = try Self.applicationPageOffset(req.pageToken, queryBinding: queryBinding)
+        let cursor = try ParsingHelpers.pageCursor(
+            token: req.pageToken,
+            skip: skip,
+            queryBinding: queryBinding,
+        )
 
         await refreshRunningApplicationState()
         let applications = await stateStore.listTargets()
@@ -227,7 +235,7 @@ extension ExactMacService {
             .filter { Self.application($0, matches: filters) }
             .sorted { Self.application($0, precedes: $1, order: order) }
         let range = try ParsingHelpers.pageRange(
-            offset: offset,
+            cursor: cursor,
             pageSize: pageSize,
             totalCount: ordered.count,
         )
@@ -575,14 +583,6 @@ extension ExactMacService {
                 value: String(view.rawValue),
             )
         }
-    }
-
-    private static func applicationPageOffset(
-        _ pageToken: String,
-        queryBinding: String,
-    ) throws -> Int {
-        guard !pageToken.isEmpty else { return 0 }
-        return try ParsingHelpers.decodePageToken(pageToken, queryBinding: queryBinding)
     }
 
     private static func parseApplicationOrder(

@@ -34,7 +34,7 @@ struct MacroInputTransactionGRPCTests {
                     $0.loop.count = 0
                     $0.loop.actions = [
                         Exactmac_V1_MacroAction.with {
-                            $0.input.moveMouse.position = point(x: 10, y: 20)
+                            $0.input.mouseMove.position = point(x: 10, y: 20)
                         },
                     ]
                 },
@@ -42,8 +42,8 @@ struct MacroInputTransactionGRPCTests {
             (
                 "ClickElement in an unreachable conditional branch",
                 Exactmac_V1_MacroAction.with {
-                    $0.conditional.condition.variableEquals.variable = "missing"
-                    $0.conditional.condition.variableEquals.value = "true"
+                    $0.conditional.condition.variableCondition.variable = "missing"
+                    $0.conditional.condition.variableCondition.value = "true"
                     $0.conditional.thenActions = [
                         Exactmac_V1_MacroAction.with {
                             $0.methodCall.method = "ClickElement"
@@ -58,12 +58,12 @@ struct MacroInputTransactionGRPCTests {
                     $0.loop.count = 1
                     $0.loop.actions = [
                         Exactmac_V1_MacroAction.with {
-                            $0.conditional.condition.variableEquals.variable = "missing"
-                            $0.conditional.condition.variableEquals.value = "true"
+                            $0.conditional.condition.variableCondition.variable = "missing"
+                            $0.conditional.condition.variableCondition.value = "true"
                             $0.conditional.thenActions = [
                                 Exactmac_V1_MacroAction.with {
-                                    $0.assign.variable = "branch"
-                                    $0.assign.literal = "then"
+                                    $0.assignment.variable = "branch"
+                                    $0.assignment.literal = "then"
                                 },
                             ]
                             $0.conditional.elseActions = [
@@ -128,8 +128,8 @@ struct MacroInputTransactionGRPCTests {
                 try await withMacroTransactionMacro(
                     actions: [
                         Exactmac_V1_MacroAction.with {
-                            $0.assign.variable = "result"
-                            $0.assign.literal = "nonphysical"
+                            $0.assignment.variable = "result"
+                            $0.assignment.literal = "nonphysical"
                         },
                     ],
                     label: "nonphysical",
@@ -153,7 +153,7 @@ struct MacroInputTransactionGRPCTests {
                         serializedBytes: terminal.response.value,
                     )
                     #expect(response.success)
-                    #expect(response.actionsExecuted == 1)
+                    #expect(response.executedActionCount == 1)
                 }
             }
         } catch {
@@ -181,8 +181,8 @@ struct MacroInputTransactionGRPCTests {
                 try await withMacroTransactionMacro(
                     actions: [
                         Exactmac_V1_MacroAction.with {
-                            $0.assign.variable = "value"
-                            $0.assign.literal = "nonphysical"
+                            $0.assignment.variable = "value"
+                            $0.assignment.literal = "nonphysical"
                         },
                     ],
                     label: "strict-application",
@@ -218,7 +218,7 @@ struct MacroInputTransactionGRPCTests {
     func `nested physical executions create exact ordinal Input transactions`() async throws {
         let fixture = await MacroTransactionFixture.make()
         let action = Exactmac_V1_InputAction.with {
-            $0.moveMouse.position = point(x: 40, y: 50)
+            $0.mouseMove.position = point(x: 40, y: 50)
         }
         let nestedLoop = Exactmac_V1_MacroAction.with {
             $0.loop.count = 2
@@ -359,8 +359,8 @@ struct MacroInputTransactionGRPCTests {
                         "\(fixture.applicationName)/inputs/macro-\(operationID)-1",
                     ])
                     if listed.inputs.count == 2 {
-                        #expect(listed.inputs[0].action.click.position == point(x: 40, y: 40))
-                        #expect(listed.inputs[1].action.typeText.text == "exact")
+                        #expect(listed.inputs[0].action.mouseClick.position == point(x: 40, y: 40))
+                        #expect(listed.inputs[1].action.textInput.text == "exact")
                         for input in listed.inputs {
                             #expect(input.target.application == fixture.applicationName)
                             #expect(input.state == .completed)
@@ -391,10 +391,10 @@ struct MacroInputTransactionGRPCTests {
                 try await withMacroTransactionMacro(
                     actions: [
                         Exactmac_V1_MacroAction.with {
-                            $0.input.moveMouse.position = point(x: 45, y: 55)
+                            $0.input.mouseMove.position = point(x: 45, y: 55)
                         },
                         Exactmac_V1_MacroAction.with {
-                            $0.input.moveMouse.position = point(x: 65, y: 75)
+                            $0.input.mouseMove.position = point(x: 65, y: 75)
                         },
                     ],
                     label: "failed-input-stops-graph",
@@ -467,7 +467,7 @@ struct MacroInputTransactionGRPCTests {
         let blocker = MacroTransactionBlockingSink()
         let fixture = await MacroTransactionFixture.make(blocker: blocker)
         let action = Exactmac_V1_InputAction.with {
-            $0.moveMouse.position = point(x: 60, y: 70)
+            $0.mouseMove.position = point(x: 60, y: 70)
         }
 
         do {
@@ -590,7 +590,7 @@ struct MacroInputTransactionGRPCTests {
                 try await withMacroTransactionMacro(
                     actions: [
                         Exactmac_V1_MacroAction.with {
-                            $0.input.moveMouse.position = point(x: 80, y: 90)
+                            $0.input.mouseMove.position = point(x: 80, y: 90)
                         },
                     ],
                     label: "timeout-owned-input",
@@ -688,7 +688,7 @@ struct MacroInputTransactionGRPCTests {
                 try await withMacroTransactionMacro(
                     actions: [
                         Exactmac_V1_MacroAction.with {
-                            $0.input.moveMouse.position = point(x: 100, y: 110)
+                            $0.input.mouseMove.position = point(x: 100, y: 110)
                         },
                     ],
                     label: "delete-owned-input",
@@ -780,7 +780,7 @@ struct MacroInputTransactionGRPCTests {
                 try await withMacroTransactionMacro(
                     actions: [
                         Exactmac_V1_MacroAction.with {
-                            $0.input.moveMouse.position = point(x: 115, y: 125)
+                            $0.input.mouseMove.position = point(x: 115, y: 125)
                         },
                     ],
                     label: "deleted-producer-drain",
@@ -858,7 +858,7 @@ struct MacroInputTransactionGRPCTests {
                             $0.loop.count = 2
                             $0.loop.actions = [
                                 Exactmac_V1_MacroAction.with {
-                                    $0.input.moveMouse.position = point(x: 120, y: 130)
+                                    $0.input.mouseMove.position = point(x: 120, y: 130)
                                 },
                             ]
                         },
@@ -949,7 +949,7 @@ struct MacroInputTransactionGRPCTests {
                 try await withMacroTransactionMacro(
                     actions: [
                         Exactmac_V1_MacroAction.with {
-                            $0.input.moveMouse.position = point(x: 122, y: 132)
+                            $0.input.mouseMove.position = point(x: 122, y: 132)
                         },
                     ],
                     label: "prepublication-generation-retirement",
@@ -1014,7 +1014,7 @@ struct MacroInputTransactionGRPCTests {
                 try await withMacroTransactionMacro(
                     actions: [
                         Exactmac_V1_MacroAction.with {
-                            $0.input.moveMouse.position = point(x: 120, y: 130)
+                            $0.input.mouseMove.position = point(x: 120, y: 130)
                         },
                     ],
                     label: "dead-kernel-generation",
@@ -1058,7 +1058,7 @@ struct MacroInputTransactionGRPCTests {
                 try await withMacroTransactionMacro(
                     actions: [
                         Exactmac_V1_MacroAction.with {
-                            $0.input.moveMouse.position = point(x: 140, y: 150)
+                            $0.input.mouseMove.position = point(x: 140, y: 150)
                         },
                     ],
                     label: "drain-owned-input",
@@ -1143,7 +1143,7 @@ struct MacroInputTransactionGRPCTests {
                 try await withMacroTransactionMacro(
                     actions: [
                         Exactmac_V1_MacroAction.with {
-                            $0.input.moveMouse.position = point(x: 121, y: 131)
+                            $0.input.mouseMove.position = point(x: 121, y: 131)
                         },
                     ],
                     label: "mid-input-generation-retirement",

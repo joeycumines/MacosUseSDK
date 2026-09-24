@@ -39,16 +39,16 @@ final class SelectorParserTests: XCTestCase {
 
     func testTextContainsNonEmptyValid() throws {
         let selector = Exactmac_Type_ElementSelector.with {
-            $0.textContains = "hello"
+            $0.textSubstring = "hello"
         }
 
         let result = try parser.parseSelector(selector)
-        XCTAssertEqual(result.textContains, "hello")
+        XCTAssertEqual(result.textSubstring, "hello")
     }
 
     func testTextContainsEmptyThrows() {
         let selector = Exactmac_Type_ElementSelector.with {
-            $0.textContains = ""
+            $0.textSubstring = ""
         }
 
         XCTAssertThrowsError(try parser.parseSelector(selector)) { error in
@@ -141,10 +141,10 @@ final class SelectorParserTests: XCTestCase {
     func testCompoundSelectorANDValid() throws {
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .and
+                $0.logicalOperator = .and
                 $0.selectors = [
                     Exactmac_Type_ElementSelector.with { $0.role = "AXButton" },
-                    Exactmac_Type_ElementSelector.with { $0.textContains = "Submit" },
+                    Exactmac_Type_ElementSelector.with { $0.textSubstring = "Submit" },
                 ]
             }
         }
@@ -156,7 +156,7 @@ final class SelectorParserTests: XCTestCase {
     func testCompoundSelectorORValid() throws {
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .or
+                $0.logicalOperator = .or
                 $0.selectors = [
                     Exactmac_Type_ElementSelector.with { $0.role = "AXButton" },
                     Exactmac_Type_ElementSelector.with { $0.role = "AXLink" },
@@ -165,13 +165,13 @@ final class SelectorParserTests: XCTestCase {
         }
 
         let result = try parser.parseSelector(selector)
-        XCTAssertEqual(result.compound.operator, .or)
+        XCTAssertEqual(result.compound.logicalOperator, .or)
     }
 
     func testCompoundSelectorEmptyThrows() {
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .and
+                $0.logicalOperator = .and
                 $0.selectors = []
             }
         }
@@ -179,12 +179,31 @@ final class SelectorParserTests: XCTestCase {
         XCTAssertThrowsError(try parser.parseSelector(selector))
     }
 
+    func testCompoundSelectorUnspecifiedOperatorThrows() {
+        let selector = Exactmac_Type_ElementSelector.with {
+            $0.compound = Exactmac_Type_CompoundSelector.with {
+                $0.selectors = [
+                    Exactmac_Type_ElementSelector.with { $0.role = "AXButton" },
+                ]
+            }
+        }
+
+        XCTAssertThrowsError(try parser.parseSelector(selector)) { error in
+            guard let rpcError = error as? RPCError else {
+                XCTFail("Expected RPCError")
+                return
+            }
+            XCTAssertEqual(rpcError.code, .invalidArgument)
+            XCTAssertTrue(rpcError.message.contains("logical_operator"))
+        }
+    }
+
     // MARK: - NOT Operator Tests
 
     func testCompoundSelectorNOTWithOneElementValid() throws {
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .not
+                $0.logicalOperator = .not
                 $0.selectors = [
                     Exactmac_Type_ElementSelector.with { $0.role = "AXStaticText" },
                 ]
@@ -192,14 +211,14 @@ final class SelectorParserTests: XCTestCase {
         }
 
         let result = try parser.parseSelector(selector)
-        XCTAssertEqual(result.compound.operator, .not)
+        XCTAssertEqual(result.compound.logicalOperator, .not)
         XCTAssertEqual(result.compound.selectors.count, 1)
     }
 
     func testCompoundSelectorNOTWithZeroElementsThrows() {
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .not
+                $0.logicalOperator = .not
                 $0.selectors = []
             }
         }
@@ -216,7 +235,7 @@ final class SelectorParserTests: XCTestCase {
     func testCompoundSelectorNOTWithMultipleElementsThrows() {
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .not
+                $0.logicalOperator = .not
                 $0.selectors = [
                     Exactmac_Type_ElementSelector.with { $0.role = "AXButton" },
                     Exactmac_Type_ElementSelector.with { $0.role = "AXLink" },
@@ -281,7 +300,7 @@ final class SelectorParserTests: XCTestCase {
     func testDescribeSelectorCompoundNOT() {
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .not
+                $0.logicalOperator = .not
                 $0.selectors = [
                     Exactmac_Type_ElementSelector.with { $0.role = "AXButton" },
                 ]
@@ -304,7 +323,7 @@ final class SelectorParserTests: XCTestCase {
     func testIsSimpleSelectorForCompound() {
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .and
+                $0.logicalOperator = .and
                 $0.selectors = [
                     Exactmac_Type_ElementSelector.with { $0.role = "AXButton" },
                 ]
@@ -319,7 +338,7 @@ final class SelectorParserTests: XCTestCase {
     func testNestedInvalidRegexThrows() {
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .and
+                $0.logicalOperator = .and
                 $0.selectors = [
                     Exactmac_Type_ElementSelector.with { $0.role = "AXButton" },
                     Exactmac_Type_ElementSelector.with { $0.textRegex = "[invalid" },

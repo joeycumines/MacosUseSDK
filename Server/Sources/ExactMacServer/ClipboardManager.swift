@@ -756,6 +756,7 @@ actor ClipboardHistoryManager {
     /// Get clipboard history.
     func getHistory() -> Exactmac_V1_ClipboardHistory {
         Exactmac_V1_ClipboardHistory.with {
+            $0.name = "clipboardHistory"
             $0.entries = history
         }
     }

@@ -112,7 +112,7 @@ func setupTextEditWithDocument(
 			lastTextAreaCandidates = append(lastTextAreaCandidates, fmt.Sprintf(
 				"role=%q path=%v bytes=%d prefix=%q suffix=%q geometry=(%.1f,%.1f %.1fx%.1f) intersects_window=%t",
 				element.GetRole(),
-				element.GetPath(),
+				element.GetPathIndices(),
 				len(element.GetText()),
 				previewDiagnosticText(element.GetText(), true),
 				previewDiagnosticText(element.GetText(), false),
@@ -187,8 +187,8 @@ func setupTextEditWithDocument(
 			app.GetName(),
 			windowInputTarget(targetWindow.GetName()),
 			&pb.InputAction{
-				InputType: &pb.InputAction_Click{
-					Click: &pb.MouseClick{
+				InputType: &pb.InputAction_MouseClick{
+					MouseClick: &pb.MouseClick{
 						Position:   visiblePoint,
 						ClickCount: &clickCount,
 					},
@@ -199,7 +199,7 @@ func setupTextEditWithDocument(
 		"focus owned TextEdit text area",
 	)
 
-	path := append([]int32(nil), textArea.Path...)
+	path := append([]int32(nil), textArea.PathIndices...)
 	focusElementCtx, cancelFocusElement := context.WithTimeout(ctx, 5*time.Second)
 	defer cancelFocusElement()
 	if err := PollUntilContext(focusElementCtx, 100*time.Millisecond, func() (bool, error) {
@@ -211,7 +211,7 @@ func setupTextEditWithDocument(
 		}
 		for _, element := range response.Elements {
 			if element != nil && isTextEditTextArea(element.Role) && element.GetFocused() &&
-				elementPathEqual(element.Path, path) && strings.Contains(element.GetText(), text) {
+				elementPathEqual(element.PathIndices, path) && strings.Contains(element.GetText(), text) {
 				return true, nil
 			}
 		}
@@ -359,8 +359,8 @@ func TestKeyboardModifiers_SelectAllCopyPaste(t *testing.T) {
 	// Cmd+Down forces the cursor into the document text, establishing
 	// first-responder on the text view so subsequent Cmd+A works.
 	sendKeyboardInput(t, ctx, client, app.Name, &pb.InputAction{
-		InputType: &pb.InputAction_PressKey{
-			PressKey: &pb.KeyPress{
+		InputType: &pb.InputAction_KeyPress{
+			KeyPress: &pb.KeyPress{
 				Key:       "down",
 				Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 			},
@@ -374,8 +374,8 @@ func TestKeyboardModifiers_SelectAllCopyPaste(t *testing.T) {
 
 	// Step 1: Cmd+A (select all).
 	sendKeyboardInput(t, ctx, client, app.Name, &pb.InputAction{
-		InputType: &pb.InputAction_PressKey{
-			PressKey: &pb.KeyPress{
+		InputType: &pb.InputAction_KeyPress{
+			KeyPress: &pb.KeyPress{
 				Key:       "a",
 				Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 			},
@@ -385,8 +385,8 @@ func TestKeyboardModifiers_SelectAllCopyPaste(t *testing.T) {
 
 	// Step 2: Cmd+C (copy).
 	sendKeyboardInput(t, ctx, client, app.Name, &pb.InputAction{
-		InputType: &pb.InputAction_PressKey{
-			PressKey: &pb.KeyPress{
+		InputType: &pb.InputAction_KeyPress{
+			KeyPress: &pb.KeyPress{
 				Key:       "c",
 				Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 			},
@@ -412,8 +412,8 @@ func TestKeyboardModifiers_SelectAllCopyPaste(t *testing.T) {
 
 	// Step 4: Cmd+Down (move to end, deselects).
 	sendKeyboardInput(t, ctx, client, app.Name, &pb.InputAction{
-		InputType: &pb.InputAction_PressKey{
-			PressKey: &pb.KeyPress{
+		InputType: &pb.InputAction_KeyPress{
+			KeyPress: &pb.KeyPress{
 				Key:       "down",
 				Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 			},
@@ -423,8 +423,8 @@ func TestKeyboardModifiers_SelectAllCopyPaste(t *testing.T) {
 
 	// Step 5: Cmd+V (paste at end).
 	sendKeyboardInput(t, ctx, client, app.Name, &pb.InputAction{
-		InputType: &pb.InputAction_PressKey{
-			PressKey: &pb.KeyPress{
+		InputType: &pb.InputAction_KeyPress{
+			KeyPress: &pb.KeyPress{
 				Key:       "v",
 				Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 			},
@@ -478,8 +478,8 @@ func TestKeyboardModifiers_MultipleModifiers(t *testing.T) {
 
 	// Move cursor to end of text.
 	sendKeyboardInput(t, ctx, client, app.Name, &pb.InputAction{
-		InputType: &pb.InputAction_PressKey{
-			PressKey: &pb.KeyPress{
+		InputType: &pb.InputAction_KeyPress{
+			KeyPress: &pb.KeyPress{
 				Key:       "down",
 				Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 			},
@@ -488,8 +488,8 @@ func TestKeyboardModifiers_MultipleModifiers(t *testing.T) {
 
 	// Cmd+Shift+Left: Select from cursor (end of text) to beginning of line.
 	sendKeyboardInput(t, ctx, client, app.Name, &pb.InputAction{
-		InputType: &pb.InputAction_PressKey{
-			PressKey: &pb.KeyPress{
+		InputType: &pb.InputAction_KeyPress{
+			KeyPress: &pb.KeyPress{
 				Key: "left",
 				Modifiers: []pb.KeyPress_Modifier{
 					pb.KeyPress_MODIFIER_COMMAND,
@@ -502,8 +502,8 @@ func TestKeyboardModifiers_MultipleModifiers(t *testing.T) {
 
 	// Cmd+C to copy the selection.
 	sendKeyboardInput(t, ctx, client, app.Name, &pb.InputAction{
-		InputType: &pb.InputAction_PressKey{
-			PressKey: &pb.KeyPress{
+		InputType: &pb.InputAction_KeyPress{
+			KeyPress: &pb.KeyPress{
 				Key:       "c",
 				Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 			},
@@ -552,8 +552,8 @@ func TestKeyboardModifiers_OptionSpecialCharacter(t *testing.T) {
 
 	// Move cursor to end.
 	sendKeyboardInput(t, ctx, client, app.Name, &pb.InputAction{
-		InputType: &pb.InputAction_PressKey{
-			PressKey: &pb.KeyPress{
+		InputType: &pb.InputAction_KeyPress{
+			KeyPress: &pb.KeyPress{
 				Key:       "down",
 				Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
 			},
@@ -562,8 +562,8 @@ func TestKeyboardModifiers_OptionSpecialCharacter(t *testing.T) {
 
 	// Press Option+P which produces π on US keyboard layout.
 	optPResp := sendKeyboardInput(t, ctx, client, app.Name, &pb.InputAction{
-		InputType: &pb.InputAction_PressKey{
-			PressKey: &pb.KeyPress{
+		InputType: &pb.InputAction_KeyPress{
+			KeyPress: &pb.KeyPress{
 				Key:       "p",
 				Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_OPTION},
 			},

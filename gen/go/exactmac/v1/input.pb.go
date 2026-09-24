@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/v1/input.proto
 
-package exactmacv1
+package exactmacpb
 
 import (
 	_type "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
@@ -580,20 +580,20 @@ func (x *InputDeliveryResult) GetRoutedDeliveryObserved() bool {
 type InputAction struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Whether to show visual feedback during execution.
-	ShowAnimation bool `protobuf:"varint,1,opt,name=show_animation,json=showAnimation,proto3" json:"show_animation,omitempty"`
+	VisualFeedback bool `protobuf:"varint,1,opt,name=visual_feedback,json=visualFeedback,proto3" json:"visual_feedback,omitempty"`
 	// Duration of visual feedback in seconds.
 	AnimationDuration float64 `protobuf:"fixed64,2,opt,name=animation_duration,json=animationDuration,proto3" json:"animation_duration,omitempty"`
 	// The specific input type and parameters.
 	//
 	// Types that are valid to be assigned to InputType:
 	//
-	//	*InputAction_Click
-	//	*InputAction_TypeText
-	//	*InputAction_PressKey
-	//	*InputAction_MoveMouse
-	//	*InputAction_Drag
-	//	*InputAction_Scroll
-	//	*InputAction_Hover
+	//	*InputAction_MouseClick
+	//	*InputAction_TextInput
+	//	*InputAction_KeyPress
+	//	*InputAction_MouseMove
+	//	*InputAction_MouseDrag
+	//	*InputAction_ScrollAction
+	//	*InputAction_HoverAction
 	InputType     isInputAction_InputType `protobuf_oneof:"input_type"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -629,9 +629,9 @@ func (*InputAction) Descriptor() ([]byte, []int) {
 	return file_exactmac_v1_input_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *InputAction) GetShowAnimation() bool {
+func (x *InputAction) GetVisualFeedback() bool {
 	if x != nil {
-		return x.ShowAnimation
+		return x.VisualFeedback
 	}
 	return false
 }
@@ -650,64 +650,64 @@ func (x *InputAction) GetInputType() isInputAction_InputType {
 	return nil
 }
 
-func (x *InputAction) GetClick() *MouseClick {
+func (x *InputAction) GetMouseClick() *MouseClick {
 	if x != nil {
-		if x, ok := x.InputType.(*InputAction_Click); ok {
-			return x.Click
+		if x, ok := x.InputType.(*InputAction_MouseClick); ok {
+			return x.MouseClick
 		}
 	}
 	return nil
 }
 
-func (x *InputAction) GetTypeText() *TextInput {
+func (x *InputAction) GetTextInput() *TextInput {
 	if x != nil {
-		if x, ok := x.InputType.(*InputAction_TypeText); ok {
-			return x.TypeText
+		if x, ok := x.InputType.(*InputAction_TextInput); ok {
+			return x.TextInput
 		}
 	}
 	return nil
 }
 
-func (x *InputAction) GetPressKey() *KeyPress {
+func (x *InputAction) GetKeyPress() *KeyPress {
 	if x != nil {
-		if x, ok := x.InputType.(*InputAction_PressKey); ok {
-			return x.PressKey
+		if x, ok := x.InputType.(*InputAction_KeyPress); ok {
+			return x.KeyPress
 		}
 	}
 	return nil
 }
 
-func (x *InputAction) GetMoveMouse() *MouseMove {
+func (x *InputAction) GetMouseMove() *MouseMove {
 	if x != nil {
-		if x, ok := x.InputType.(*InputAction_MoveMouse); ok {
-			return x.MoveMouse
+		if x, ok := x.InputType.(*InputAction_MouseMove); ok {
+			return x.MouseMove
 		}
 	}
 	return nil
 }
 
-func (x *InputAction) GetDrag() *MouseDrag {
+func (x *InputAction) GetMouseDrag() *MouseDrag {
 	if x != nil {
-		if x, ok := x.InputType.(*InputAction_Drag); ok {
-			return x.Drag
+		if x, ok := x.InputType.(*InputAction_MouseDrag); ok {
+			return x.MouseDrag
 		}
 	}
 	return nil
 }
 
-func (x *InputAction) GetScroll() *Scroll {
+func (x *InputAction) GetScrollAction() *Scroll {
 	if x != nil {
-		if x, ok := x.InputType.(*InputAction_Scroll); ok {
-			return x.Scroll
+		if x, ok := x.InputType.(*InputAction_ScrollAction); ok {
+			return x.ScrollAction
 		}
 	}
 	return nil
 }
 
-func (x *InputAction) GetHover() *Hover {
+func (x *InputAction) GetHoverAction() *Hover {
 	if x != nil {
-		if x, ok := x.InputType.(*InputAction_Hover); ok {
-			return x.Hover
+		if x, ok := x.InputType.(*InputAction_HoverAction); ok {
+			return x.HoverAction
 		}
 	}
 	return nil
@@ -717,54 +717,54 @@ type isInputAction_InputType interface {
 	isInputAction_InputType()
 }
 
-type InputAction_Click struct {
-	// Click at a specific point.
-	Click *MouseClick `protobuf:"bytes,10,opt,name=click,proto3,oneof"`
+type InputAction_MouseClick struct {
+	// Mouse click action.
+	MouseClick *MouseClick `protobuf:"bytes,3,opt,name=mouse_click,json=mouseClick,proto3,oneof"`
 }
 
-type InputAction_TypeText struct {
-	// Type the specified text.
-	TypeText *TextInput `protobuf:"bytes,11,opt,name=type_text,json=typeText,proto3,oneof"`
+type InputAction_TextInput struct {
+	// Text input action.
+	TextInput *TextInput `protobuf:"bytes,4,opt,name=text_input,json=textInput,proto3,oneof"`
 }
 
-type InputAction_PressKey struct {
-	// Press a key combination.
-	PressKey *KeyPress `protobuf:"bytes,12,opt,name=press_key,json=pressKey,proto3,oneof"`
+type InputAction_KeyPress struct {
+	// Key press action.
+	KeyPress *KeyPress `protobuf:"bytes,5,opt,name=key_press,json=keyPress,proto3,oneof"`
 }
 
-type InputAction_MoveMouse struct {
-	// Move mouse to a specific point.
-	MoveMouse *MouseMove `protobuf:"bytes,13,opt,name=move_mouse,json=moveMouse,proto3,oneof"`
+type InputAction_MouseMove struct {
+	// Mouse move action.
+	MouseMove *MouseMove `protobuf:"bytes,6,opt,name=mouse_move,json=mouseMove,proto3,oneof"`
 }
 
-type InputAction_Drag struct {
-	// Drag from one point to another.
-	Drag *MouseDrag `protobuf:"bytes,14,opt,name=drag,proto3,oneof"`
+type InputAction_MouseDrag struct {
+	// Mouse drag action.
+	MouseDrag *MouseDrag `protobuf:"bytes,7,opt,name=mouse_drag,json=mouseDrag,proto3,oneof"`
 }
 
-type InputAction_Scroll struct {
-	// Scroll operation.
-	Scroll *Scroll `protobuf:"bytes,15,opt,name=scroll,proto3,oneof"`
+type InputAction_ScrollAction struct {
+	// Scroll action.
+	ScrollAction *Scroll `protobuf:"bytes,8,opt,name=scroll_action,json=scrollAction,proto3,oneof"`
 }
 
-type InputAction_Hover struct {
-	// Hover at a point for duration.
-	Hover *Hover `protobuf:"bytes,16,opt,name=hover,proto3,oneof"`
+type InputAction_HoverAction struct {
+	// Hover action.
+	HoverAction *Hover `protobuf:"bytes,9,opt,name=hover_action,json=hoverAction,proto3,oneof"`
 }
 
-func (*InputAction_Click) isInputAction_InputType() {}
+func (*InputAction_MouseClick) isInputAction_InputType() {}
 
-func (*InputAction_TypeText) isInputAction_InputType() {}
+func (*InputAction_TextInput) isInputAction_InputType() {}
 
-func (*InputAction_PressKey) isInputAction_InputType() {}
+func (*InputAction_KeyPress) isInputAction_InputType() {}
 
-func (*InputAction_MoveMouse) isInputAction_InputType() {}
+func (*InputAction_MouseMove) isInputAction_InputType() {}
 
-func (*InputAction_Drag) isInputAction_InputType() {}
+func (*InputAction_MouseDrag) isInputAction_InputType() {}
 
-func (*InputAction_Scroll) isInputAction_InputType() {}
+func (*InputAction_ScrollAction) isInputAction_InputType() {}
 
-func (*InputAction_Hover) isInputAction_InputType() {}
+func (*InputAction_HoverAction) isInputAction_InputType() {}
 
 // Mouse click action.
 //
@@ -850,7 +850,7 @@ type TextInput struct {
 	// Text to type.
 	Text string `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
 	// Delay between characters in seconds.
-	CharDelay     float64 `protobuf:"fixed64,3,opt,name=char_delay,json=charDelay,proto3" json:"char_delay,omitempty"`
+	CharDelay     float64 `protobuf:"fixed64,2,opt,name=char_delay,json=charDelay,proto3" json:"char_delay,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1047,10 +1047,10 @@ type MouseDrag struct {
 	// Modifier keys applied atomically to every drag event.
 	Modifiers []KeyPress_Modifier `protobuf:"varint,5,rep,packed,name=modifiers,proto3,enum=exactmac.v1.KeyPress_Modifier" json:"modifiers,omitempty"`
 	// Ordered drag waypoints in Global Display Coordinates. When present, this
-	// path is authoritative and must contain at least two points. The first and
-	// last points must equal start_position and end_position when those legacy
-	// fields are also supplied.
-	Path          []*_type.Point `protobuf:"bytes,6,rep,name=path,proto3" json:"path,omitempty"`
+	// field is authoritative and must contain at least two points. The first and
+	// last points must equal start_position and end_position when those fields
+	// are also supplied.
+	Waypoints     []*_type.Point `protobuf:"bytes,6,rep,name=waypoints,proto3" json:"waypoints,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1120,9 +1120,9 @@ func (x *MouseDrag) GetModifiers() []KeyPress_Modifier {
 	return nil
 }
 
-func (x *MouseDrag) GetPath() []*_type.Point {
+func (x *MouseDrag) GetWaypoints() []*_type.Point {
 	if x != nil {
-		return x.Path
+		return x.Waypoints
 	}
 	return nil
 }
@@ -1314,21 +1314,23 @@ const file_exactmac_v1_input_proto_rawDesc = "" +
 	"\x16COMMITMENT_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14COMMITMENT_NO_EFFECT\x10\x01\x12!\n" +
 	"\x1dCOMMITMENT_POSSIBLY_COMMITTED\x10\x02\x12$\n" +
-	" COMMITMENT_COMMITTED_AND_SETTLED\x10\x03\"\x82\x04\n" +
-	"\vInputAction\x12*\n" +
-	"\x0eshow_animation\x18\x01 \x01(\bB\x03\xe0A\x01R\rshowAnimation\x122\n" +
-	"\x12animation_duration\x18\x02 \x01(\x01B\x03\xe0A\x01R\x11animationDuration\x12/\n" +
-	"\x05click\x18\n" +
-	" \x01(\v2\x17.exactmac.v1.MouseClickH\x00R\x05click\x125\n" +
-	"\ttype_text\x18\v \x01(\v2\x16.exactmac.v1.TextInputH\x00R\btypeText\x124\n" +
-	"\tpress_key\x18\f \x01(\v2\x15.exactmac.v1.KeyPressH\x00R\bpressKey\x127\n" +
+	" COMMITMENT_COMMITTED_AND_SETTLED\x10\x03\"\x8f\x04\n" +
+	"\vInputAction\x12,\n" +
+	"\x0fvisual_feedback\x18\x01 \x01(\bB\x03\xe0A\x01R\x0evisualFeedback\x122\n" +
+	"\x12animation_duration\x18\x02 \x01(\x01B\x03\xe0A\x01R\x11animationDuration\x12:\n" +
+	"\vmouse_click\x18\x03 \x01(\v2\x17.exactmac.v1.MouseClickH\x00R\n" +
+	"mouseClick\x127\n" +
 	"\n" +
-	"move_mouse\x18\r \x01(\v2\x16.exactmac.v1.MouseMoveH\x00R\tmoveMouse\x12,\n" +
-	"\x04drag\x18\x0e \x01(\v2\x16.exactmac.v1.MouseDragH\x00R\x04drag\x12-\n" +
-	"\x06scroll\x18\x0f \x01(\v2\x13.exactmac.v1.ScrollH\x00R\x06scroll\x12*\n" +
-	"\x05hover\x18\x10 \x01(\v2\x12.exactmac.v1.HoverH\x00R\x05hoverB\f\n" +
+	"text_input\x18\x04 \x01(\v2\x16.exactmac.v1.TextInputH\x00R\ttextInput\x124\n" +
+	"\tkey_press\x18\x05 \x01(\v2\x15.exactmac.v1.KeyPressH\x00R\bkeyPress\x127\n" +
 	"\n" +
-	"input_typeJ\x04\b\x11\x10\x14R\agestureR\vbutton_downR\tbutton_up\"\x87\x03\n" +
+	"mouse_move\x18\x06 \x01(\v2\x16.exactmac.v1.MouseMoveH\x00R\tmouseMove\x127\n" +
+	"\n" +
+	"mouse_drag\x18\a \x01(\v2\x16.exactmac.v1.MouseDragH\x00R\tmouseDrag\x12:\n" +
+	"\rscroll_action\x18\b \x01(\v2\x13.exactmac.v1.ScrollH\x00R\fscrollAction\x127\n" +
+	"\fhover_action\x18\t \x01(\v2\x12.exactmac.v1.HoverH\x00R\vhoverActionB\f\n" +
+	"\n" +
+	"input_type\"\x87\x03\n" +
 	"\n" +
 	"MouseClick\x125\n" +
 	"\bposition\x18\x01 \x01(\v2\x14.exactmac.type.PointB\x03\xe0A\x02R\bposition\x12J\n" +
@@ -1343,11 +1345,11 @@ const file_exactmac_v1_input_proto_rawDesc = "" +
 	"\x10CLICK_TYPE_RIGHT\x10\x02\x12\x15\n" +
 	"\x11CLICK_TYPE_MIDDLE\x10\x03B\r\n" +
 	"\v_click_typeB\x0e\n" +
-	"\f_click_count\"W\n" +
+	"\f_click_count\"H\n" +
 	"\tTextInput\x12\x17\n" +
 	"\x04text\x18\x01 \x01(\tB\x03\xe0A\x02R\x04text\x12\"\n" +
 	"\n" +
-	"char_delay\x18\x03 \x01(\x01B\x03\xe0A\x01R\tcharDelayJ\x04\b\x02\x10\x03R\ause_ime\"\xb9\x02\n" +
+	"char_delay\x18\x02 \x01(\x01B\x03\xe0A\x01R\tcharDelay\"\xb9\x02\n" +
 	"\bKeyPress\x12\x15\n" +
 	"\x03key\x18\x01 \x01(\tB\x03\xe0A\x02R\x03key\x12A\n" +
 	"\tmodifiers\x18\x02 \x03(\x0e2\x1e.exactmac.v1.KeyPress.ModifierB\x03\xe0A\x01R\tmodifiers\x12(\n" +
@@ -1363,14 +1365,14 @@ const file_exactmac_v1_input_proto_rawDesc = "" +
 	"\tMouseMove\x125\n" +
 	"\bposition\x18\x01 \x01(\v2\x14.exactmac.type.PointB\x03\xe0A\x02R\bposition\x12\x1f\n" +
 	"\bduration\x18\x02 \x01(\x01B\x03\xe0A\x01R\bduration\x12A\n" +
-	"\tmodifiers\x18\x03 \x03(\x0e2\x1e.exactmac.v1.KeyPress.ModifierB\x03\xe0A\x01R\tmodifiers\"\xee\x02\n" +
+	"\tmodifiers\x18\x03 \x03(\x0e2\x1e.exactmac.v1.KeyPress.ModifierB\x03\xe0A\x01R\tmodifiers\"\xf8\x02\n" +
 	"\tMouseDrag\x12@\n" +
 	"\x0estart_position\x18\x01 \x01(\v2\x14.exactmac.type.PointB\x03\xe0A\x02R\rstartPosition\x12<\n" +
 	"\fend_position\x18\x02 \x01(\v2\x14.exactmac.type.PointB\x03\xe0A\x02R\vendPosition\x12\x1f\n" +
 	"\bduration\x18\x03 \x01(\x01B\x03\xe0A\x01R\bduration\x12C\n" +
 	"\x06button\x18\x04 \x01(\x0e2!.exactmac.v1.MouseClick.ClickTypeB\x03\xe0A\x01H\x00R\x06button\x88\x01\x01\x12A\n" +
-	"\tmodifiers\x18\x05 \x03(\x0e2\x1e.exactmac.v1.KeyPress.ModifierB\x03\xe0A\x01R\tmodifiers\x12-\n" +
-	"\x04path\x18\x06 \x03(\v2\x14.exactmac.type.PointB\x03\xe0A\x01R\x04pathB\t\n" +
+	"\tmodifiers\x18\x05 \x03(\x0e2\x1e.exactmac.v1.KeyPress.ModifierB\x03\xe0A\x01R\tmodifiers\x127\n" +
+	"\twaypoints\x18\x06 \x03(\v2\x14.exactmac.type.PointB\x03\xe0A\x01R\twaypointsB\t\n" +
 	"\a_button\"\xe9\x01\n" +
 	"\x06Scroll\x125\n" +
 	"\bposition\x18\x01 \x01(\v2\x14.exactmac.type.PointB\x03\xe0A\x01R\bposition\x12#\n" +
@@ -1382,9 +1384,9 @@ const file_exactmac_v1_input_proto_rawDesc = "" +
 	"\tmodifiers\x18\x05 \x03(\x0e2\x1e.exactmac.v1.KeyPress.ModifierB\x03\xe0A\x01R\tmodifiers\"_\n" +
 	"\x05Hover\x125\n" +
 	"\bposition\x18\x01 \x01(\v2\x14.exactmac.type.PointB\x03\xe0A\x02R\bposition\x12\x1f\n" +
-	"\bduration\x18\x02 \x01(\x01B\x03\xe0A\x02R\bdurationB\xbb\x01\n" +
+	"\bduration\x18\x02 \x01(\x01B\x03\xe0A\x02R\bdurationBp\n" +
 	"!io.github.joeycumines.exactmac.v1B\n" +
-	"InputProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1\xa2\x02\x03EXX\xaa\x02\vExactmac.V1\xca\x02\vExactmac\\V1\xe2\x02\x17Exactmac\\V1\\GPBMetadata\xea\x02\fExactmac::V1b\x06proto3"
+	"InputProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpbb\x06proto3"
 
 var (
 	file_exactmac_v1_input_proto_rawDescOnce sync.Once
@@ -1427,13 +1429,13 @@ var file_exactmac_v1_input_proto_depIdxs = []int32{
 	5,  // 4: exactmac.v1.Input.target:type_name -> exactmac.v1.InputTarget
 	6,  // 5: exactmac.v1.Input.delivery_result:type_name -> exactmac.v1.InputDeliveryResult
 	1,  // 6: exactmac.v1.InputDeliveryResult.commitment:type_name -> exactmac.v1.InputDeliveryResult.Commitment
-	8,  // 7: exactmac.v1.InputAction.click:type_name -> exactmac.v1.MouseClick
-	9,  // 8: exactmac.v1.InputAction.type_text:type_name -> exactmac.v1.TextInput
-	10, // 9: exactmac.v1.InputAction.press_key:type_name -> exactmac.v1.KeyPress
-	11, // 10: exactmac.v1.InputAction.move_mouse:type_name -> exactmac.v1.MouseMove
-	12, // 11: exactmac.v1.InputAction.drag:type_name -> exactmac.v1.MouseDrag
-	13, // 12: exactmac.v1.InputAction.scroll:type_name -> exactmac.v1.Scroll
-	14, // 13: exactmac.v1.InputAction.hover:type_name -> exactmac.v1.Hover
+	8,  // 7: exactmac.v1.InputAction.mouse_click:type_name -> exactmac.v1.MouseClick
+	9,  // 8: exactmac.v1.InputAction.text_input:type_name -> exactmac.v1.TextInput
+	10, // 9: exactmac.v1.InputAction.key_press:type_name -> exactmac.v1.KeyPress
+	11, // 10: exactmac.v1.InputAction.mouse_move:type_name -> exactmac.v1.MouseMove
+	12, // 11: exactmac.v1.InputAction.mouse_drag:type_name -> exactmac.v1.MouseDrag
+	13, // 12: exactmac.v1.InputAction.scroll_action:type_name -> exactmac.v1.Scroll
+	14, // 13: exactmac.v1.InputAction.hover_action:type_name -> exactmac.v1.Hover
 	16, // 14: exactmac.v1.MouseClick.position:type_name -> exactmac.type.Point
 	2,  // 15: exactmac.v1.MouseClick.click_type:type_name -> exactmac.v1.MouseClick.ClickType
 	3,  // 16: exactmac.v1.MouseClick.modifiers:type_name -> exactmac.v1.KeyPress.Modifier
@@ -1444,7 +1446,7 @@ var file_exactmac_v1_input_proto_depIdxs = []int32{
 	16, // 21: exactmac.v1.MouseDrag.end_position:type_name -> exactmac.type.Point
 	2,  // 22: exactmac.v1.MouseDrag.button:type_name -> exactmac.v1.MouseClick.ClickType
 	3,  // 23: exactmac.v1.MouseDrag.modifiers:type_name -> exactmac.v1.KeyPress.Modifier
-	16, // 24: exactmac.v1.MouseDrag.path:type_name -> exactmac.type.Point
+	16, // 24: exactmac.v1.MouseDrag.waypoints:type_name -> exactmac.type.Point
 	16, // 25: exactmac.v1.Scroll.position:type_name -> exactmac.type.Point
 	3,  // 26: exactmac.v1.Scroll.modifiers:type_name -> exactmac.v1.KeyPress.Modifier
 	16, // 27: exactmac.v1.Hover.position:type_name -> exactmac.type.Point
@@ -1467,13 +1469,13 @@ func file_exactmac_v1_input_proto_init() {
 		(*InputTarget_Desktop)(nil),
 	}
 	file_exactmac_v1_input_proto_msgTypes[3].OneofWrappers = []any{
-		(*InputAction_Click)(nil),
-		(*InputAction_TypeText)(nil),
-		(*InputAction_PressKey)(nil),
-		(*InputAction_MoveMouse)(nil),
-		(*InputAction_Drag)(nil),
-		(*InputAction_Scroll)(nil),
-		(*InputAction_Hover)(nil),
+		(*InputAction_MouseClick)(nil),
+		(*InputAction_TextInput)(nil),
+		(*InputAction_KeyPress)(nil),
+		(*InputAction_MouseMove)(nil),
+		(*InputAction_MouseDrag)(nil),
+		(*InputAction_ScrollAction)(nil),
+		(*InputAction_HoverAction)(nil),
 	}
 	file_exactmac_v1_input_proto_msgTypes[4].OneofWrappers = []any{}
 	file_exactmac_v1_input_proto_msgTypes[8].OneofWrappers = []any{}

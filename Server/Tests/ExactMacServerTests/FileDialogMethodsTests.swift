@@ -73,7 +73,7 @@ final class FileDialogMethodsTests: XCTestCase {
         open.defaultDirectory = "/tmp"
         open.fileFilters = ["*.txt"]
         open.timeout = 1
-        open.allowMultiple = true
+        open.multipleSelection = true
 
         var save = Exactmac_V1_AutomateSaveFileDialogRequest()
         save.application = Self.application
@@ -81,7 +81,7 @@ final class FileDialogMethodsTests: XCTestCase {
         save.defaultDirectory = "/tmp"
         save.defaultFilename = "output.txt"
         save.timeout = 1
-        save.confirmOverwrite = true
+        save.overwriteConfirmation = true
 
         XCTAssertEqual(open.application, Self.application)
         XCTAssertEqual(save.application, Self.application)

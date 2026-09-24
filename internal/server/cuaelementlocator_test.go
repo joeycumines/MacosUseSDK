@@ -24,7 +24,7 @@ func TestFindElementsUsesOneCanonicalSelector(t *testing.T) {
 
 	result, err := server.cuaHandleFindElements(&ToolCall{
 		Name:      "find_elements",
-		Arguments: json.RawMessage(`{"parent":"applications/exact/windows/window-a","selector":"text_contains:Save","force_refresh":true,"page_size":7}`),
+		Arguments: json.RawMessage(`{"parent":"applications/exact/windows/window-a","selector":"text_substring:Save","cache_bypass":true,"page_size":7}`),
 	})
 	if err != nil {
 		t.Fatalf("cuaHandleFindElements returned error: %v", err)
@@ -35,11 +35,11 @@ func TestFindElementsUsesOneCanonicalSelector(t *testing.T) {
 	if request == nil {
 		t.Fatal("FindElements was not called")
 	}
-	if request.GetParent() != "applications/exact/windows/window-a" || !request.GetForceRefresh() || request.GetPageSize() != 7 {
+	if request.GetParent() != "applications/exact/windows/window-a" || !request.GetCacheBypass() || request.GetPageSize() != 7 {
 		t.Fatalf("FindElements request metadata mismatch: %+v", request)
 	}
-	want := &typepb.ElementSelector_TextContains{TextContains: "Save"}
-	if got, ok := request.GetSelector().GetCriteria().(*typepb.ElementSelector_TextContains); !ok || got.TextContains != want.TextContains {
+	want := &typepb.ElementSelector_TextSubstring{TextSubstring: "Save"}
+	if got, ok := request.GetSelector().GetCriteria().(*typepb.ElementSelector_TextSubstring); !ok || got.TextSubstring != want.TextSubstring {
 		t.Fatalf("FindElements selector = %#v, want %#v", request.GetSelector().GetCriteria(), want)
 	}
 }
@@ -50,7 +50,7 @@ func TestFindElementsRejectsMissingOrLegacyCriteriaBeforeGRPC(t *testing.T) {
 		`{"parent":"applications/exact"}`,
 		`{"parent":"applications/exact","role":"AXButton"}`,
 		`{"parent":"applications/exact","text":"Save"}`,
-		`{"parent":"applications/exact","text_contains":"Save"}`,
+		`{"parent":"applications/exact","text_substring":"Save"}`,
 	} {
 		result, err := server.cuaHandleFindElements(&ToolCall{
 			Name:      "find_elements",
@@ -79,7 +79,7 @@ func TestFindElementsSchemaAdvertisesOnlyCanonicalSelector(t *testing.T) {
 	if _, ok := properties["selector"]; !ok {
 		t.Fatal("find_elements schema does not advertise selector")
 	}
-	for _, removed := range []string{"role", "text", "text_contains"} {
+	for _, removed := range []string{"role", "text", "text_substring"} {
 		if _, ok := properties[removed]; ok {
 			t.Fatalf("find_elements schema retains ignored field %q", removed)
 		}
@@ -190,5 +190,59 @@ func TestApplicationParentResourcePreservesOpaqueProcessIdentity(t *testing.T) {
 		if got != test.want || ok != test.ok {
 			t.Fatalf("applicationParentResource(%q) = (%q, %t), want (%q, %t)", test.parent, got, ok, test.want, test.ok)
 		}
+	}
+}
+
+// --- cuaHandleFindElements — canonical selector admission ---
+
+func TestCUAHandleFindElements_InvalidParams(t *testing.T) {
+	s := newTestServer()
+
+	tests := []struct {
+		name       string
+		args       string
+		wantError  bool
+		wantSubstr string
+	}{
+		{
+			name:       "missing parent parameter",
+			args:       `{"selector":"role:AXButton"}`,
+			wantError:  true,
+			wantSubstr: "parent parameter is required",
+		},
+		{
+			name:       "empty parent parameter",
+			args:       `{"parent":"","selector":"role:AXButton"}`,
+			wantError:  true,
+			wantSubstr: "parent parameter is required",
+		},
+		{
+			name:       "missing selector parameter",
+			args:       `{"parent":"applications/1"}`,
+			wantError:  true,
+			wantSubstr: "selector parameter is required",
+		},
+		{
+			name:       "invalid JSON",
+			args:       `{bad`,
+			wantError:  true,
+			wantSubstr: "Invalid parameters",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			call := &ToolCall{Name: "find_elements", Arguments: json.RawMessage(tt.args)}
+			result, err := s.cuaHandleFindElements(call)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantError && !resultIsError(result) {
+				t.Errorf("expected error result, got: %+v", result)
+			}
+			if tt.wantSubstr != "" && !resultContains(result, tt.wantSubstr) {
+				t.Errorf("expected result to contain %q, got: %q", tt.wantSubstr, resultText(result))
+			}
+		})
 	}
 }

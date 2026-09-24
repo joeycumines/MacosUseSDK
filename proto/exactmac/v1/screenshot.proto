@@ -6,7 +6,7 @@ syntax = "proto3";
 
 package exactmac.v1;
 
-option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpb";
 option java_multiple_files = true;
 option java_outer_classname = "ScreenshotProto";
 option java_package = "io.github.joeycumines.exactmac.v1";
@@ -16,12 +16,15 @@ enum ImageFormat {
   // Default format (PNG).
   IMAGE_FORMAT_UNSPECIFIED = 0;
 
-  // PNG format (lossless).
+  // PNG format (lossless). PNG preserves source alpha when the capture
+  // supplies an alpha channel.
   IMAGE_FORMAT_PNG = 1;
 
-  // JPEG format (lossy, smaller size).
+  // JPEG format (lossy, smaller size). JPEG cannot represent alpha; source
+  // alpha is discarded and the encoded image is opaque.
   IMAGE_FORMAT_JPEG = 2;
 
-  // TIFF format (lossless, larger size).
+  // TIFF format (lossless, larger size). TIFF preserves source alpha when the
+  // capture supplies an alpha channel.
   IMAGE_FORMAT_TIFF = 3;
 }

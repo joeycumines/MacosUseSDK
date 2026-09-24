@@ -10,7 +10,7 @@ import "exactmac/type/geometry.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 
-option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpb";
 option java_multiple_files = true;
 option java_outer_classname = "DisplayProto";
 option java_package = "io.github.joeycumines.exactmac.v1";
@@ -39,7 +39,7 @@ message Display {
   exactmac.type.Region visible_frame = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // True if this is the main (primary) display.
-  bool is_main = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+  bool main = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Scale factor (backingScaleFactor). For Retina displays this is typically 2.0.
   double scale = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -50,10 +50,16 @@ message ListDisplaysRequest {
   // Maximum number of displays to return.
   int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
 
-  // Page token from a previous ListDisplays call.
-  // This token is opaque and its structure must not be relied upon by clients.
-  // Only its presence or absence should be used to determine pagination state.
+  // Page token from a previous call. The token is bound to the other semantic
+  // query inputs, not page_size or skip; clients may change either when continuing.
+  // Its structure is opaque and must not be relied upon by clients.
   string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Number of individual resources to skip before returning this page.
+  // A continuation adds this value to the position encoded by page_token.
+  // If the requested position is beyond the collection, return an empty page
+  // without a next_page_token.
+  int32 skip = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Request to get a specific display.

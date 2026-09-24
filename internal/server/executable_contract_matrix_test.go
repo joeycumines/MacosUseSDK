@@ -80,6 +80,38 @@ func TestExecutableMCPContractMatrix(t *testing.T) {
 	assertToolSurfacesEqual(t, "stdio tools/list", direct, stdio)
 }
 
+func TestMCPSchemasDoNotExposeProgrammaticPaginationSkip(t *testing.T) {
+	server := &MCPServer{tools: make(map[string]*Tool)}
+	server.registerTools()
+
+	for name, tool := range server.tools {
+		if schemaContainsKey(tool.InputSchema, "skip") {
+			t.Errorf("MCP tool %q exposes programmatic pagination field skip", name)
+		}
+	}
+}
+
+func schemaContainsKey(value any, key string) bool {
+	switch typed := value.(type) {
+	case map[string]any:
+		if _, ok := typed[key]; ok {
+			return true
+		}
+		for _, child := range typed {
+			if schemaContainsKey(child, key) {
+				return true
+			}
+		}
+	case []any:
+		for _, child := range typed {
+			if schemaContainsKey(child, key) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func TestExecutableGRPCContractMatrix(t *testing.T) {
 	service := pb.File_exactmac_v1_exact_mac_proto.Services().ByName("ExactMac")
 	if service == nil {
@@ -442,6 +474,7 @@ func assertExecutablePaginationShape(t *testing.T, method protoreflect.MethodDes
 	t.Helper()
 	assertExecutableFieldKind(t, method, method.Input(), "page_size", protoreflect.Int32Kind)
 	assertExecutableFieldKind(t, method, method.Input(), "page_token", protoreflect.StringKind)
+	assertExecutableFieldKind(t, method, method.Input(), "skip", protoreflect.Int32Kind)
 	assertExecutableFieldKind(t, method, method.Output(), "next_page_token", protoreflect.StringKind)
 }
 

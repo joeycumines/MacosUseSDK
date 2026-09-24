@@ -81,7 +81,7 @@ extension ExactMacService {
                 try await self.scriptExecutor.executeAppleScript(
                     req.script,
                     timeout: timeout,
-                    compileOnly: req.compileOnly,
+                    compileOnly: req.validationOnly,
                 )
             }
 
@@ -142,7 +142,7 @@ extension ExactMacService {
                 try await self.scriptExecutor.executeJavaScript(
                     req.script,
                     timeout: timeout,
-                    compileOnly: req.compileOnly,
+                    compileOnly: req.validationOnly,
                 )
             }
 
@@ -202,10 +202,10 @@ extension ExactMacService {
         // Extract working directory (optional)
         let workingDir = req.workingDirectory.isEmpty ? nil : req.workingDirectory
 
-        // Extract environment (optional)
+        // Extract environment variables (optional)
         let environment =
-            req.environment.isEmpty
-                ? nil : Dictionary(uniqueKeysWithValues: req.environment.map { ($0.key, $0.value) })
+            req.environmentVariables.isEmpty
+                ? nil : Dictionary(uniqueKeysWithValues: req.environmentVariables.map { ($0.key, $0.value) })
 
         // Extract stdin (optional)
         let stdin = req.stdin.isEmpty ? nil : req.stdin
@@ -322,16 +322,16 @@ extension ExactMacService {
         }
     }
 
-    func getScriptingDictionaries(
-        request: ServerRequest<Exactmac_V1_GetScriptingDictionariesRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Exactmac_V1_ScriptingDictionaries> {
-        Self.logger.info("getScriptingDictionaries called")
+    func getScriptingDictionaryCatalog(
+        request: ServerRequest<Exactmac_V1_GetScriptingDictionaryCatalogRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Exactmac_V1_ScriptingDictionaryCatalog> {
+        Self.logger.info("getScriptingDictionaryCatalog called")
         let req = request.message
 
-        // Validate resource name (singleton: "scriptingDictionaries")
-        guard req.name == "scriptingDictionaries" else {
+        // Validate resource name (singleton: "scriptingDictionaryCatalog")
+        guard req.name == "scriptingDictionaryCatalog" else {
             throw RPCError(
-                code: .invalidArgument, message: "Invalid scripting dictionaries name: \(req.name)",
+                code: .invalidArgument, message: "Invalid scripting dictionary catalog name: \(req.name)",
             )
         }
 
@@ -383,7 +383,8 @@ extension ExactMacService {
             dictionaries.append(dictionary)
         }
 
-        let response = Exactmac_V1_ScriptingDictionaries.with {
+        let response = Exactmac_V1_ScriptingDictionaryCatalog.with {
+            $0.name = "scriptingDictionaryCatalog"
             $0.dictionaries = dictionaries
         }
         return ServerResponse(message: response)

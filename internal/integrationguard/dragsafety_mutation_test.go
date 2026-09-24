@@ -31,15 +31,15 @@ func TestDragSafetyGuardRejectsMutations(t *testing.T) {
 			name:     "former close then wildcard drag sequence",
 			filename: "drag_operation_test.go",
 			source: `package integration
-func first() { _ = pb.InputAction_Drag{Drag: &pb.MouseDrag{}}; client.CloseWindow(ctx, closeRequest) }
-func TestDragOperation_InputStateTracking() { _ = pb.CreateInputRequest{Parent: "applications/-", Input: &pb.Input{Action: &pb.InputAction{InputType: &pb.InputAction_Drag{Drag: &pb.MouseDrag{}}}}} }
+func first() { _ = pb.InputAction_MouseDrag{MouseDrag: &pb.MouseDrag{}}; client.CloseWindow(ctx, closeRequest) }
+func TestDragOperation_InputStateTracking() { _ = pb.CreateInputRequest{Parent: "applications/-", Input: &pb.Input{Action: &pb.InputAction{InputType: &pb.InputAction_MouseDrag{MouseDrag: &pb.MouseDrag{}}}}} }
 `,
 			wantRules: []string{ruleDragSymbol},
 		},
 		{
 			name:      "application parent does not make global drag safe",
 			filename:  "apparently_owned_test.go",
-			source:    "package integration\nvar _ = pb.CreateInputRequest{Parent: app.Name, Input: &pb.Input{Action: &pb.InputAction{InputType: &pb.InputAction_Drag{Drag: &pb.MouseDrag{}}}}}\n",
+			source:    "package integration\nvar _ = pb.CreateInputRequest{Parent: app.Name, Input: &pb.Input{Action: &pb.InputAction{InputType: &pb.InputAction_MouseDrag{MouseDrag: &pb.MouseDrag{}}}}}\n",
 			wantRules: []string{ruleDragSymbol},
 		},
 		{
@@ -51,13 +51,13 @@ func TestDragOperation_InputStateTracking() { _ = pb.CreateInputRequest{Parent: 
 		{
 			name:      "dot imported generated symbols",
 			filename:  "dot_import_test.go",
-			source:    "package integration\nvar _ = InputAction_Drag{Drag: &MouseDrag{}}\n",
+			source:    "package integration\nvar _ = InputAction_MouseDrag{MouseDrag: &MouseDrag{}}\n",
 			wantRules: []string{ruleDragSymbol},
 		},
 		{
 			name:      "aliased generated drag type",
 			filename:  "alias_test.go",
-			source:    "package integration\ntype unsafeDrag = pb.InputAction_Drag\n",
+			source:    "package integration\ntype unsafeDrag = pb.InputAction_MouseDrag\n",
 			wantRules: []string{ruleDragSymbol},
 		},
 		{
@@ -289,7 +289,7 @@ func requireOwnedTextEditDrag(
 	}
 	return ownedTextEditDragCall{
 		toolName: "drag",
-		action: &pb.InputAction{InputType: &pb.InputAction_Drag{Drag: &pb.MouseDrag{}}},
+		action: &pb.InputAction{InputType: &pb.InputAction_MouseDrag{MouseDrag: &pb.MouseDrag{}}},
 	}
 }
 `,
@@ -297,7 +297,7 @@ func requireOwnedTextEditDrag(
 func nonPhysicalInputAdmissionDragCase() physicalInputAdmissionCase {
 	return physicalInputAdmissionCase{
 		name: "drag",
-		wantAction: &pb.InputAction{InputType: &pb.InputAction_Drag{Drag: &pb.MouseDrag{}}},
+		wantAction: &pb.InputAction{InputType: &pb.InputAction_MouseDrag{MouseDrag: &pb.MouseDrag{}}},
 	}
 }
 `,

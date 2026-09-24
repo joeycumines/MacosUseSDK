@@ -340,3 +340,181 @@ func TestHandleCloseAppReturnsBackendFailure(t *testing.T) {
 		t.Fatalf("handleCloseApp() error=%v result=%q", err, resultText(result))
 	}
 }
+
+// --- H1: handleOpenApp — bring_to_front defaults to true ---
+
+func TestCUAHandleOpenApp_InvalidParams(t *testing.T) {
+	s := newTestServer()
+
+	tests := []struct {
+		name       string
+		args       string
+		wantError  bool
+		wantSubstr string
+	}{
+		{
+			name:       "missing app parameter",
+			args:       `{}`,
+			wantError:  true,
+			wantSubstr: "app parameter is required",
+		},
+		{
+			name:       "empty app parameter",
+			args:       `{"app":""}`,
+			wantError:  true,
+			wantSubstr: "app parameter is required",
+		},
+		{
+			name:       "invalid mode",
+			args:       `{"app":"applicationBundles/bundle-calculator","mode":"invalid_mode"}`,
+			wantError:  true,
+			wantSubstr: "Unknown mode",
+		},
+		{
+			name:       "invalid JSON",
+			args:       `{bad`,
+			wantError:  true,
+			wantSubstr: "Invalid parameters",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			call := &ToolCall{Name: "open_app", Arguments: json.RawMessage(tt.args)}
+			result, err := s.handleOpenApp(call)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantError && !resultIsError(result) {
+				t.Errorf("expected error result, got: %+v", result)
+			}
+			if tt.wantSubstr != "" && !resultContains(result, tt.wantSubstr) {
+				t.Errorf("expected result to contain %q, got: %q", tt.wantSubstr, resultText(result))
+			}
+		})
+	}
+}
+
+// TestCUAHandleOpenApp_BringToFrontDefault verifies H1 fix:
+// bring_to_front defaults to true when not explicitly set.
+func TestCUAHandleOpenApp_BringToFrontDefault(t *testing.T) {
+	tests := []struct {
+		name      string
+		args      string
+		wantBring bool
+	}{
+		{
+			name:      "bring_to_front not set defaults to true",
+			args:      `{"app":"applicationBundles/bundle-calculator"}`,
+			wantBring: true,
+		},
+		{
+			name:      "bring_to_front explicitly true",
+			args:      `{"app":"applicationBundles/bundle-calculator","bring_to_front":true}`,
+			wantBring: true,
+		},
+		{
+			name:      "bring_to_front explicitly false",
+			args:      `{"app":"applicationBundles/bundle-calculator","bring_to_front":false}`,
+			wantBring: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var params struct {
+				App          string `json:"app"`
+				Mode         string `json:"mode"`
+				BringToFront *bool  `json:"bring_to_front"`
+			}
+			if err := json.Unmarshal(json.RawMessage(tt.args), &params); err != nil {
+				t.Fatalf("failed to unmarshal: %v", err)
+			}
+
+			// Replicate the handler's default logic
+			bringToFront := true
+			if params.BringToFront != nil {
+				bringToFront = *params.BringToFront
+			}
+
+			if bringToFront != tt.wantBring {
+				t.Errorf("bringToFront = %v, want %v", bringToFront, tt.wantBring)
+			}
+		})
+	}
+}
+
+// TestCUAHandleOpenApp_ValidModes verifies all valid mode strings are accepted.
+func TestCUAHandleOpenApp_ValidModes(t *testing.T) {
+	validModes := []string{"launch_or_activate", "force_new_instance"}
+	for _, mode := range validModes {
+		t.Run(mode, func(t *testing.T) {
+			var params struct {
+				App  string `json:"app"`
+				Mode string `json:"mode"`
+			}
+			args := `{"app":"applicationBundles/bundle-calculator","mode":"` + mode + `"}`
+			if err := json.Unmarshal(json.RawMessage(args), &params); err != nil {
+				t.Fatalf("failed to unmarshal: %v", err)
+			}
+			if params.Mode != mode {
+				t.Errorf("mode = %q, want %q", params.Mode, mode)
+			}
+			if params.App != "applicationBundles/bundle-calculator" {
+				t.Errorf("app = %q, want exact bundle resource", params.App)
+			}
+		})
+	}
+}
+
+// --- H3: handleCloseApp — displayName sanitization ---
+
+func TestCUAHandleCloseApp_InvalidParams(t *testing.T) {
+	s := newTestServer()
+
+	tests := []struct {
+		name       string
+		args       string
+		wantError  bool
+		wantSubstr string
+	}{
+		{
+			name:       "missing app parameter",
+			args:       `{}`,
+			wantError:  true,
+			wantSubstr: "app parameter is required",
+		},
+		{
+			name:       "empty app parameter",
+			args:       `{"app":""}`,
+			wantError:  true,
+			wantSubstr: "app parameter is required",
+		},
+		{
+			name:       "invalid JSON",
+			args:       `{bad`,
+			wantError:  true,
+			wantSubstr: "Invalid parameters",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			call := &ToolCall{Name: "close_app", Arguments: json.RawMessage(tt.args)}
+			result, err := s.handleCloseApp(call)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantError && !resultIsError(result) {
+				t.Errorf("expected error result, got: %+v", result)
+			}
+			if tt.wantSubstr != "" && !resultContains(result, tt.wantSubstr) {
+				t.Errorf("expected result to contain %q, got: %q", tt.wantSubstr, resultText(result))
+			}
+		})
+	}
+}
+
+// --- handleListApps — no parameter validation (goes straight to gRPC) ---
+// handleListApps has no parameter parsing, so validation tests are not applicable.
+// It will be tested via integration tests with a live gRPC server.

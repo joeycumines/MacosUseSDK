@@ -251,7 +251,7 @@ func TestMCPInputAdmission_ProductionTransports(t *testing.T) {
 				},
 			},
 			wantAction: &pb.InputAction{
-				InputType: &pb.InputAction_Click{Click: &pb.MouseClick{
+				InputType: &pb.InputAction_MouseClick{MouseClick: &pb.MouseClick{
 					Position:   &typepb.Point{X: 10.25, Y: -20.5},
 					ClickType:  &right,
 					ClickCount: &triple,
@@ -277,7 +277,7 @@ func TestMCPInputAdmission_ProductionTransports(t *testing.T) {
 				Destination: &pb.InputTarget_Display{Display: "displays/7"},
 			},
 			wantAction: &pb.InputAction{
-				InputType: &pb.InputAction_Click{Click: &pb.MouseClick{
+				InputType: &pb.InputAction_MouseClick{MouseClick: &pb.MouseClick{
 					Position:   &typepb.Point{X: 0.25, Y: 1.5},
 					ClickType:  &middle,
 					ClickCount: &double,
@@ -298,7 +298,7 @@ func TestMCPInputAdmission_ProductionTransports(t *testing.T) {
 				Destination: &pb.InputTarget_Application{Application: "applications/editor"},
 			},
 			wantAction: &pb.InputAction{
-				InputType: &pb.InputAction_TypeText{TypeText: &pb.TextInput{
+				InputType: &pb.InputAction_TextInput{TextInput: &pb.TextInput{
 					Text:      "é👨‍👩‍👧‍👦",
 					CharDelay: 0.125,
 				}},
@@ -319,7 +319,7 @@ func TestMCPInputAdmission_ProductionTransports(t *testing.T) {
 				},
 			},
 			wantAction: &pb.InputAction{
-				InputType: &pb.InputAction_PressKey{PressKey: &pb.KeyPress{
+				InputType: &pb.InputAction_KeyPress{KeyPress: &pb.KeyPress{
 					Key:          "é",
 					Modifiers:    []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_CONTROL},
 					HoldDuration: 0.375,
@@ -343,7 +343,7 @@ func TestMCPInputAdmission_ProductionTransports(t *testing.T) {
 				Destination: &pb.InputTarget_Desktop{Desktop: true},
 			},
 			wantAction: &pb.InputAction{
-				InputType: &pb.InputAction_Scroll{Scroll: &pb.Scroll{
+				InputType: &pb.InputAction_ScrollAction{ScrollAction: &pb.Scroll{
 					Position:   &typepb.Point{X: 1.25, Y: 2.5},
 					Horizontal: 2.5,
 					Vertical:   3.5,
@@ -368,7 +368,7 @@ func TestMCPInputAdmission_ProductionTransports(t *testing.T) {
 				Destination: &pb.InputTarget_Display{Display: "displays/9"},
 			},
 			wantAction: &pb.InputAction{
-				InputType: &pb.InputAction_MoveMouse{MoveMouse: &pb.MouseMove{
+				InputType: &pb.InputAction_MouseMove{MouseMove: &pb.MouseMove{
 					Position:  &typepb.Point{X: -0.25, Y: 1.5},
 					Duration:  0.5,
 					Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
@@ -453,13 +453,13 @@ func nonPhysicalInputAdmissionDragCase() physicalInputAdmissionCase {
 			},
 		},
 		wantAction: &pb.InputAction{
-			InputType: &pb.InputAction_Drag{Drag: &pb.MouseDrag{
+			InputType: &pb.InputAction_MouseDrag{MouseDrag: &pb.MouseDrag{
 				StartPosition: &typepb.Point{X: -1.25, Y: 2.5},
 				EndPosition:   &typepb.Point{X: 8.5, Y: 9.25},
 				Duration:      0.75,
 				Button:        &right,
 				Modifiers:     []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_SHIFT},
-				Path: []*typepb.Point{
+				Waypoints: []*typepb.Point{
 					{X: -1.25, Y: 2.5},
 					{X: 3.75, Y: 4.125},
 					{X: 8.5, Y: 9.25},
@@ -559,7 +559,7 @@ func assertInputAdmissionDefaultClick(t *testing.T, recorder *inputAdmissionBack
 	if !reflect.DeepEqual(methods, []string{pb.ExactMac_CreateInput_FullMethodName}) || len(inputs) != 1 {
 		t.Fatalf("%s methods=%v inputs=%d", label, methods, len(inputs))
 	}
-	click := inputs[0].GetInput().GetAction().GetClick()
+	click := inputs[0].GetInput().GetAction().GetMouseClick()
 	if click == nil || click.GetClickType() != pb.MouseClick_CLICK_TYPE_LEFT || click.GetClickCount() != 1 || click.GetPosition().GetX() != 0 || click.GetPosition().GetY() != 0 {
 		t.Fatalf("%s click=%+v, want explicit left/1 at (0,0)", label, click)
 	}

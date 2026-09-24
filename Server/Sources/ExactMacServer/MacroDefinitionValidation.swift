@@ -30,7 +30,7 @@ enum MacroDefinitionValidator {
                 pending.append(contentsOf: conditional.elseActions)
             case let .loop(loop):
                 pending.append(contentsOf: loop.actions)
-            case .wait, .assign, .none:
+            case .wait, .assignment, .none:
                 break
             }
         }
@@ -114,15 +114,15 @@ enum MacroDefinitionValidator {
                         condition,
                         "\(pendingAction.path).loop.while_condition",
                     ))
-                case let .foreach(foreach):
+                case let .eachItemLoop(foreach):
                     try require(
                         foreach.collection != nil,
-                        path: "\(pendingAction.path).loop.foreach.collection",
+                        path: "\(pendingAction.path).loop.each_item_loop.collection",
                         detail: "collection is required",
                     )
                     try require(
                         !foreach.itemVariable.isEmpty,
-                        path: "\(pendingAction.path).loop.foreach.item_variable",
+                        path: "\(pendingAction.path).loop.each_item_loop.item_variable",
                         detail: "item variable is required",
                     )
                 }
@@ -130,27 +130,27 @@ enum MacroDefinitionValidator {
                     (action: action, path: "\(pendingAction.path).loop.actions[\(index)]")
                 })
 
-            case let .assign(assignAction):
+            case let .assignment(assignAction):
                 try require(
                     !assignAction.variable.isEmpty,
-                    path: "\(pendingAction.path).assign.variable",
+                    path: "\(pendingAction.path).assignment.variable",
                     detail: "variable is required",
                 )
                 guard let value = assignAction.value else {
                     throw MacroDefinitionValidationError(
-                        actionPath: "\(pendingAction.path).assign.value",
+                        actionPath: "\(pendingAction.path).assignment.value",
                         detail: "value source is required",
                     )
                 }
                 if case let .elementAttribute(elementAttribute) = value {
                     try require(
                         !elementAttribute.elementSelector.isEmpty,
-                        path: "\(pendingAction.path).assign.element_attribute.element_selector",
+                        path: "\(pendingAction.path).assignment.element_attribute.element_selector",
                         detail: "element selector is required",
                     )
                     try require(
                         !elementAttribute.attribute.isEmpty,
-                        path: "\(pendingAction.path).assign.element_attribute.attribute",
+                        path: "\(pendingAction.path).assignment.element_attribute.attribute",
                         detail: "attribute is required",
                     )
                 }
@@ -184,21 +184,21 @@ enum MacroDefinitionValidator {
                 )
             }
             switch condition {
-            case let .variableEquals(variableCondition):
+            case let .variableCondition(variableCondition):
                 try require(
                     !variableCondition.variable.isEmpty,
-                    path: "\(pendingCondition.path).variable_equals.variable",
+                    path: "\(pendingCondition.path).variable_condition.variable",
                     detail: "variable is required",
                 )
                 try require(
                     !variableCondition.value.isEmpty,
-                    path: "\(pendingCondition.path).variable_equals.value",
+                    path: "\(pendingCondition.path).variable_condition.value",
                     detail: "value is required",
                 )
             case let .compound(compoundCondition):
                 try require(
-                    compoundCondition.operator != .unspecified,
-                    path: "\(pendingCondition.path).compound.operator",
+                    compoundCondition.logicalOperator != .unspecified,
+                    path: "\(pendingCondition.path).compound.logical_operator",
                     detail: "operator is required",
                 )
                 try require(
@@ -212,7 +212,7 @@ enum MacroDefinitionValidator {
                         path: "\(pendingCondition.path).compound.conditions[\(index)]",
                     )
                 })
-            case .elementExists, .windowExists, .applicationRunning:
+            case .elementSelector, .windowTitle, .runningApplicationBundleID:
                 break
             }
         }

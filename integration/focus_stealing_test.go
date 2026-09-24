@@ -61,8 +61,8 @@ func TestNoFocusStealingWithPassiveObservation(t *testing.T) {
 	createReq := &pb.CreateObservationRequest{
 		Parent: app.Name,
 		Observation: &pb.Observation{
-			Type:     pb.ObservationType_OBSERVATION_TYPE_WINDOW_CHANGES,
-			Activate: false,
+			Type:       pb.ObservationType_OBSERVATION_TYPE_WINDOW_CHANGES,
+			Activation: false,
 			Filter: &pb.ObservationFilter{
 				PollInterval: 0.5,
 			},
@@ -189,8 +189,8 @@ func TestFocusStealingWithActiveObservation(t *testing.T) {
 	createReq := &pb.CreateObservationRequest{
 		Parent: app.Name,
 		Observation: &pb.Observation{
-			Type:     pb.ObservationType_OBSERVATION_TYPE_TREE_CHANGES,
-			Activate: true,
+			Type:       pb.ObservationType_OBSERVATION_TYPE_TREE_CHANGES,
+			Activation: true,
 			Filter: &pb.ObservationFilter{
 				PollInterval: 0.5,
 			},

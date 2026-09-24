@@ -135,11 +135,11 @@ The agent skill in `skills/exactmac/` ships as the `exactmac` Claude Code plugin
 /plugin install exactmac@exactmac
 ```
 
-Validate manifests with `claude plugin validate .` from the repo root. The manifests carry no `version` field, so updates follow the git SHA while the plugin is under active development.
+Validate manifests with `claude plugin validate .` from the repo root. The plugin manifest and skill metadata carry the coupled product version; use `gmake release.update RELEASE_VERSION=X.Y.Z` for release updates instead of editing one manifest or following a Git SHA independently.
 
 ## Releases
 
-See [RELEASE_PROCESS.md](RELEASE_PROCESS.md) for the one-version, one-root-tag release process. The document describes future release steps; it does not create a release or tag.
+See [RELEASE_PROCESS.md](RELEASE_PROCESS.md) for the one-version, one-root-tag release process and the required `hack/` helper scripts. The update script edits files; the tag script creates only a local annotated tag. Neither pushes a tag or creates a GitHub release.
 
 ## Test Guidelines
 

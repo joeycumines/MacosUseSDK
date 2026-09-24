@@ -124,8 +124,8 @@ func (s *MCPServer) cuaHandleClick(call *ToolCall) (*ToolResult, error) {
 
 	request, err := buildCUAInputRequest(params.Target, &pb.Input{
 		Action: &pb.InputAction{
-			InputType: &pb.InputAction_Click{
-				Click: &pb.MouseClick{
+			InputType: &pb.InputAction_MouseClick{
+				MouseClick: &pb.MouseClick{
 					Position:   &typepb.Point{X: *params.X, Y: *params.Y},
 					ClickType:  &clickType,
 					ClickCount: &clickCount,
@@ -206,8 +206,8 @@ func (s *MCPServer) handleDoubleClick(call *ToolCall) (*ToolResult, error) {
 
 	request, err := buildCUAInputRequest(params.Target, &pb.Input{
 		Action: &pb.InputAction{
-			InputType: &pb.InputAction_Click{
-				Click: &pb.MouseClick{
+			InputType: &pb.InputAction_MouseClick{
+				MouseClick: &pb.MouseClick{
 					Position:   &typepb.Point{X: *params.X, Y: *params.Y},
 					ClickType:  &clickType,
 					ClickCount: &clickCount,
@@ -271,8 +271,8 @@ func (s *MCPServer) handleType(call *ToolCall) (*ToolResult, error) {
 
 	input := &pb.Input{
 		Action: &pb.InputAction{
-			InputType: &pb.InputAction_TypeText{
-				TypeText: &pb.TextInput{
+			InputType: &pb.InputAction_TextInput{
+				TextInput: &pb.TextInput{
 					Text:      params.Text,
 					CharDelay: params.CharDelay,
 				},
@@ -338,8 +338,8 @@ func (s *MCPServer) handleKeypress(call *ToolCall) (*ToolResult, error) {
 
 	input := &pb.Input{
 		Action: &pb.InputAction{
-			InputType: &pb.InputAction_PressKey{
-				PressKey: &pb.KeyPress{
+			InputType: &pb.InputAction_KeyPress{
+				KeyPress: &pb.KeyPress{
 					Key:          primaryKey,
 					Modifiers:    modifierEnums,
 					HoldDuration: params.HoldDuration,
@@ -422,7 +422,7 @@ func (s *MCPServer) cuaHandleScroll(call *ToolCall) (*ToolResult, error) {
 
 	request, err := buildCUAInputRequest(params.Target, &pb.Input{
 		Action: &pb.InputAction{
-			InputType: &pb.InputAction_Scroll{Scroll: scroll},
+			InputType: &pb.InputAction_ScrollAction{ScrollAction: scroll},
 		},
 	})
 	if err != nil {
@@ -530,12 +530,12 @@ func (s *MCPServer) cuaHandleDrag(call *ToolCall) (*ToolResult, error) {
 		Duration:      params.Duration,
 		Button:        &clickType,
 		Modifiers:     modifiers,
-		Path:          path,
+		Waypoints:     path,
 	}
 
 	request, err := buildCUAInputRequest(params.Target, &pb.Input{
 		Action: &pb.InputAction{
-			InputType: &pb.InputAction_Drag{Drag: drag},
+			InputType: &pb.InputAction_MouseDrag{MouseDrag: drag},
 		},
 	})
 	if err != nil {
@@ -605,7 +605,7 @@ func (s *MCPServer) handleMove(call *ToolCall) (*ToolResult, error) {
 
 	request, err := buildCUAInputRequest(params.Target, &pb.Input{
 		Action: &pb.InputAction{
-			InputType: &pb.InputAction_MoveMouse{MoveMouse: move},
+			InputType: &pb.InputAction_MouseMove{MouseMove: move},
 		},
 	})
 	if err != nil {

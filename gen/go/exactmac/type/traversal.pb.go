@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/type/traversal.proto
 
-package exactmactype
+package exactmactypepb
 
 import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -152,8 +152,8 @@ const file_exactmac_type_traversal_proto_rawDesc = "" +
 	"roleCounts\x1a=\n" +
 	"\x0fRoleCountsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01B\xcd\x01\n" +
-	"#io.github.joeycumines.exactmac.typeB\x0eTraversalProtoP\x01ZAgithub.com/joeycumines/ExactMac/gen/go/exactmac/type;exactmactype\xa2\x02\x03ETX\xaa\x02\rExactmac.Type\xca\x02\rExactmac\\Type\xe2\x02\x19Exactmac\\Type\\GPBMetadata\xea\x02\x0eExactmac::Typeb\x06proto3"
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01B|\n" +
+	"#io.github.joeycumines.exactmac.typeB\x0eTraversalProtoP\x01ZCgithub.com/joeycumines/ExactMac/gen/go/exactmac/type;exactmactypepbb\x06proto3"
 
 var (
 	file_exactmac_type_traversal_proto_rawDescOnce sync.Once

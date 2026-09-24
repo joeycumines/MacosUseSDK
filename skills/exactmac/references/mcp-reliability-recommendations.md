@@ -33,10 +33,10 @@ exist:
 
 ## 4. `find_elements` Staleness Mitigation — **Implemented**
 
-`find_elements` accepts `force_refresh=true`, which discards the server's
+`find_elements` accepts `cache_bypass=true`, which discards the server's
 cached AX data and re-walks the tree before returning results. Default is
-`force_refresh=false`. After interactions that modify element state, use
-`force_refresh=true` or `read_element` on the specific element for a fresh
+`cache_bypass=false`. After interactions that modify element state, use
+`cache_bypass=true` or `read_element` on the specific element for a fresh
 read.
 
 ## 5. Element Bounds Accuracy for Clickable Area — **Open proposal**
@@ -75,7 +75,7 @@ VS Code), DOM redraws and dynamic updates invalidate element handles
 **Mitigations:**
 - Avoid conversational turns between `find_elements` and `click_element`.
 - If an element handle reports `Element ... is no longer available` or is not attached
-  to an AX window, call `find_elements(force_refresh=true)` on the current parent and
+  to an AX window, call `find_elements(cache_bypass=true)` on the current parent and
   use the fresh actionable handle immediately. If that also fails, re-list/focus the
   exact process/window and rediscover before using coordinates.
 - When a fresh `read_element` provides usable bounds, record the center coordinates:

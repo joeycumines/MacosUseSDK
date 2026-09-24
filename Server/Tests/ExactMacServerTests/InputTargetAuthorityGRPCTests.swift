@@ -1907,7 +1907,7 @@ private func targetAuthorityClickRequest(
         $0.parent = parent
         $0.inputID = id
         $0.input.target.window = window
-        $0.input.action.click.position = Exactmac_Type_Point.with {
+        $0.input.action.mouseClick.position = Exactmac_Type_Point.with {
             $0.x = point.x
             $0.y = point.y
         }
@@ -1923,7 +1923,7 @@ private func targetAuthorityKeyRequest(
         $0.parent = parent
         $0.inputID = id
         $0.input.target.window = window
-        $0.input.action.pressKey.key = "return"
+        $0.input.action.keyPress.key = "return"
     }
 }
 
@@ -1937,7 +1937,7 @@ private func targetAuthorityScrollRequest(
         $0.parent = parent
         $0.inputID = id
         $0.input.target.window = window
-        $0.input.action.scroll = Exactmac_V1_Scroll.with {
+        $0.input.action.scrollAction = Exactmac_V1_Scroll.with {
             $0.position = Exactmac_Type_Point.with {
                 $0.x = point.x
                 $0.y = point.y
@@ -1955,7 +1955,7 @@ private func targetAuthorityApplicationKeyRequest(
         $0.parent = parent
         $0.inputID = id
         $0.input.target.application = parent
-        $0.input.action.pressKey.key = "return"
+        $0.input.action.keyPress.key = "return"
     }
 }
 
@@ -1968,7 +1968,7 @@ private func targetAuthorityApplicationClickRequest(
         $0.parent = parent
         $0.inputID = id
         $0.input.target.application = parent
-        $0.input.action.click.position = Exactmac_Type_Point.with {
+        $0.input.action.mouseClick.position = Exactmac_Type_Point.with {
             $0.x = point.x
             $0.y = point.y
         }
@@ -1983,7 +1983,7 @@ private func targetAuthorityApplicationCharacterRequest(
         $0.parent = parent
         $0.inputID = id
         $0.input.target.application = parent
-        $0.input.action.pressKey.key = "a"
+        $0.input.action.keyPress.key = "a"
     }
 }
 
@@ -1996,7 +1996,7 @@ private func targetAuthoritySessionClickRequest(
         $0.parent = "applications/-"
         $0.inputID = id
         $0.input.target.destination = target
-        $0.input.action.click.position = Exactmac_Type_Point.with {
+        $0.input.action.mouseClick.position = Exactmac_Type_Point.with {
             $0.x = point.x
             $0.y = point.y
         }
@@ -2011,7 +2011,7 @@ private func targetAuthorityApplicationMoveRequest(
         $0.parent = parent
         $0.inputID = id
         $0.input.target.application = parent
-        $0.input.action.moveMouse.position = Exactmac_Type_Point.with {
+        $0.input.action.mouseMove.position = Exactmac_Type_Point.with {
             $0.x = 120
             $0.y = 120
         }
@@ -2027,7 +2027,7 @@ private func targetAuthorityWindowMoveRequest(
         $0.parent = parent
         $0.inputID = id
         $0.input.target.window = window
-        $0.input.action.moveMouse.position = Exactmac_Type_Point.with {
+        $0.input.action.mouseMove.position = Exactmac_Type_Point.with {
             $0.x = 120
             $0.y = 120
         }

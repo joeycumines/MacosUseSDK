@@ -31,13 +31,16 @@ public nonisolated enum Exactmac_V1_ImageFormat: SwiftProtobuf.Enum, Swift.CaseI
   /// Default format (PNG).
   case unspecified // = 0
 
-  /// PNG format (lossless).
+  /// PNG format (lossless). PNG preserves source alpha when the capture
+  /// supplies an alpha channel.
   case png // = 1
 
-  /// JPEG format (lossy, smaller size).
+  /// JPEG format (lossy, smaller size). JPEG cannot represent alpha; source
+  /// alpha is discarded and the encoded image is opaque.
   case jpeg // = 2
 
-  /// TIFF format (lossless, larger size).
+  /// TIFF format (lossless, larger size). TIFF preserves source alpha when the
+  /// capture supplies an alpha channel.
   case tiff // = 3
   case UNRECOGNIZED(Int)
 

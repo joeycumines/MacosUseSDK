@@ -15,7 +15,7 @@ description: >
 license: MIT
 metadata:
   author: ExactMac Team
-  version: 1.3.0
+  version: 0.1.0
   mcp-server: exactmac
   compatibility: Requires the ExactMac MCP server (server key `exactmac`) running with macOS Accessibility permissions.
 ---
@@ -142,7 +142,7 @@ ExactMac uses **Global Display Coordinates (top-left origin)**:
 
 - **Stale Handle:** If `click_element` reports that an element is no longer available or
   is not attached to an AX window, treat the snapshot handle as expired. Re-run
-  `find_elements(force_refresh=true)` on the current parent and use the fresh actionable
+  `find_elements(cache_bypass=true)` on the current parent and use the fresh actionable
   handle immediately. Do not insert a focus, screenshot, wait, or second discovery
   between that fresh discovery and the mutation. If the fresh handle also fails, re-list
   and focus the exact process/window, rediscover once more, then escalate to keyboard
@@ -162,7 +162,7 @@ ExactMac uses **Global Display Coordinates (top-left origin)**:
 When an interaction does not produce the expected result, escalate immediately rather
 than repeating the same failed call:
 1. `click_element(parent, element=handle)` — clicks geometric center and acquires focus.
-2. Fresh `find_elements(force_refresh=true)` and a new actionable handle.
+2. Fresh `find_elements(cache_bypass=true)` and a new actionable handle.
 3. Re-list/activate the exact process or accessible window, rediscover, and retry once.
 4. If `read_element` confirms the fresh target is focused and its available action
    matches the request, use a keyboard trigger — `keypress(target=window, keys=["enter"])`
@@ -221,7 +221,7 @@ after the UI settles.
      `role:AXLink` to discover content.
    - Click links/buttons using `click_element` or center-coordinate `click`.
    - Scroll through feeds: `scroll(target=window, x=center_x, y=center_y, scroll_y=500)`
-     followed by `wait(1.0)` and `find_elements(force_refresh=true)`.
+     followed by `wait(1.0)` and `find_elements(cache_bypass=true)`.
 
 ### Workflow 2: Visual Grounding Fallback (JetBrains IDEs, Canvas, Games)
 
@@ -245,7 +245,7 @@ When an application's accessibility tree returns `kAXErrorAPIDisabled (-25211)` 
 1. `find_elements(parent=window, selector="role:AXButton")` or specific text.
 2. `click_element(parent=window, element=handle)` to click and focus.
 3. For text fields: `type_element(parent=window, element=handle, text="value")`.
-4. Re-query AX with `force_refresh=true` or use `read_element` to confirm changes.
+4. Re-query AX with `cache_bypass=true` or use `read_element` to confirm changes.
 
 ### Workflow 4: Desktop Web-View or Canvas App Navigation
 

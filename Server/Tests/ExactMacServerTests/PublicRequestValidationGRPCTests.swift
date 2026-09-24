@@ -263,7 +263,7 @@ struct PublicRequestValidationGRPCTests {
 
         let clickArm = try Array(
             Exactmac_V1_InputAction.with {
-                $0.click.position = Exactmac_Type_Point.with {
+                $0.mouseClick.position = Exactmac_Type_Point.with {
                     $0.x = 1
                     $0.y = 1
                 }
@@ -271,17 +271,17 @@ struct PublicRequestValidationGRPCTests {
         )
         let typeTextArm = try Array(
             Exactmac_V1_InputAction.with {
-                $0.typeText.text = "must-not-execute"
+                $0.textInput.text = "must-not-execute"
             }.serializedData(),
         )
         let elementConditionArm = try Array(
             Exactmac_V1_MacroCondition.with {
-                $0.elementExists = "role=AXButton"
+                $0.elementSelector = "role=AXButton"
             }.serializedData(),
         )
         let windowConditionArm = try Array(
             Exactmac_V1_MacroCondition.with {
-                $0.windowExists = "must-not-create"
+                $0.windowTitle = "must-not-create"
             }.serializedData(),
         )
 
@@ -564,10 +564,10 @@ struct PublicRequestValidationGRPCTests {
             (
                 "assignment value",
                 Exactmac_V1_MacroAction.with {
-                    $0.assign.variable = "result"
+                    $0.assignment.variable = "result"
                 },
                 "REQUIRED_ONEOF_MISSING",
-                "macro.actions.assign.value",
+                "macro.actions.assignment.value",
             ),
             (
                 "wait duration",
@@ -998,7 +998,7 @@ struct PublicRequestValidationGRPCTests {
                     client: client,
                     request: Exactmac_V1_ExecuteAppleScriptRequest.with {
                         $0.script = "return 1"
-                        $0.compileOnly = true
+                        $0.validationOnly = true
                         $0.timeout = Google_Protobuf_Duration.with {
                             $0.seconds = 18_446_744_073
                             $0.nanos = 709_551_615
@@ -1013,7 +1013,7 @@ struct PublicRequestValidationGRPCTests {
                     client: client,
                     request: Exactmac_V1_ExecuteJavaScriptRequest.with {
                         $0.script = "1"
-                        $0.compileOnly = true
+                        $0.validationOnly = true
                         $0.timeout = Google_Protobuf_Duration(seconds: 0, nanos: 1_000_000_000)
                     },
                     descriptor: Exactmac_V1_ExactMac.Method.ExecuteJavaScript.descriptor,
@@ -1086,6 +1086,42 @@ struct PublicRequestValidationGRPCTests {
             let errorInfo = try extractErrorInfo(from: error)
             #expect(errorInfo.reason == "INVALID_PAGE_SIZE")
             #expect(errorInfo.metadata["field"] == "page_size")
+        }
+    }
+
+    @Test
+    func `every public skip uses one bounded policy`() throws {
+        let contract = try Self.loadPublicContract()
+        let skipPaths = try Self.requestFieldPaths(for: contract).filter {
+            $0.fields.last?.name == "skip" && $0.fields.last?.type == .int32
+        }
+        #expect(
+            Set(skipPaths.map(\.label)) == Set([
+                "\(Exactmac_V1_ExactMac.Method.ListApplicationBundles.descriptor.fullyQualifiedMethod):skip",
+                "\(Exactmac_V1_ExactMac.Method.ListApplications.descriptor.fullyQualifiedMethod):skip",
+                "\(Exactmac_V1_ExactMac.Method.ListInputs.descriptor.fullyQualifiedMethod):skip",
+                "\(Exactmac_V1_ExactMac.Method.FindElements.descriptor.fullyQualifiedMethod):skip",
+                "\(Exactmac_V1_ExactMac.Method.FindRegionElements.descriptor.fullyQualifiedMethod):skip",
+                "\(Exactmac_V1_ExactMac.Method.ListElements.descriptor.fullyQualifiedMethod):skip",
+                "\(Exactmac_V1_ExactMac.Method.ListWindows.descriptor.fullyQualifiedMethod):skip",
+                "\(Exactmac_V1_ExactMac.Method.ListObservations.descriptor.fullyQualifiedMethod):skip",
+                "\(Exactmac_V1_ExactMac.Method.ListSessions.descriptor.fullyQualifiedMethod):skip",
+                "\(Exactmac_V1_ExactMac.Method.ListMacros.descriptor.fullyQualifiedMethod):skip",
+                "\(Exactmac_V1_ExactMac.Method.ListDisplays.descriptor.fullyQualifiedMethod):skip",
+            ]),
+        )
+
+        #expect(try RequestNumericValidation.skip(0) == 0)
+        #expect(try RequestNumericValidation.skip(30) == 30)
+        #expect(try RequestNumericValidation.skip(Int32.max) == Int(Int32.max))
+        do {
+            _ = try RequestNumericValidation.skip(-1)
+            Issue.record("Expected negative skip rejection")
+        } catch let error as RPCError {
+            #expect(error.code == .invalidArgument)
+            let errorInfo = try extractErrorInfo(from: error)
+            #expect(errorInfo.reason == "INVALID_SKIP")
+            #expect(errorInfo.metadata["field"] == "skip")
         }
     }
 
@@ -1191,8 +1227,8 @@ struct PublicRequestValidationGRPCTests {
             }
 
             let removedOptions: [(label: String, bytes: [UInt8])] = [
-                ("speed", [0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40]),
-                ("continue_on_error", [0x10, 0x01]),
+                ("speed", [0x10, 0x01]),
+                ("continue_on_error", [0x18, 0x01]),
                 ("record_execution", [0x20, 0x01]),
             ]
             for removedOption in removedOptions {
@@ -1240,41 +1276,41 @@ struct PublicRequestValidationGRPCTests {
             (
                 "click_count",
                 Exactmac_V1_InputAction.with {
-                    $0.click.position = Exactmac_Type_Point.with {
+                    $0.mouseClick.position = Exactmac_Type_Point.with {
                         $0.x = 1
                         $0.y = 1
                     }
-                    $0.click.clickCount = 11
+                    $0.mouseClick.clickCount = 11
                 },
             ),
             (
                 "char_delay",
                 Exactmac_V1_InputAction.with {
-                    $0.typeText.text = "x"
-                    $0.typeText.charDelay = 61
+                    $0.textInput.text = "x"
+                    $0.textInput.charDelay = 61
                 },
             ),
             (
-                "scroll.horizontal",
+                "scroll_action.horizontal",
                 Exactmac_V1_InputAction.with {
-                    $0.scroll.horizontal = Double(Int32.max) + 1
+                    $0.scrollAction.horizontal = Double(Int32.max) + 1
                 },
             ),
             (
-                "hover.duration",
+                "hover_action.duration",
                 Exactmac_V1_InputAction.with {
-                    $0.hover.position = Exactmac_Type_Point.with {
+                    $0.hoverAction.position = Exactmac_Type_Point.with {
                         $0.x = 1
                         $0.y = 1
                     }
-                    $0.hover.duration = 3601
+                    $0.hoverAction.duration = 3601
                 },
             ),
             (
                 "animation_duration",
                 Exactmac_V1_InputAction.with {
                     $0.animationDuration = 3601
-                    $0.moveMouse.position = Exactmac_Type_Point.with {
+                    $0.mouseMove.position = Exactmac_Type_Point.with {
                         $0.x = 1
                         $0.y = 1
                     }
@@ -1350,11 +1386,11 @@ struct PublicRequestValidationGRPCTests {
                                 $0.loop.count = 1
                                 $0.loop.actions = [
                                     Exactmac_V1_MacroAction.with {
-                                        $0.input.click.position = Exactmac_Type_Point.with {
+                                        $0.input.mouseClick.position = Exactmac_Type_Point.with {
                                             $0.x = 1
                                             $0.y = 1
                                         }
-                                        $0.input.click.clickCount = 11
+                                        $0.input.mouseClick.clickCount = 11
                                     },
                                 ]
                             },
@@ -1392,8 +1428,8 @@ struct PublicRequestValidationGRPCTests {
         let macroID = "invalid-update-\(UUID().uuidString)"
         let macroName = "macros/\(macroID)"
         let originalAction = Exactmac_V1_MacroAction.with {
-            $0.assign.variable = "state"
-            $0.assign.literal = "original"
+            $0.assignment.variable = "state"
+            $0.assignment.literal = "original"
         }
         _ = await composition.macroRegistry.createMacro(
             macroId: macroID,
@@ -1421,11 +1457,11 @@ struct PublicRequestValidationGRPCTests {
                         $0.macro.displayName = "preserved macro"
                         $0.macro.actions = [
                             Exactmac_V1_MacroAction.with {
-                                $0.input.hover.position = Exactmac_Type_Point.with {
+                                $0.input.hoverAction.position = Exactmac_Type_Point.with {
                                     $0.x = 1
                                     $0.y = 1
                                 }
-                                $0.input.hover.duration = 3601
+                                $0.input.hoverAction.duration = 3601
                             },
                         ]
                         $0.updateMask.paths = ["actions"]
@@ -1518,7 +1554,7 @@ struct PublicRequestValidationGRPCTests {
             #expect(regionAliasInfo.metadata["field"] == "display")
 
             let removedFullIndex = try Exactmac_V1_CaptureScreenshotRequest(
-                serializedBytes: [0x18, 0x01],
+                serializedBytes: [0x28, 0x01],
             )
             let removedFullError = try await protobufRPCError(
                 client: client,
@@ -1530,7 +1566,7 @@ struct PublicRequestValidationGRPCTests {
             #expect(try extractErrorInfo(from: removedFullError).reason == "UNKNOWN_FIELD")
 
             let removedRegionIndex = try Exactmac_V1_CaptureRegionScreenshotRequest(
-                serializedBytes: [0x20, 0x01],
+                serializedBytes: [0x30, 0x01],
             )
             let removedRegionError = try await protobufRPCError(
                 client: client,
@@ -1584,12 +1620,12 @@ struct PublicRequestValidationGRPCTests {
                 .map(\.label),
         )
         let expectedPointOccurrences: Set = [
-            "\(createInputMethod):input.action.click.position.x",
-            "\(createInputMethod):input.action.move_mouse.position.x",
-            "\(createInputMethod):input.action.drag.start_position.x",
-            "\(createInputMethod):input.action.drag.end_position.x",
-            "\(createInputMethod):input.action.drag.path.x",
-            "\(createInputMethod):input.action.hover.position.x",
+            "\(createInputMethod):input.action.mouse_click.position.x",
+            "\(createInputMethod):input.action.mouse_move.position.x",
+            "\(createInputMethod):input.action.mouse_drag.start_position.x",
+            "\(createInputMethod):input.action.mouse_drag.end_position.x",
+            "\(createInputMethod):input.action.mouse_drag.waypoints.x",
+            "\(createInputMethod):input.action.hover_action.position.x",
         ]
 
         #expect(
@@ -1610,6 +1646,9 @@ struct PublicRequestValidationGRPCTests {
         if path == "page_size" {
             return .boundedPageSize
         }
+        if path == "skip" {
+            return .boundedSkip
+        }
         if fieldPath.fields.dropLast().last.map({
             normalizedTypeName($0.typeName) == "google.protobuf.Duration"
         }) == true {
@@ -1623,29 +1662,29 @@ struct PublicRequestValidationGRPCTests {
 
         let inputActionNumericPaths: Set = [
             "animation_duration",
-            "click.click_count",
-            "click.position.x",
-            "click.position.y",
-            "drag.duration",
-            "drag.end_position.x",
-            "drag.end_position.y",
-            "drag.path.x",
-            "drag.path.y",
-            "drag.start_position.x",
-            "drag.start_position.y",
-            "hover.duration",
-            "hover.position.x",
-            "hover.position.y",
-            "move_mouse.duration",
-            "move_mouse.position.x",
-            "move_mouse.position.y",
-            "press_key.hold_duration",
-            "scroll.duration",
-            "scroll.horizontal",
-            "scroll.position.x",
-            "scroll.position.y",
-            "scroll.vertical",
-            "type_text.char_delay",
+            "mouse_click.click_count",
+            "mouse_click.position.x",
+            "mouse_click.position.y",
+            "mouse_drag.duration",
+            "mouse_drag.end_position.x",
+            "mouse_drag.end_position.y",
+            "mouse_drag.waypoints.x",
+            "mouse_drag.waypoints.y",
+            "mouse_drag.start_position.x",
+            "mouse_drag.start_position.y",
+            "hover_action.duration",
+            "hover_action.position.x",
+            "hover_action.position.y",
+            "mouse_move.duration",
+            "mouse_move.position.x",
+            "mouse_move.position.y",
+            "key_press.hold_duration",
+            "scroll_action.duration",
+            "scroll_action.horizontal",
+            "scroll_action.position.x",
+            "scroll_action.position.y",
+            "scroll_action.vertical",
+            "text_input.char_delay",
         ]
         if method == exactMac.CreateInput.descriptor.fullyQualifiedMethod,
            path.hasPrefix("input.action."),
@@ -2371,6 +2410,7 @@ private struct RequestFieldPath {
 
 private enum NumericRequestPolicy: CaseIterable {
     case boundedPageSize
+    case boundedSkip
     case canonicalProtobufDuration
     case validatedInputAction
     case boundedImageQuality
@@ -2385,8 +2425,8 @@ private enum NumericRequestPolicy: CaseIterable {
 
 private func validAssignmentAction() -> Exactmac_V1_MacroAction {
     Exactmac_V1_MacroAction.with {
-        $0.assign.variable = "value"
-        $0.assign.literal = "valid"
+        $0.assignment.variable = "value"
+        $0.assignment.literal = "valid"
     }
 }
 

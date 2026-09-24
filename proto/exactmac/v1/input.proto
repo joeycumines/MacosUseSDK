@@ -11,7 +11,7 @@ import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpb";
 option java_multiple_files = true;
 option java_outer_classname = "InputProto";
 option java_package = "io.github.joeycumines.exactmac.v1";
@@ -125,37 +125,34 @@ message InputDeliveryResult {
 
 // Specification of an input action.
 message InputAction {
-  reserved 17 to 19;
-  reserved "gesture", "button_down", "button_up";
-
   // Whether to show visual feedback during execution.
-  bool show_animation = 1 [(google.api.field_behavior) = OPTIONAL];
+  bool visual_feedback = 1 [(google.api.field_behavior) = OPTIONAL];
 
   // Duration of visual feedback in seconds.
   double animation_duration = 2 [(google.api.field_behavior) = OPTIONAL];
 
   // The specific input type and parameters.
   oneof input_type {
-    // Click at a specific point.
-    MouseClick click = 10;
+    // Mouse click action.
+    MouseClick mouse_click = 3;
 
-    // Type the specified text.
-    TextInput type_text = 11;
+    // Text input action.
+    TextInput text_input = 4;
 
-    // Press a key combination.
-    KeyPress press_key = 12;
+    // Key press action.
+    KeyPress key_press = 5;
 
-    // Move mouse to a specific point.
-    MouseMove move_mouse = 13;
+    // Mouse move action.
+    MouseMove mouse_move = 6;
 
-    // Drag from one point to another.
-    MouseDrag drag = 14;
+    // Mouse drag action.
+    MouseDrag mouse_drag = 7;
 
-    // Scroll operation.
-    Scroll scroll = 15;
+    // Scroll action.
+    Scroll scroll_action = 8;
 
-    // Hover at a point for duration.
-    Hover hover = 16;
+    // Hover action.
+    Hover hover_action = 9;
   }
 }
 
@@ -196,14 +193,11 @@ message MouseClick {
 
 // Text input action.
 message TextInput {
-  reserved 2;
-  reserved "use_ime";
-
   // Text to type.
   string text = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Delay between characters in seconds.
-  double char_delay = 3 [(google.api.field_behavior) = OPTIONAL];
+  double char_delay = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Key press with optional modifiers.
@@ -278,10 +272,10 @@ message MouseDrag {
   repeated KeyPress.Modifier modifiers = 5 [(google.api.field_behavior) = OPTIONAL];
 
   // Ordered drag waypoints in Global Display Coordinates. When present, this
-  // path is authoritative and must contain at least two points. The first and
-  // last points must equal start_position and end_position when those legacy
-  // fields are also supplied.
-  repeated exactmac.type.Point path = 6 [(google.api.field_behavior) = OPTIONAL];
+  // field is authoritative and must contain at least two points. The first and
+  // last points must equal start_position and end_position when those fields
+  // are also supplied.
+  repeated exactmac.type.Point waypoints = 6 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Scroll action.

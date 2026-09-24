@@ -227,7 +227,7 @@ func inspectFile(fileSet *token.FileSet, filename string, file *ast.File, consta
 	ast.Inspect(file, func(node ast.Node) bool {
 		switch typed := node.(type) {
 		case *ast.Ident:
-			if typed.Name == "InputAction_Drag" || typed.Name == "MouseDrag" {
+			if typed.Name == "InputAction_MouseDrag" || typed.Name == "MouseDrag" {
 				if _, allowed := allowedDragProof[typed.Pos()]; !allowed {
 					add(ruleDragSymbol, typed.Pos())
 				}

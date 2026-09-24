@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/v1/session.proto
 
-package exactmacv1
+package exactmacpb
 
 import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -170,11 +170,11 @@ type Session struct {
 	// When the session was last accessed.
 	LastAccessTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=last_access_time,json=lastAccessTime,proto3" json:"last_access_time,omitempty"`
 	// When the session expires (auto-cleanup).
-	ExpireTime *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expire_time,json=expireTime,proto3" json:"expire_time,omitempty"`
+	ExpireTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=expire_time,json=expireTime,proto3" json:"expire_time,omitempty"`
 	// Active transaction ID (if in transaction).
-	TransactionId string `protobuf:"bytes,8,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
+	TransactionId string `protobuf:"bytes,7,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
 	// Session-scoped metadata (key-value pairs).
-	Metadata      map[string]string `protobuf:"bytes,9,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Metadata      map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -365,10 +365,10 @@ type SessionSnapshot struct {
 	Applications []string `protobuf:"bytes,2,rep,name=applications,proto3" json:"applications,omitempty"`
 	// Active observations in session context.
 	Observations []string `protobuf:"bytes,3,rep,name=observations,proto3" json:"observations,omitempty"`
-	// Operation history.
-	History       []*OperationRecord `protobuf:"bytes,4,rep,name=history,proto3" json:"history,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// Operation records.
+	OperationRecords []*OperationRecord `protobuf:"bytes,4,rep,name=operation_records,json=operationRecords,proto3" json:"operation_records,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *SessionSnapshot) Reset() {
@@ -422,9 +422,9 @@ func (x *SessionSnapshot) GetObservations() []string {
 	return nil
 }
 
-func (x *SessionSnapshot) GetHistory() []*OperationRecord {
+func (x *SessionSnapshot) GetOperationRecords() []*OperationRecord {
 	if x != nil {
-		return x.History
+		return x.OperationRecords
 	}
 	return nil
 }
@@ -532,10 +532,10 @@ const file_exactmac_v1_session_proto_rawDesc = "" +
 	"\vcreate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\n" +
 	"createTime\x12I\n" +
 	"\x10last_access_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\x0elastAccessTime\x12@\n" +
-	"\vexpire_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\n" +
+	"\vexpire_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\n" +
 	"expireTime\x12*\n" +
-	"\x0etransaction_id\x18\b \x01(\tB\x03\xe0A\x03R\rtransactionId\x12C\n" +
-	"\bmetadata\x18\t \x03(\v2\".exactmac.v1.Session.MetadataEntryB\x03\xe0A\x01R\bmetadata\x1a;\n" +
+	"\x0etransaction_id\x18\a \x01(\tB\x03\xe0A\x03R\rtransactionId\x12C\n" +
+	"\bmetadata\x18\b \x03(\v2\".exactmac.v1.Session.MetadataEntryB\x03\xe0A\x01R\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x85\x01\n" +
@@ -561,20 +561,20 @@ const file_exactmac_v1_session_proto_rawDesc = "" +
 	"\fSTATE_ACTIVE\x10\x01\x12\x13\n" +
 	"\x0fSTATE_COMMITTED\x10\x02\x12\x15\n" +
 	"\x11STATE_ROLLED_BACK\x10\x03\x12\x10\n" +
-	"\fSTATE_FAILED\x10\x04\"\xd5\x01\n" +
+	"\fSTATE_FAILED\x10\x04\"\xe8\x01\n" +
 	"\x0fSessionSnapshot\x123\n" +
 	"\asession\x18\x01 \x01(\v2\x14.exactmac.v1.SessionB\x03\xe0A\x03R\asession\x12'\n" +
 	"\fapplications\x18\x02 \x03(\tB\x03\xe0A\x03R\fapplications\x12'\n" +
-	"\fobservations\x18\x03 \x03(\tB\x03\xe0A\x03R\fobservations\x12;\n" +
-	"\ahistory\x18\x04 \x03(\v2\x1c.exactmac.v1.OperationRecordB\x03\xe0A\x03R\ahistory\"\x8c\x02\n" +
+	"\fobservations\x18\x03 \x03(\tB\x03\xe0A\x03R\fobservations\x12N\n" +
+	"\x11operation_records\x18\x04 \x03(\v2\x1c.exactmac.v1.OperationRecordB\x03\xe0A\x03R\x10operationRecords\"\x8c\x02\n" +
 	"\x0fOperationRecord\x12F\n" +
 	"\x0eoperation_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\roperationTime\x12*\n" +
 	"\x0eoperation_type\x18\x02 \x01(\tB\x03\xe0A\x03R\roperationType\x12\x1f\n" +
 	"\bresource\x18\x03 \x01(\tB\x03\xe0A\x03R\bresource\x12\x1d\n" +
 	"\asuccess\x18\x04 \x01(\bB\x03\xe0A\x03R\asuccess\x12\x19\n" +
 	"\x05error\x18\x05 \x01(\tB\x03\xe0A\x03R\x05error\x12*\n" +
-	"\x0etransaction_id\x18\x06 \x01(\tB\x03\xe0A\x03R\rtransactionIdB\xbd\x01\n" +
-	"!io.github.joeycumines.exactmac.v1B\fSessionProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1\xa2\x02\x03EXX\xaa\x02\vExactmac.V1\xca\x02\vExactmac\\V1\xe2\x02\x17Exactmac\\V1\\GPBMetadata\xea\x02\fExactmac::V1b\x06proto3"
+	"\x0etransaction_id\x18\x06 \x01(\tB\x03\xe0A\x03R\rtransactionIdBr\n" +
+	"!io.github.joeycumines.exactmac.v1B\fSessionProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpbb\x06proto3"
 
 var (
 	file_exactmac_v1_session_proto_rawDescOnce sync.Once
@@ -610,7 +610,7 @@ var file_exactmac_v1_session_proto_depIdxs = []int32{
 	7,  // 6: exactmac.v1.Transaction.start_time:type_name -> google.protobuf.Timestamp
 	2,  // 7: exactmac.v1.Transaction.updated_session:type_name -> exactmac.v1.Session
 	2,  // 8: exactmac.v1.SessionSnapshot.session:type_name -> exactmac.v1.Session
-	5,  // 9: exactmac.v1.SessionSnapshot.history:type_name -> exactmac.v1.OperationRecord
+	5,  // 9: exactmac.v1.SessionSnapshot.operation_records:type_name -> exactmac.v1.OperationRecord
 	7,  // 10: exactmac.v1.OperationRecord.operation_time:type_name -> google.protobuf.Timestamp
 	11, // [11:11] is the sub-list for method output_type
 	11, // [11:11] is the sub-list for method input_type

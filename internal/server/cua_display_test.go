@@ -59,7 +59,7 @@ func TestCUAHandleGetDisplay_MultipleDisplays(t *testing.T) {
 						DisplayId:    1,
 						Frame:        &typepb.Region{X: 0, Y: 0, Width: 1920, Height: 1080},
 						VisibleFrame: &typepb.Region{X: 0, Y: 25, Width: 1920, Height: 1055},
-						IsMain:       true,
+						Main:         true,
 						Scale:        2.0,
 					},
 					{
@@ -67,7 +67,7 @@ func TestCUAHandleGetDisplay_MultipleDisplays(t *testing.T) {
 						DisplayId:    2,
 						Frame:        &typepb.Region{X: 1920, Y: 0, Width: 2560, Height: 1440},
 						VisibleFrame: &typepb.Region{X: 1920, Y: 0, Width: 2560, Height: 1440},
-						IsMain:       false,
+						Main:         false,
 						Scale:        1.0,
 					},
 				},
@@ -120,7 +120,7 @@ func TestCUAHandleGetDisplay_SingleDisplay(t *testing.T) {
 						DisplayId:    42,
 						Frame:        &typepb.Region{X: 0, Y: 0, Width: 2560, Height: 1440},
 						VisibleFrame: &typepb.Region{X: 0, Y: 25, Width: 2560, Height: 1415},
-						IsMain:       true,
+						Main:         true,
 						Scale:        2.0,
 					},
 				},
@@ -183,7 +183,7 @@ func TestCUAHandleGetDisplay_NegativeCoordinates(t *testing.T) {
 						DisplayId:    2,
 						Frame:        &typepb.Region{X: -1920, Y: 0, Width: 1920, Height: 1080},
 						VisibleFrame: &typepb.Region{X: -1920, Y: 0, Width: 1920, Height: 1080},
-						IsMain:       true,
+						Main:         true,
 						Scale:        1.0,
 					},
 				},
@@ -219,7 +219,7 @@ func TestCUAHandleGetDisplay_CursorErrorFailsClosed(t *testing.T) {
 						DisplayId:    1,
 						Frame:        &typepb.Region{X: 0, Y: 0, Width: 1920, Height: 1080},
 						VisibleFrame: &typepb.Region{X: 0, Y: 25, Width: 1920, Height: 1055},
-						IsMain:       true,
+						Main:         true,
 						Scale:        1,
 					},
 				},
@@ -276,7 +276,7 @@ func TestCUAHandleGetDisplay_ContentTypeIsText(t *testing.T) {
 				DisplayId:    1,
 				Frame:        &typepb.Region{X: 0, Y: 0, Width: 1920, Height: 1080},
 				VisibleFrame: &typepb.Region{X: 0, Y: 25, Width: 1920, Height: 1055},
-				IsMain:       true,
+				Main:         true,
 				Scale:        1,
 			}}}, nil
 		},
@@ -297,4 +297,11 @@ func TestCUAHandleGetDisplay_ContentTypeIsText(t *testing.T) {
 	if result.Content[0].Type != "text" {
 		t.Errorf("content type = %q, want 'text'", result.Content[0].Type)
 	}
+}
+
+// --- cuaHandleGetDisplay — no params, just gRPC calls ---
+
+func TestCUAHandleGetDisplay_NoValidationNeeded(t *testing.T) {
+	// No parameters to validate; nil client would panic on gRPC call.
+	// Test documents that get_display needs no input validation.
 }

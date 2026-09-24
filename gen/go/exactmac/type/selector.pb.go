@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/type/selector.proto
 
-package exactmactype
+package exactmactypepb
 
 import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -90,9 +90,9 @@ func (CompoundSelector_Operator) EnumDescriptor() ([]byte, []int) {
 // 1. SIMPLE SELECTORS (all fully implemented):
 //   - role: "button"                     → Match by AXRole (case-sensitive)
 //   - text: "Submit"                     → Exact text match (AXValue or AXTitle)
-//   - text_contains: "Submit"            → Substring match (case-sensitive)
+//   - text_substring: "Submit"            → Substring match (case-sensitive)
 //   - text_regex: "^Submit.*"            → Regex match using NSRegularExpression
-//   - position: {x: 100, y: 200, tol: 5} → Match element at Global Display Coordinates ±tolerance
+//   - position: {x: 100, y: 200, tolerance: 5} → Match element at Global Display Coordinates ±tolerance
 //   - attributes: {"AXEnabled": "1"}     → Match custom accessibility attributes (all must match)
 //
 // 2. COMPOUND SELECTORS (fully implemented):
@@ -105,20 +105,20 @@ func (CompoundSelector_Operator) EnumDescriptor() ([]byte, []int) {
 //
 // 4. VALIDATION RULES (enforced by SelectorParser):
 //   - role: cannot be empty string
-//   - text_contains: cannot be empty string
+//   - text_substring: cannot be empty string
 //   - text_regex: must be valid NSRegularExpression pattern
 //   - position: tolerance cannot be negative
 //   - attributes: must have at least one key-value pair
-//   - compound: must have at least one selector; NOT requires exactly one
+//   - compound: logical_operator is required; must have at least one selector; NOT requires exactly one
 //
 // 5. MATCHING SEMANTICS:
-//   - text/text_contains/text_regex: Check AXValue first, fall back to AXTitle
+//   - text/text_substring/text_regex: Check AXValue first, fall back to AXTitle
 //   - role: Exact match against AXRole (e.g., "AXButton", "AXTextField")
 //   - position: Element bounds must contain point (x,y) within tolerance
 //   - attributes: All specified attributes must match element's accessibility attributes
 //
 // 6. PERFORMANCE CONSIDERATIONS:
-//   - Simple selectors (role, text, text_contains, position) are optimized
+//   - Simple selectors (role, text, text_substring, position) are optimized
 //   - Regex and attribute selectors require full tree traversal
 //   - Compound selectors with AND can short-circuit on first failure
 //
@@ -126,28 +126,24 @@ func (CompoundSelector_Operator) EnumDescriptor() ([]byte, []int) {
 //
 //	// Find button with text "Submit"
 //	{ role: "AXButton", text: "Submit" }  // INVALID: can't mix criteria in oneof
-//	{ compound: { operator: AND, selectors: [
+//	{ compound: { logical_operator: OPERATOR_AND, selectors: [
 //	    { role: "AXButton" },
 //	    { text: "Submit" }
 //	]}}
 //
 //	// Find any button OR link
-//	{ compound: { operator: OR, selectors: [
+//	{ compound: { logical_operator: OPERATOR_OR, selectors: [
 //	    { role: "AXButton" },
 //	    { role: "AXLink" }
 //	]}}
 //
 //	// Find elements NOT containing "Error"
-//	{ compound: { operator: NOT, selectors: [
-//	    { text_contains: "Error" }
+//	{ compound: { logical_operator: OPERATOR_NOT, selectors: [
+//	    { text_substring: "Error" }
 //	]}}
 //
 //	// Find element at screen position (100, 200) with 10px tolerance
 //	{ position: { x: 100, y: 200, tolerance: 10 }}
-//
-// FILES:
-//   - Implementation: Server/Sources/ExactMacServer/SelectorParser.swift
-//   - Matching logic: Server/Sources/ExactMacServer/ElementLocator.swift
 type ElementSelector struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Selector criteria (at least one must be specified).
@@ -156,7 +152,7 @@ type ElementSelector struct {
 	//
 	//	*ElementSelector_Role
 	//	*ElementSelector_Text
-	//	*ElementSelector_TextContains
+	//	*ElementSelector_TextSubstring
 	//	*ElementSelector_TextRegex
 	//	*ElementSelector_Position
 	//	*ElementSelector_Attributes
@@ -221,10 +217,10 @@ func (x *ElementSelector) GetText() string {
 	return ""
 }
 
-func (x *ElementSelector) GetTextContains() string {
+func (x *ElementSelector) GetTextSubstring() string {
 	if x != nil {
-		if x, ok := x.Criteria.(*ElementSelector_TextContains); ok {
-			return x.TextContains
+		if x, ok := x.Criteria.(*ElementSelector_TextSubstring); ok {
+			return x.TextSubstring
 		}
 	}
 	return ""
@@ -280,9 +276,9 @@ type ElementSelector_Text struct {
 	Text string `protobuf:"bytes,2,opt,name=text,proto3,oneof"`
 }
 
-type ElementSelector_TextContains struct {
+type ElementSelector_TextSubstring struct {
 	// Select by text containing a substring.
-	TextContains string `protobuf:"bytes,3,opt,name=text_contains,json=textContains,proto3,oneof"`
+	TextSubstring string `protobuf:"bytes,3,opt,name=text_substring,json=textSubstring,proto3,oneof"`
 }
 
 type ElementSelector_TextRegex struct {
@@ -309,7 +305,7 @@ func (*ElementSelector_Role) isElementSelector_Criteria() {}
 
 func (*ElementSelector_Text) isElementSelector_Criteria() {}
 
-func (*ElementSelector_TextContains) isElementSelector_Criteria() {}
+func (*ElementSelector_TextSubstring) isElementSelector_Criteria() {}
 
 func (*ElementSelector_TextRegex) isElementSelector_Criteria() {}
 
@@ -435,8 +431,10 @@ func (x *AttributeSelector) GetAttributes() map[string]string {
 // Compound selector combining multiple criteria.
 type CompoundSelector struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Operator for combining selectors.
-	Operator CompoundSelector_Operator `protobuf:"varint,1,opt,name=operator,proto3,enum=exactmac.type.CompoundSelector_Operator" json:"operator,omitempty"`
+	// Logical operator for combining selectors. The field is named
+	// logical_operator to avoid the common language keyword `operator`; the
+	// enum type remains Operator.
+	LogicalOperator CompoundSelector_Operator `protobuf:"varint,1,opt,name=logical_operator,json=logicalOperator,proto3,enum=exactmac.type.CompoundSelector_Operator" json:"logical_operator,omitempty"`
 	// Selectors to combine.
 	Selectors     []*ElementSelector `protobuf:"bytes,2,rep,name=selectors,proto3" json:"selectors,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -473,9 +471,9 @@ func (*CompoundSelector) Descriptor() ([]byte, []int) {
 	return file_exactmac_type_selector_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *CompoundSelector) GetOperator() CompoundSelector_Operator {
+func (x *CompoundSelector) GetLogicalOperator() CompoundSelector_Operator {
 	if x != nil {
-		return x.Operator
+		return x.LogicalOperator
 	}
 	return CompoundSelector_OPERATOR_UNSPECIFIED
 }
@@ -491,11 +489,11 @@ var File_exactmac_type_selector_proto protoreflect.FileDescriptor
 
 const file_exactmac_type_selector_proto_rawDesc = "" +
 	"\n" +
-	"\x1cexactmac/type/selector.proto\x12\rexactmac.type\x1a\x1fgoogle/api/field_behavior.proto\"\xd3\x02\n" +
+	"\x1cexactmac/type/selector.proto\x12\rexactmac.type\x1a\x1fgoogle/api/field_behavior.proto\"\xd5\x02\n" +
 	"\x0fElementSelector\x12\x14\n" +
 	"\x04role\x18\x01 \x01(\tH\x00R\x04role\x12\x14\n" +
-	"\x04text\x18\x02 \x01(\tH\x00R\x04text\x12%\n" +
-	"\rtext_contains\x18\x03 \x01(\tH\x00R\ftextContains\x12\x1f\n" +
+	"\x04text\x18\x02 \x01(\tH\x00R\x04text\x12'\n" +
+	"\x0etext_substring\x18\x03 \x01(\tH\x00R\rtextSubstring\x12\x1f\n" +
 	"\n" +
 	"text_regex\x18\x04 \x01(\tH\x00R\ttextRegex\x12=\n" +
 	"\bposition\x18\x05 \x01(\v2\x1f.exactmac.type.PositionSelectorH\x00R\bposition\x12B\n" +
@@ -517,16 +515,16 @@ const file_exactmac_type_selector_proto_rawDesc = "" +
 	"attributes\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xfb\x01\n" +
-	"\x10CompoundSelector\x12I\n" +
-	"\boperator\x18\x01 \x01(\x0e2(.exactmac.type.CompoundSelector.OperatorB\x03\xe0A\x02R\boperator\x12A\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8a\x02\n" +
+	"\x10CompoundSelector\x12X\n" +
+	"\x10logical_operator\x18\x01 \x01(\x0e2(.exactmac.type.CompoundSelector.OperatorB\x03\xe0A\x02R\x0flogicalOperator\x12A\n" +
 	"\tselectors\x18\x02 \x03(\v2\x1e.exactmac.type.ElementSelectorB\x03\xe0A\x02R\tselectors\"Y\n" +
 	"\bOperator\x12\x18\n" +
 	"\x14OPERATOR_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fOPERATOR_AND\x10\x01\x12\x0f\n" +
 	"\vOPERATOR_OR\x10\x02\x12\x10\n" +
-	"\fOPERATOR_NOT\x10\x03B\xcc\x01\n" +
-	"#io.github.joeycumines.exactmac.typeB\rSelectorProtoP\x01ZAgithub.com/joeycumines/ExactMac/gen/go/exactmac/type;exactmactype\xa2\x02\x03ETX\xaa\x02\rExactmac.Type\xca\x02\rExactmac\\Type\xe2\x02\x19Exactmac\\Type\\GPBMetadata\xea\x02\x0eExactmac::Typeb\x06proto3"
+	"\fOPERATOR_NOT\x10\x03B{\n" +
+	"#io.github.joeycumines.exactmac.typeB\rSelectorProtoP\x01ZCgithub.com/joeycumines/ExactMac/gen/go/exactmac/type;exactmactypepbb\x06proto3"
 
 var (
 	file_exactmac_type_selector_proto_rawDescOnce sync.Once
@@ -555,7 +553,7 @@ var file_exactmac_type_selector_proto_depIdxs = []int32{
 	3, // 1: exactmac.type.ElementSelector.attributes:type_name -> exactmac.type.AttributeSelector
 	4, // 2: exactmac.type.ElementSelector.compound:type_name -> exactmac.type.CompoundSelector
 	5, // 3: exactmac.type.AttributeSelector.attributes:type_name -> exactmac.type.AttributeSelector.AttributesEntry
-	0, // 4: exactmac.type.CompoundSelector.operator:type_name -> exactmac.type.CompoundSelector.Operator
+	0, // 4: exactmac.type.CompoundSelector.logical_operator:type_name -> exactmac.type.CompoundSelector.Operator
 	1, // 5: exactmac.type.CompoundSelector.selectors:type_name -> exactmac.type.ElementSelector
 	6, // [6:6] is the sub-list for method output_type
 	6, // [6:6] is the sub-list for method input_type
@@ -572,7 +570,7 @@ func file_exactmac_type_selector_proto_init() {
 	file_exactmac_type_selector_proto_msgTypes[0].OneofWrappers = []any{
 		(*ElementSelector_Role)(nil),
 		(*ElementSelector_Text)(nil),
-		(*ElementSelector_TextContains)(nil),
+		(*ElementSelector_TextSubstring)(nil),
 		(*ElementSelector_TextRegex)(nil),
 		(*ElementSelector_Position)(nil),
 		(*ElementSelector_Attributes)(nil),

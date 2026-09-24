@@ -21,18 +21,8 @@ func TestInputAdmissionDescriptorSurface(t *testing.T) {
 		t.Fatal("InputAction descriptor is absent")
 	}
 
-	reservedRanges := inputAction.ReservedRanges()
-	if reservedRanges.Len() != 1 || reservedRanges.Get(0)[0] != 17 || reservedRanges.Get(0)[1] != 20 {
-		t.Fatalf("InputAction reserved ranges = %v, want exactly [17,20)", reservedRanges)
-	}
-	reservedNames := inputAction.ReservedNames()
-	gotNames := make([]string, 0, reservedNames.Len())
-	for index := 0; index < reservedNames.Len(); index++ {
-		gotNames = append(gotNames, string(reservedNames.Get(index)))
-	}
-	wantNames := []string{"gesture", "button_down", "button_up"}
-	if !reflect.DeepEqual(gotNames, wantNames) {
-		t.Fatalf("InputAction reserved names = %v, want %v", gotNames, wantNames)
+	if inputAction.ReservedRanges().Len() != 0 || inputAction.ReservedNames().Len() != 0 {
+		t.Fatal("InputAction must not retain reservations after the final declaration-order contract")
 	}
 
 	for _, name := range []protoreflect.Name{"Gesture", "MouseButtonDown", "MouseButtonUp"} {
@@ -72,7 +62,7 @@ func TestInputAdmissionClickAndDragOmissionVersusSuppliedIntent(t *testing.T) {
 		if len(*requests) != 1 {
 			t.Fatalf("CreateInput calls = %d, want 1", len(*requests))
 		}
-		click := (*requests)[0].GetInput().GetAction().GetClick()
+		click := (*requests)[0].GetInput().GetAction().GetMouseClick()
 		if click.GetClickType() != pb.MouseClick_CLICK_TYPE_LEFT || click.GetClickCount() != 1 {
 			t.Fatalf("omitted click became button=%v count=%d, want left/1", click.GetClickType(), click.GetClickCount())
 		}
@@ -91,7 +81,7 @@ func TestInputAdmissionClickAndDragOmissionVersusSuppliedIntent(t *testing.T) {
 		if err != nil || result == nil || result.IsError {
 			t.Fatalf("omitted drag button result=%+v error=%v", result, err)
 		}
-		drag := (*requests)[0].GetInput().GetAction().GetDrag()
+		drag := (*requests)[0].GetInput().GetAction().GetMouseDrag()
 		if drag.GetButton() != pb.MouseClick_CLICK_TYPE_LEFT {
 			t.Fatalf("omitted drag button = %v, want left", drag.GetButton())
 		}
@@ -143,7 +133,7 @@ func TestInputAdmissionKeyChordIsExact(t *testing.T) {
 	if err != nil || result == nil || result.IsError {
 		t.Fatalf("valid key chord result=%+v error=%v", result, err)
 	}
-	key := (*requests)[0].GetInput().GetAction().GetPressKey()
+	key := (*requests)[0].GetInput().GetAction().GetKeyPress()
 	if key.GetKey() != "3" || !reflect.DeepEqual(key.GetModifiers(), []pb.KeyPress_Modifier{
 		pb.KeyPress_MODIFIER_COMMAND,
 		pb.KeyPress_MODIFIER_SHIFT,
@@ -159,7 +149,7 @@ func TestInputAdmissionKeyChordIsExact(t *testing.T) {
 	if err != nil || result == nil || result.IsError {
 		t.Fatalf("valid arrow alias result=%+v error=%v", result, err)
 	}
-	if got := (*requests)[0].GetInput().GetAction().GetPressKey().GetKey(); got != "up" {
+	if got := (*requests)[0].GetInput().GetAction().GetKeyPress().GetKey(); got != "up" {
 		t.Fatalf("arrowup normalized to %q, want backend-supported up", got)
 	}
 

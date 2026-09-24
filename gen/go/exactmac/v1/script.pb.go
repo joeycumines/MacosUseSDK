@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/v1/script.proto
 
-package exactmacv1
+package exactmacpb
 
 import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -83,29 +83,31 @@ func (ScriptType) EnumDescriptor() ([]byte, []int) {
 	return file_exactmac_v1_script_proto_rawDescGZIP(), []int{0}
 }
 
-// Scripting dictionaries.
-type ScriptingDictionaries struct {
+// Catalog of scripting dictionaries.
+type ScriptingDictionaryCatalog struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource name for the singleton scripting dictionary catalog.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Available scripting dictionaries.
-	Dictionaries  []*ScriptingDictionary `protobuf:"bytes,1,rep,name=dictionaries,proto3" json:"dictionaries,omitempty"`
+	Dictionaries  []*ScriptingDictionary `protobuf:"bytes,2,rep,name=dictionaries,proto3" json:"dictionaries,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ScriptingDictionaries) Reset() {
-	*x = ScriptingDictionaries{}
+func (x *ScriptingDictionaryCatalog) Reset() {
+	*x = ScriptingDictionaryCatalog{}
 	mi := &file_exactmac_v1_script_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ScriptingDictionaries) String() string {
+func (x *ScriptingDictionaryCatalog) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ScriptingDictionaries) ProtoMessage() {}
+func (*ScriptingDictionaryCatalog) ProtoMessage() {}
 
-func (x *ScriptingDictionaries) ProtoReflect() protoreflect.Message {
+func (x *ScriptingDictionaryCatalog) ProtoReflect() protoreflect.Message {
 	mi := &file_exactmac_v1_script_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -117,12 +119,19 @@ func (x *ScriptingDictionaries) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ScriptingDictionaries.ProtoReflect.Descriptor instead.
-func (*ScriptingDictionaries) Descriptor() ([]byte, []int) {
+// Deprecated: Use ScriptingDictionaryCatalog.ProtoReflect.Descriptor instead.
+func (*ScriptingDictionaryCatalog) Descriptor() ([]byte, []int) {
 	return file_exactmac_v1_script_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *ScriptingDictionaries) GetDictionaries() []*ScriptingDictionary {
+func (x *ScriptingDictionaryCatalog) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ScriptingDictionaryCatalog) GetDictionaries() []*ScriptingDictionary {
 	if x != nil {
 		return x.Dictionaries
 	}
@@ -224,9 +233,11 @@ var File_exactmac_v1_script_proto protoreflect.FileDescriptor
 
 const file_exactmac_v1_script_proto_rawDesc = "" +
 	"\n" +
-	"\x18exactmac/v1/script.proto\x12\vexactmac.v1\x1a\x1fgoogle/api/field_behavior.proto\"b\n" +
-	"\x15ScriptingDictionaries\x12I\n" +
-	"\fdictionaries\x18\x01 \x03(\v2 .exactmac.v1.ScriptingDictionaryB\x03\xe0A\x03R\fdictionaries\"\xfe\x01\n" +
+	"\x18exactmac/v1/script.proto\x12\vexactmac.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xff\x01\n" +
+	"\x1aScriptingDictionaryCatalog\x12\x17\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12I\n" +
+	"\fdictionaries\x18\x02 \x03(\v2 .exactmac.v1.ScriptingDictionaryB\x03\xe0A\x03R\fdictionaries:}\xeaAz\n" +
+	"#exactmac/ScriptingDictionaryCatalog\x12\x1ascriptingDictionaryCatalog*\x1bscriptingDictionaryCatalogs2\x1ascriptingDictionaryCatalog\"\xfe\x01\n" +
 	"\x13ScriptingDictionary\x12%\n" +
 	"\vapplication\x18\x01 \x01(\tB\x03\xe0A\x03R\vapplication\x12 \n" +
 	"\tbundle_id\x18\x02 \x01(\tB\x03\xe0A\x03R\bbundleId\x126\n" +
@@ -239,8 +250,8 @@ const file_exactmac_v1_script_proto_rawDesc = "" +
 	"\x17SCRIPT_TYPE_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17SCRIPT_TYPE_APPLESCRIPT\x10\x01\x12\x13\n" +
 	"\x0fSCRIPT_TYPE_JXA\x10\x02\x12\x15\n" +
-	"\x11SCRIPT_TYPE_SHELL\x10\x03B\xbc\x01\n" +
-	"!io.github.joeycumines.exactmac.v1B\vScriptProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1\xa2\x02\x03EXX\xaa\x02\vExactmac.V1\xca\x02\vExactmac\\V1\xe2\x02\x17Exactmac\\V1\\GPBMetadata\xea\x02\fExactmac::V1b\x06proto3"
+	"\x11SCRIPT_TYPE_SHELL\x10\x03Bq\n" +
+	"!io.github.joeycumines.exactmac.v1B\vScriptProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpbb\x06proto3"
 
 var (
 	file_exactmac_v1_script_proto_rawDescOnce sync.Once
@@ -257,12 +268,12 @@ func file_exactmac_v1_script_proto_rawDescGZIP() []byte {
 var file_exactmac_v1_script_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_exactmac_v1_script_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_exactmac_v1_script_proto_goTypes = []any{
-	(ScriptType)(0),               // 0: exactmac.v1.ScriptType
-	(*ScriptingDictionaries)(nil), // 1: exactmac.v1.ScriptingDictionaries
-	(*ScriptingDictionary)(nil),   // 2: exactmac.v1.ScriptingDictionary
+	(ScriptType)(0),                    // 0: exactmac.v1.ScriptType
+	(*ScriptingDictionaryCatalog)(nil), // 1: exactmac.v1.ScriptingDictionaryCatalog
+	(*ScriptingDictionary)(nil),        // 2: exactmac.v1.ScriptingDictionary
 }
 var file_exactmac_v1_script_proto_depIdxs = []int32{
-	2, // 0: exactmac.v1.ScriptingDictionaries.dictionaries:type_name -> exactmac.v1.ScriptingDictionary
+	2, // 0: exactmac.v1.ScriptingDictionaryCatalog.dictionaries:type_name -> exactmac.v1.ScriptingDictionary
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name

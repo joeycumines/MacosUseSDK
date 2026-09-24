@@ -83,11 +83,13 @@ extension ExactMacService {
 
         // List sessions from SessionManager with pagination
         let pageSize = try RequestNumericValidation.pageSize(req.pageSize, default: 50)
+        let skip = try RequestNumericValidation.skip(req.skip)
         let pageToken = req.pageToken.isEmpty ? nil : req.pageToken
 
         let (sessions, nextToken) = try await sessionManager.listSessions(
             pageSize: pageSize,
             pageToken: pageToken,
+            skip: skip,
         )
 
         let response = Exactmac_V1_ListSessionsResponse.with {

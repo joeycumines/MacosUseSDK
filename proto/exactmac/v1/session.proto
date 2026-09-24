@@ -10,7 +10,7 @@ import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpb";
 option java_multiple_files = true;
 option java_outer_classname = "SessionProto";
 option java_package = "io.github.joeycumines.exactmac.v1";
@@ -43,13 +43,13 @@ message Session {
   google.protobuf.Timestamp last_access_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // When the session expires (auto-cleanup).
-  google.protobuf.Timestamp expire_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp expire_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Active transaction ID (if in transaction).
-  string transaction_id = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string transaction_id = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Session-scoped metadata (key-value pairs).
-  map<string, string> metadata = 9 [(google.api.field_behavior) = OPTIONAL];
+  map<string, string> metadata = 8 [(google.api.field_behavior) = OPTIONAL];
 
   // State of a session.
   enum State {
@@ -126,8 +126,8 @@ message SessionSnapshot {
   // Active observations in session context.
   repeated string observations = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // Operation history.
-  repeated OperationRecord history = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Operation records.
+  repeated OperationRecord operation_records = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Record of an operation within a session.

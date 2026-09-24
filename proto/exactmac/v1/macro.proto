@@ -11,7 +11,7 @@ import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpb";
 option java_multiple_files = true;
 option java_outer_classname = "MacroProto";
 option java_package = "io.github.joeycumines.exactmac.v1";
@@ -57,33 +57,23 @@ message Macro {
 
 // Log entry for macro execution.
 message ExecutionLogEntry {
-  option (google.api.resource) = {
-    type: "exactmac/ExecutionLogEntry"
-    pattern: "macros/{macro}/executions/{execution}/logEntries/{log_entry}"
-    singular: "executionLogEntry"
-    plural: "executionLogEntries"
-  };
-
-  // Resource name.
-  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
-
   // When the action executed.
-  google.protobuf.Timestamp execution_time = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp execution_time = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Action index in macro.
-  int32 action_index = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  int32 action_index = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Action description.
-  string description = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string description = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether action succeeded.
-  bool success = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+  bool success = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Error message if failed.
-  string error = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string error = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Duration in seconds.
-  double duration = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+  double duration = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // A single action within a macro.
@@ -102,15 +92,15 @@ message MacroAction {
     // Loop action (repeat).
     LoopAction loop = 4;
 
-    // Variable assignment.
-    AssignAction assign = 5;
+    // Assignment action.
+    AssignAction assignment = 5;
 
     // Custom method call.
     MethodCall method_call = 6;
   }
 
   // Human-readable description of this action.
-  string description = 10 [(google.api.field_behavior) = OPTIONAL];
+  string description = 7 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Wait/delay action.
@@ -137,7 +127,7 @@ message WaitCondition {
   }
 
   // Timeout in seconds.
-  double timeout = 10 [(google.api.field_behavior) = OPTIONAL];
+  double timeout = 4 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Conditional action (if-then-else).
@@ -156,17 +146,17 @@ message ConditionalAction {
 message MacroCondition {
   // Condition type.
   oneof condition {
-    // Element exists.
-    string element_exists = 1;
+    // Element selector.
+    string element_selector = 1;
 
-    // Window exists.
-    string window_exists = 2;
+    // Window title.
+    string window_title = 2;
 
-    // Application is running.
-    string application_running = 3;
+    // Running application bundle identifier.
+    string running_application_bundle_id = 3;
 
-    // Variable equals value.
-    VariableCondition variable_equals = 4;
+    // Variable condition.
+    VariableCondition variable_condition = 4;
 
     // Compound condition.
     CompoundCondition compound = 5;
@@ -184,8 +174,9 @@ message VariableCondition {
 
 // Compound condition (AND/OR/NOT).
 message CompoundCondition {
-  // Operator.
-  Operator operator = 1 [(google.api.field_behavior) = REQUIRED];
+  // Logical operator. The field is named logical_operator to avoid the
+  // common language keyword `operator`; the enum type remains Operator.
+  Operator logical_operator = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Sub-conditions.
   repeated MacroCondition conditions = 2 [(google.api.field_behavior) = REQUIRED];
@@ -217,11 +208,11 @@ message LoopAction {
     MacroCondition while_condition = 2;
 
     // Loop over each item in collection.
-    ForEachLoop foreach = 3;
+    ForEachLoop each_item_loop = 3;
   }
 
   // Actions to execute in each iteration.
-  repeated MacroAction actions = 10 [(google.api.field_behavior) = REQUIRED];
+  repeated MacroAction actions = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 // For-each loop over collection.
@@ -239,7 +230,7 @@ message ForEachLoop {
   }
 
   // Variable name for current item.
-  string item_variable = 10 [(google.api.field_behavior) = REQUIRED];
+  string item_variable = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Variable assignment action.

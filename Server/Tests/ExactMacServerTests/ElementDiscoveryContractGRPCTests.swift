@@ -40,9 +40,9 @@ struct ElementDiscoveryContractGRPCTests {
 
         #expect(firstScan.count == 2)
         #expect(Set(firstScan.map(\.elementID)).count == 2)
-        #expect(Dictionary(uniqueKeysWithValues: firstScan.map { ($0.path, $0.elementID) }) ==
-            Dictionary(uniqueKeysWithValues: secondScan.map { ($0.path, $0.elementID) }))
-        #expect(secondScan.first(where: { $0.path == [1] })?.text == "updated")
+        #expect(Dictionary(uniqueKeysWithValues: firstScan.map { ($0.pathIndices, $0.elementID) }) ==
+            Dictionary(uniqueKeysWithValues: secondScan.map { ($0.pathIndices, $0.elementID) }))
+        #expect(secondScan.first(where: { $0.pathIndices == [1] })?.text == "updated")
         #expect(await registry.getCachedElementCount() == 2)
     }
 
@@ -151,7 +151,7 @@ struct ElementDiscoveryContractGRPCTests {
     }
 
     @Test
-    func `generated client continuation preserves stable handles without a second force refresh`() async throws {
+    func `generated client continuation preserves stable handles without a second cache bypass`() async throws {
         let ids = LockedElementIDSequence(["first-page", "second-page", "third-page"])
         let harness = try await ElementDiscoveryServiceHarness.make(
             idSequence: ids,
@@ -169,7 +169,7 @@ struct ElementDiscoveryContractGRPCTests {
                     $0.parent = harness.parent
                     $0.selector.role = "AXButton"
                     $0.pageSize = 1
-                    $0.forceRefresh = true
+                    $0.cacheBypass = true
                 },
                 descriptor: Exactmac_V1_ExactMac.Method.FindElements.descriptor,
             )
@@ -180,7 +180,7 @@ struct ElementDiscoveryContractGRPCTests {
                     $0.selector.role = "AXButton"
                     $0.pageSize = 1
                     $0.pageToken = first.nextPageToken
-                    $0.forceRefresh = true
+                    $0.cacheBypass = true
                 },
                 descriptor: Exactmac_V1_ExactMac.Method.FindElements.descriptor,
             )
@@ -191,7 +191,7 @@ struct ElementDiscoveryContractGRPCTests {
                     $0.selector.role = "AXButton"
                     $0.pageSize = 1
                     $0.pageToken = second.nextPageToken
-                    $0.forceRefresh = true
+                    $0.cacheBypass = true
                 },
                 descriptor: Exactmac_V1_ExactMac.Method.FindElements.descriptor,
             )

@@ -368,14 +368,13 @@ public actor OperationStore {
     private func operationListQueryBinding(
         namePrefix: String?,
         showOnlyDone: Bool?,
-        pageSize: Int,
+        pageSize _: Int,
     ) -> String {
         ParsingHelpers.pageTokenQuery(
             method: "OperationStore.listOperations",
             parameters: [
                 ("name_prefix", namePrefix ?? ""),
                 ("done", showOnlyDone.map(String.init) ?? ""),
-                ("page_size", String(pageSize)),
             ],
         )
     }

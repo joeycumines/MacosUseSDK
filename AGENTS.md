@@ -216,4 +216,5 @@ MCP compliance requirements are documented in docs/ai-artifacts/05-mcp-integrati
 ### CI/CD Workflows
 
 - CI workflow policy applies when workflow files are present; verify the checked-out workflow set before referring to an entry point or reusable workflow.
+- For trusted and first-party GitHub Actions, including `bufbuild/buf-action`, use the latest major version tag. Do not use an older major or a commit-SHA pin for these actions; re-check the current latest major before editing workflows.
 - Scripts MUST NOT use `set -e`; use explicit chaining (`&&`) or condition checks.

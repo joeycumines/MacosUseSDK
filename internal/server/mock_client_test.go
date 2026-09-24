@@ -408,8 +408,8 @@ func (m *mockExactMacClient) ValidateScript(ctx context.Context, in *pb.Validate
 	panic("ValidateScript not expected to be called in display tests")
 }
 
-func (m *mockExactMacClient) GetScriptingDictionaries(ctx context.Context, in *pb.GetScriptingDictionariesRequest, opts ...grpc.CallOption) (*pb.ScriptingDictionaries, error) {
-	panic("GetScriptingDictionaries not expected to be called in display tests")
+func (m *mockExactMacClient) GetScriptingDictionaryCatalog(ctx context.Context, in *pb.GetScriptingDictionaryCatalogRequest, opts ...grpc.CallOption) (*pb.ScriptingDictionaryCatalog, error) {
+	panic("GetScriptingDictionaryCatalog not expected to be called in display tests")
 }
 
 // newTestMCPServer creates a minimal MCPServer for testing with the provided mock client.
@@ -422,5 +422,15 @@ func newTestMCPServer(mockClient pb.ExactMacClient) *MCPServer {
 		ctx:    ctx,
 		tools:  make(map[string]*Tool),
 		client: mockClient,
+	}
+}
+
+// newTestServer creates an MCPServer suitable for validation-only tests.
+// The client is nil; handlers that pass validation will panic on gRPC calls,
+// which is expected — only validation paths are tested here.
+func newTestServer() *MCPServer {
+	return &MCPServer{
+		cfg: &config.Config{RequestTimeout: 30},
+		ctx: context.Background(),
 	}
 }

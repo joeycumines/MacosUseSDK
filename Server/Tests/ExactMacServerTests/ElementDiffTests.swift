@@ -249,11 +249,11 @@ final class ElementDiffTests: XCTestCase {
     func testPathNotTracked() {
         let old = Exactmac_V1_Element.with {
             $0.role = "button"
-            $0.path = [0, 1, 2]
+            $0.pathIndices = [0, 1, 2]
         }
         let new = Exactmac_V1_Element.with {
             $0.role = "button"
-            $0.path = [0, 1, 3]
+            $0.pathIndices = [0, 1, 3]
         }
 
         let changes = service.computeElementChanges(old: old, new: new)
@@ -266,7 +266,7 @@ final class ElementDiffTests: XCTestCase {
     func testElementPathKeyWithNonEmptyPath() {
         let element = Exactmac_V1_Element.with {
             $0.role = "button"
-            $0.path = [0, 1, 2]
+            $0.pathIndices = [0, 1, 2]
         }
 
         let key = ExactMacService.elementPathKey(element)
@@ -277,7 +277,7 @@ final class ElementDiffTests: XCTestCase {
     func testElementPathKeyWithEmptyPath() {
         let element = Exactmac_V1_Element.with {
             $0.role = "AXApplication"
-            $0.path = []
+            $0.pathIndices = []
             $0.x = 0
             $0.y = 0
         }
@@ -292,13 +292,13 @@ final class ElementDiffTests: XCTestCase {
     func testElementPathKeyEmptyPathsWithDifferentPositions() {
         let element1 = Exactmac_V1_Element.with {
             $0.role = "AXButton"
-            $0.path = []
+            $0.pathIndices = []
             $0.x = 100
             $0.y = 200
         }
         let element2 = Exactmac_V1_Element.with {
             $0.role = "AXButton"
-            $0.path = []
+            $0.pathIndices = []
             $0.x = 300
             $0.y = 400
         }
@@ -312,13 +312,13 @@ final class ElementDiffTests: XCTestCase {
     func testElementPathKeyEmptyPathsWithDifferentRoles() {
         let element1 = Exactmac_V1_Element.with {
             $0.role = "AXButton"
-            $0.path = []
+            $0.pathIndices = []
             $0.x = 100
             $0.y = 200
         }
         let element2 = Exactmac_V1_Element.with {
             $0.role = "AXStaticText"
-            $0.path = []
+            $0.pathIndices = []
             $0.x = 100
             $0.y = 200
         }
@@ -388,7 +388,7 @@ final class ElementDiffTests: XCTestCase {
     func testElementPathKeyEmptyPathsWithDifferentSizes() {
         let element1 = Exactmac_V1_Element.with {
             $0.role = "AXButton"
-            $0.path = []
+            $0.pathIndices = []
             $0.x = 100
             $0.y = 200
             $0.width = 80
@@ -396,7 +396,7 @@ final class ElementDiffTests: XCTestCase {
         }
         let element2 = Exactmac_V1_Element.with {
             $0.role = "AXButton"
-            $0.path = []
+            $0.pathIndices = []
             $0.x = 100
             $0.y = 200
             $0.width = 120
@@ -412,7 +412,7 @@ final class ElementDiffTests: XCTestCase {
     func testElementPathKeyWithNaNCoordinates() {
         let element = Exactmac_V1_Element.with {
             $0.role = "AXButton"
-            $0.path = []
+            $0.pathIndices = []
             $0.x = Double.nan
             $0.y = Double.infinity
             $0.width = -Double.infinity

@@ -100,9 +100,9 @@ func TestProtoFieldNumbers_Window(t *testing.T) {
 		"name":      1,
 		"title":     2,
 		"bounds":    3,
-		"layer":     11,
-		"visible":   5,
-		"bundle_id": 10,
+		"layer":     6,
+		"visible":   4,
+		"bundle_id": 5,
 	}
 
 	for fieldName, expectedNum := range expectedFields {
@@ -195,7 +195,6 @@ func TestProtoFieldNumbers_ApplicationBundle(t *testing.T) {
 }
 
 // TestProtoFieldNumbers_Session verifies Session field numbers are stable.
-// Note: Field 6 is intentionally skipped in the proto to reserve for future use.
 func TestProtoFieldNumbers_Session(t *testing.T) {
 	var session pb.Session
 	md := session.ProtoReflect().Descriptor()
@@ -207,10 +206,9 @@ func TestProtoFieldNumbers_Session(t *testing.T) {
 		"state":            3,
 		"create_time":      4,
 		"last_access_time": 5,
-		// Field 6 intentionally skipped
-		"expire_time":    7,
-		"transaction_id": 8,
-		"metadata":       9,
+		"expire_time":      6,
+		"transaction_id":   7,
+		"metadata":         8,
 	}
 
 	for fieldName, expectedNum := range expectedFields {
@@ -424,7 +422,7 @@ func TestProtoMessageFieldCounts(t *testing.T) {
 		minCount int
 	}{
 		{"Window", &pb.Window{}, 6},           // name, title, bounds, visible, bundle_id, layer
-		{"Observation", &pb.Observation{}, 8}, // name, type, state, create_time, start_time, end_time, filter, activate
+		{"Observation", &pb.Observation{}, 8}, // name, type, state, create_time, start_time, end_time, filter, activation
 		{"Application", &pb.Application{}, 7}, // exact process identity and display metadata
 		{"ApplicationBundle", &pb.ApplicationBundle{}, 5},
 		{"Session", &pb.Session{}, 8}, // name, display_name, state, create_time, last_access_time, expire_time, transaction_id, metadata

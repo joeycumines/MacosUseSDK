@@ -204,8 +204,8 @@ func TestInputExecutionMCPGeneratesStableOpaqueInputIDs(t *testing.T) {
 	for range 64 {
 		request, err := buildCUAInputRequest("desktop", &pb.Input{
 			Action: &pb.InputAction{
-				InputType: &pb.InputAction_MoveMouse{
-					MoveMouse: &pb.MouseMove{
+				InputType: &pb.InputAction_MouseMove{
+					MouseMove: &pb.MouseMove{
 						Position: &typepb.Point{X: 10, Y: 20},
 					},
 				},
@@ -263,8 +263,8 @@ func TestInputExecutionMCPRequiresExactCommittedDeliveryReceipt(t *testing.T) {
 				Destination: &pb.InputTarget_Desktop{Desktop: true},
 			},
 			Action: &pb.InputAction{
-				InputType: &pb.InputAction_MoveMouse{
-					MoveMouse: &pb.MouseMove{
+				InputType: &pb.InputAction_MouseMove{
+					MouseMove: &pb.MouseMove{
 						Position: &typepb.Point{X: 10, Y: 20},
 					},
 				},

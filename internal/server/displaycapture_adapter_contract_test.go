@@ -106,7 +106,7 @@ func TestGetDisplayContractRejectsUntruthfulTopologyAndCursor(t *testing.T) {
 			response.Displays[0].Scale = math.Inf(1)
 		}},
 		{name: "missing main", mutate: func(response *pb.ListDisplaysResponse) {
-			response.Displays[0].IsMain = false
+			response.Displays[0].Main = false
 		}},
 		{name: "multiple main", mutate: func(response *pb.ListDisplaysResponse) {
 			other := proto.Clone(response.Displays[0]).(*pb.Display)
@@ -172,7 +172,7 @@ func TestGetDisplayContractConsumesEveryPageExactlyOnce(t *testing.T) {
 	secondDisplay.DisplayId = 18
 	secondDisplay.Frame = &typepb.Region{X: 200.25, Y: -50.25, Width: 100, Height: 200.5}
 	secondDisplay.VisibleFrame = proto.Clone(secondDisplay.Frame).(*typepb.Region)
-	secondDisplay.IsMain = false
+	secondDisplay.Main = false
 
 	var requests []*pb.ListDisplaysRequest
 	server := newTestMCPServerWithDisplayClient(&mockCUADisplayClient{
@@ -569,7 +569,7 @@ func validDisplayContractResponse() *pb.ListDisplaysResponse {
 		DisplayId:    17,
 		Frame:        &typepb.Region{X: -100.5, Y: -50.25, Width: 300.75, Height: 200.5},
 		VisibleFrame: &typepb.Region{X: -100.125, Y: -49.75, Width: 299.5, Height: 199.25},
-		IsMain:       true,
+		Main:         true,
 		Scale:        1.234375,
 	}}}
 }

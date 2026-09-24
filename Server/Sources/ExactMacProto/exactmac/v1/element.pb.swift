@@ -34,9 +34,6 @@ public nonisolated struct Exactmac_V1_Element: Sendable {
   /// Canonical resource name in the format
   /// "applications/{application}/elements/{element}". The element segment is
   /// an opaque server-generated ID valid only while this resource is retained.
-  ///
-  /// Field 13 is intentionally additive: fields 1 through 12 retain the wire
-  /// numbers used by element values returned before resource naming existed.
   public var name: String = String()
 
   /// The accessibility role of the element (for example, button or text field).
@@ -115,8 +112,8 @@ public nonisolated struct Exactmac_V1_Element: Sendable {
   /// Clears the value of `focused`. Subsequent reads from it will return its default value.
   public mutating func clearFocused() {self._focused = nil}
 
-  /// Hierarchy path from the traversal root to this element.
-  public var path: [Int32] = []
+  /// Hierarchy path indices from the traversal root to this element.
+  public var pathIndices: [Int32] = []
 
   /// Additional Accessibility attributes represented as key-value pairs.
   public var attributes: Dictionary<String,String> = [:]
@@ -124,9 +121,9 @@ public nonisolated struct Exactmac_V1_Element: Sendable {
   /// Available Accessibility action names.
   public var actions: [String] = []
 
-  /// Parent application resource (for example, "applications/com.apple.TextEdit-abc123").
+  /// Owning application resource (for example, "applications/com.apple.TextEdit-abc123").
   /// This is the canonical owner at discovery time; a stale element must be re-resolved.
-  public var parent: String = String()
+  public var application: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -147,7 +144,7 @@ fileprivate nonisolated let _protobuf_package = "exactmac.v1"
 
 nonisolated extension Exactmac_V1_Element: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Element"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}role\0\u{1}text\0\u{1}x\0\u{1}y\0\u{1}width\0\u{1}height\0\u{3}element_id\0\u{1}enabled\0\u{1}focused\0\u{1}path\0\u{1}attributes\0\u{1}actions\0\u{1}name\0\u{1}parent\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}role\0\u{1}text\0\u{1}x\0\u{1}y\0\u{1}width\0\u{1}height\0\u{3}element_id\0\u{1}enabled\0\u{1}focused\0\u{3}path_indices\0\u{1}attributes\0\u{1}actions\0\u{1}application\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -155,20 +152,20 @@ nonisolated extension Exactmac_V1_Element: SwiftProtobuf.Message, SwiftProtobuf.
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.role) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self._text) }()
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self._x) }()
-      case 4: try { try decoder.decodeSingularDoubleField(value: &self._y) }()
-      case 5: try { try decoder.decodeSingularDoubleField(value: &self._width) }()
-      case 6: try { try decoder.decodeSingularDoubleField(value: &self._height) }()
-      case 7: try { try decoder.decodeSingularStringField(value: &self.elementID) }()
-      case 8: try { try decoder.decodeSingularBoolField(value: &self._enabled) }()
-      case 9: try { try decoder.decodeSingularBoolField(value: &self._focused) }()
-      case 10: try { try decoder.decodeRepeatedInt32Field(value: &self.path) }()
-      case 11: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.attributes) }()
-      case 12: try { try decoder.decodeRepeatedStringField(value: &self.actions) }()
-      case 13: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      case 14: try { try decoder.decodeSingularStringField(value: &self.parent) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.role) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self._text) }()
+      case 4: try { try decoder.decodeSingularDoubleField(value: &self._x) }()
+      case 5: try { try decoder.decodeSingularDoubleField(value: &self._y) }()
+      case 6: try { try decoder.decodeSingularDoubleField(value: &self._width) }()
+      case 7: try { try decoder.decodeSingularDoubleField(value: &self._height) }()
+      case 8: try { try decoder.decodeSingularStringField(value: &self.elementID) }()
+      case 9: try { try decoder.decodeSingularBoolField(value: &self._enabled) }()
+      case 10: try { try decoder.decodeSingularBoolField(value: &self._focused) }()
+      case 11: try { try decoder.decodeRepeatedInt32Field(value: &self.pathIndices) }()
+      case 12: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.attributes) }()
+      case 13: try { try decoder.decodeRepeatedStringField(value: &self.actions) }()
+      case 14: try { try decoder.decodeSingularStringField(value: &self.application) }()
       default: break
       }
     }
@@ -179,47 +176,47 @@ nonisolated extension Exactmac_V1_Element: SwiftProtobuf.Message, SwiftProtobuf.
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
     if !self.role.isEmpty {
-      try visitor.visitSingularStringField(value: self.role, fieldNumber: 1)
+      try visitor.visitSingularStringField(value: self.role, fieldNumber: 2)
     }
     try { if let v = self._text {
-      try visitor.visitSingularStringField(value: v, fieldNumber: 2)
+      try visitor.visitSingularStringField(value: v, fieldNumber: 3)
     } }()
     try { if let v = self._x {
-      try visitor.visitSingularDoubleField(value: v, fieldNumber: 3)
-    } }()
-    try { if let v = self._y {
       try visitor.visitSingularDoubleField(value: v, fieldNumber: 4)
     } }()
-    try { if let v = self._width {
+    try { if let v = self._y {
       try visitor.visitSingularDoubleField(value: v, fieldNumber: 5)
     } }()
-    try { if let v = self._height {
+    try { if let v = self._width {
       try visitor.visitSingularDoubleField(value: v, fieldNumber: 6)
     } }()
+    try { if let v = self._height {
+      try visitor.visitSingularDoubleField(value: v, fieldNumber: 7)
+    } }()
     if !self.elementID.isEmpty {
-      try visitor.visitSingularStringField(value: self.elementID, fieldNumber: 7)
+      try visitor.visitSingularStringField(value: self.elementID, fieldNumber: 8)
     }
     try { if let v = self._enabled {
-      try visitor.visitSingularBoolField(value: v, fieldNumber: 8)
-    } }()
-    try { if let v = self._focused {
       try visitor.visitSingularBoolField(value: v, fieldNumber: 9)
     } }()
-    if !self.path.isEmpty {
-      try visitor.visitPackedInt32Field(value: self.path, fieldNumber: 10)
+    try { if let v = self._focused {
+      try visitor.visitSingularBoolField(value: v, fieldNumber: 10)
+    } }()
+    if !self.pathIndices.isEmpty {
+      try visitor.visitPackedInt32Field(value: self.pathIndices, fieldNumber: 11)
     }
     if !self.attributes.isEmpty {
-      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: self.attributes, fieldNumber: 11)
+      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: self.attributes, fieldNumber: 12)
     }
     if !self.actions.isEmpty {
-      try visitor.visitRepeatedStringField(value: self.actions, fieldNumber: 12)
+      try visitor.visitRepeatedStringField(value: self.actions, fieldNumber: 13)
     }
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 13)
-    }
-    if !self.parent.isEmpty {
-      try visitor.visitSingularStringField(value: self.parent, fieldNumber: 14)
+    if !self.application.isEmpty {
+      try visitor.visitSingularStringField(value: self.application, fieldNumber: 14)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -235,10 +232,10 @@ nonisolated extension Exactmac_V1_Element: SwiftProtobuf.Message, SwiftProtobuf.
     if lhs.elementID != rhs.elementID {return false}
     if lhs._enabled != rhs._enabled {return false}
     if lhs._focused != rhs._focused {return false}
-    if lhs.path != rhs.path {return false}
+    if lhs.pathIndices != rhs.pathIndices {return false}
     if lhs.attributes != rhs.attributes {return false}
     if lhs.actions != rhs.actions {return false}
-    if lhs.parent != rhs.parent {return false}
+    if lhs.application != rhs.application {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

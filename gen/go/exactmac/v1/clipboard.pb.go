@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/v1/clipboard.proto
 
-package exactmacv1
+package exactmacpb
 
 import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -284,32 +284,32 @@ type isClipboardContent_Content interface {
 
 type ClipboardContent_Text struct {
 	// Plain text content.
-	Text string `protobuf:"bytes,10,opt,name=text,proto3,oneof"`
+	Text string `protobuf:"bytes,2,opt,name=text,proto3,oneof"`
 }
 
 type ClipboardContent_Rtf struct {
 	// Rich Text Format (RTF) content.
-	Rtf []byte `protobuf:"bytes,11,opt,name=rtf,proto3,oneof"`
+	Rtf []byte `protobuf:"bytes,3,opt,name=rtf,proto3,oneof"`
 }
 
 type ClipboardContent_Html struct {
 	// HTML content.
-	Html string `protobuf:"bytes,12,opt,name=html,proto3,oneof"`
+	Html string `protobuf:"bytes,4,opt,name=html,proto3,oneof"`
 }
 
 type ClipboardContent_Image struct {
 	// Image data (PNG format).
-	Image []byte `protobuf:"bytes,13,opt,name=image,proto3,oneof"`
+	Image []byte `protobuf:"bytes,5,opt,name=image,proto3,oneof"`
 }
 
 type ClipboardContent_Files struct {
 	// File paths (for copied files).
-	Files *FilePaths `protobuf:"bytes,14,opt,name=files,proto3,oneof"`
+	Files *FilePaths `protobuf:"bytes,6,opt,name=files,proto3,oneof"`
 }
 
 type ClipboardContent_Url struct {
 	// URL content.
-	Url string `protobuf:"bytes,15,opt,name=url,proto3,oneof"`
+	Url string `protobuf:"bytes,7,opt,name=url,proto3,oneof"`
 }
 
 func (*ClipboardContent_Text) isClipboardContent_Content() {}
@@ -373,8 +373,10 @@ func (x *FilePaths) GetPaths() []string {
 // Clipboard history.
 type ClipboardHistory struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource name for the singleton clipboard history.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Historical clipboard entries (most recent first).
-	Entries       []*ClipboardHistoryEntry `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+	Entries       []*ClipboardHistoryEntry `protobuf:"bytes,2,rep,name=entries,proto3" json:"entries,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -407,6 +409,13 @@ func (x *ClipboardHistory) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ClipboardHistory.ProtoReflect.Descriptor instead.
 func (*ClipboardHistory) Descriptor() ([]byte, []int) {
 	return file_exactmac_v1_clipboard_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ClipboardHistory) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
 }
 
 func (x *ClipboardHistory) GetEntries() []*ClipboardHistoryEntry {
@@ -493,19 +502,20 @@ const file_exactmac_v1_clipboard_proto_rawDesc = "" +
 	"clipboards2\tclipboard\"\xfa\x01\n" +
 	"\x10ClipboardContent\x126\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x18.exactmac.v1.ContentTypeB\x03\xe0A\x02H\x01R\x04type\x88\x01\x01\x12\x14\n" +
-	"\x04text\x18\n" +
-	" \x01(\tH\x00R\x04text\x12\x12\n" +
-	"\x03rtf\x18\v \x01(\fH\x00R\x03rtf\x12\x14\n" +
-	"\x04html\x18\f \x01(\tH\x00R\x04html\x12\x16\n" +
-	"\x05image\x18\r \x01(\fH\x00R\x05image\x12.\n" +
-	"\x05files\x18\x0e \x01(\v2\x16.exactmac.v1.FilePathsH\x00R\x05files\x12\x12\n" +
-	"\x03url\x18\x0f \x01(\tH\x00R\x03urlB\t\n" +
+	"\x04text\x18\x02 \x01(\tH\x00R\x04text\x12\x12\n" +
+	"\x03rtf\x18\x03 \x01(\fH\x00R\x03rtf\x12\x14\n" +
+	"\x04html\x18\x04 \x01(\tH\x00R\x04html\x12\x16\n" +
+	"\x05image\x18\x05 \x01(\fH\x00R\x05image\x12.\n" +
+	"\x05files\x18\x06 \x01(\v2\x16.exactmac.v1.FilePathsH\x00R\x05files\x12\x12\n" +
+	"\x03url\x18\a \x01(\tH\x00R\x03urlB\t\n" +
 	"\acontentB\a\n" +
 	"\x05_type\"&\n" +
 	"\tFilePaths\x12\x19\n" +
-	"\x05paths\x18\x01 \x03(\tB\x03\xe0A\x02R\x05paths\"U\n" +
-	"\x10ClipboardHistory\x12A\n" +
-	"\aentries\x18\x01 \x03(\v2\".exactmac.v1.ClipboardHistoryEntryB\x03\xe0A\x03R\aentries\"\xcb\x01\n" +
+	"\x05paths\x18\x01 \x03(\tB\x03\xe0A\x02R\x05paths\"\xc6\x01\n" +
+	"\x10ClipboardHistory\x12\x17\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12A\n" +
+	"\aentries\x18\x02 \x03(\v2\".exactmac.v1.ClipboardHistoryEntryB\x03\xe0A\x03R\aentries:V\xeaAS\n" +
+	"\x19exactmac/ClipboardHistory\x12\x10clipboardHistory*\x12clipboardHistories2\x10clipboardHistory\"\xcb\x01\n" +
 	"\x15ClipboardHistoryEntry\x12@\n" +
 	"\vcopied_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\n" +
 	"copiedTime\x12<\n" +
@@ -518,8 +528,8 @@ const file_exactmac_v1_clipboard_proto_rawDesc = "" +
 	"\x11CONTENT_TYPE_HTML\x10\x03\x12\x16\n" +
 	"\x12CONTENT_TYPE_IMAGE\x10\x04\x12\x16\n" +
 	"\x12CONTENT_TYPE_FILES\x10\x05\x12\x14\n" +
-	"\x10CONTENT_TYPE_URL\x10\x06B\xbf\x01\n" +
-	"!io.github.joeycumines.exactmac.v1B\x0eClipboardProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1\xa2\x02\x03EXX\xaa\x02\vExactmac.V1\xca\x02\vExactmac\\V1\xe2\x02\x17Exactmac\\V1\\GPBMetadata\xea\x02\fExactmac::V1b\x06proto3"
+	"\x10CONTENT_TYPE_URL\x10\x06Bt\n" +
+	"!io.github.joeycumines.exactmac.v1B\x0eClipboardProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpbb\x06proto3"
 
 var (
 	file_exactmac_v1_clipboard_proto_rawDescOnce sync.Once

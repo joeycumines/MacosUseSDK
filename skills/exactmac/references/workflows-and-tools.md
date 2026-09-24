@@ -48,7 +48,7 @@ actions, and verification without redundant pauses:
      or `role:AXLink` to discover content.
    - Click articles or links via `click_element(parent=window, element=handle)`.
    - Scroll through dynamic feeds: `scroll(target=window, x=center_x, y=center_y, scroll_y=500)`
-     followed by `wait(1.0)` and `find_elements(force_refresh=true)`.
+     followed by `wait(1.0)` and `find_elements(cache_bypass=true)`.
 
 ### Navigate Desktop Web-View and Canvas Apps (Figma / Electron)
 
@@ -62,7 +62,7 @@ actions, and verification without redundant pauses:
    appears on both an `AXRow` and an `AXButton` (or another container/action pair), use
    `find_elements` to inspect all matches and choose the actionable handle.
 3. **Mutate while fresh:** Call `click_element` immediately with the fresh handle. On a
-   stale/not-attached error, force-refresh and rediscover; after one more failure, never
+   stale/not-attached error, cache-bypass and rediscover; after one more failure, never
    reuse a failed handle or unscoped keyboard trigger. Follow the Click Escalation path
    only after confirming focus/action or fresh visible bounds.
 4. **Verify navigation:** Capture a baseline before the action. Confirm two independent
@@ -130,7 +130,7 @@ IntelliJ, PyCharm throwing `AX error -25202` or `kAXErrorAPIDisabled -25211`):
    enabled/focused state, and actions.
 3. Extract text from AX elements — do not screenshot to read text.
 4. After interaction, data may be stale. Use `read_element` on the specific
-   handle or `find_elements` with `force_refresh=true` for a fresh read.
+   handle or `find_elements` with `cache_bypass=true` for a fresh read.
 
 ### Automate a Repetitive Sequence (Macros)
 
@@ -152,7 +152,7 @@ selector string:
 |----------|---------|-------------|
 | `role` | `role:AXButton` | Match by AX role |
 | `text` | `text:Submit` | Exact text match (case-sensitive) |
-| `text_contains` | `text_contains:save` | Substring match (case-sensitive) |
+| `text_substring` | `text_substring:save` | Substring match (case-sensitive) |
 
 A selector used for mutation (`click_element`, `type_element`) must resolve
 to exactly one element; the server rejects ambiguous selectors. When
@@ -189,9 +189,9 @@ close_app(app, force=false)
 ### Finding Elements
 
 ```
-find_elements(parent, selector, force_refresh=false, page_size, page_token)
+find_elements(parent, selector, cache_bypass=false, page_size, page_token)
   parent: "applications/{id}" or "applications/{id}/windows/{id}"
-  selector: "role:AXButton" | "text:Save" | "text_contains:save" (required)
+  selector: "role:AXButton" | "text:Save" | "text_substring:save" (required)
 read_element(parent, element)
   parent: application/window used during discovery when element is a bare handle
   element: parent-bound handle or full element resource name
@@ -236,7 +236,7 @@ resize_window(window, width, height)
 ### Screenshots
 
 ```
-screenshot(display|window|region, format="png"|"jpeg"|"tiff", quality, ocr, include_shadow)
+screenshot(display|window|region, format="png"|"jpeg"|"tiff", quality, ocr_enabled, shadow_enabled)
   display: "displays/{id}" from get_display
   window:  exact applications/{id}/windows/{id} resource
   region:  x, y, width, height in logical display points

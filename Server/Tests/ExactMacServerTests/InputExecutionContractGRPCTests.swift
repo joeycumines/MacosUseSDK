@@ -140,7 +140,7 @@ struct InputExecutionContractGRPCTests {
             Exactmac_V1_Input.with {
                 $0.name = name
                 $0.target.display = "displays/2"
-                $0.action.click.position = Exactmac_Type_Point.with {
+                $0.action.mouseClick.position = Exactmac_Type_Point.with {
                     $0.x = 10
                     $0.y = 20
                 }
@@ -154,7 +154,7 @@ struct InputExecutionContractGRPCTests {
             $0.parent = "applications/-"
             $0.inputID = "disappeared-target"
             $0.input.target.display = "displays/2"
-            $0.input.action.click.position = Exactmac_Type_Point.with {
+            $0.input.action.mouseClick.position = Exactmac_Type_Point.with {
                 $0.x = 10
                 $0.y = 20
             }
@@ -242,7 +242,7 @@ struct InputExecutionContractGRPCTests {
                 $0.parent = "applications/-"
                 $0.inputID = "cross-display-drag"
                 $0.input.target.display = "displays/1"
-                $0.input.action.drag.path = [
+                $0.input.action.mouseDrag.waypoints = [
                     Exactmac_Type_Point.with { $0.x = 10; $0.y = 20 },
                     Exactmac_Type_Point.with { $0.x = 2500; $0.y = 20 },
                     Exactmac_Type_Point.with { $0.x = 30; $0.y = 40 },
@@ -384,7 +384,7 @@ struct InputExecutionContractGRPCTests {
         )
         let name = "applications/-/inputs/overlay-failure"
         var configuredRequest = inputExecutionCreateRequest(id: "overlay-failure")
-        configuredRequest.input.action.showAnimation = true
+        configuredRequest.input.action.visualFeedback = true
         configuredRequest.input.action.animationDuration = 0.25
         let request = configuredRequest
 
@@ -612,7 +612,7 @@ struct InputExecutionContractGRPCTests {
         )
         var request = inputExecutionCreateRequest(id: "permanent-duplicate")
         request.input.action = Exactmac_V1_InputAction.with {
-            $0.pressKey.key = "a"
+            $0.keyPress.key = "a"
         }
         let duplicateRequest = request
 
@@ -651,7 +651,7 @@ struct InputExecutionContractGRPCTests {
 
         try await withInputExecutionClient(composition) { client in
             var duplicateModifiers = inputExecutionCreateRequest(id: "duplicate-modifiers")
-            duplicateModifiers.input.action.click.modifiers = [.shift, .shift]
+            duplicateModifiers.input.action.mouseClick.modifiers = [.shift, .shift]
             await expectInputExecutionRPCError(.invalidArgument) {
                 let _: Exactmac_V1_Input = try await inputExecutionUnary(
                     client: client,
@@ -664,7 +664,7 @@ struct InputExecutionContractGRPCTests {
                 $0.parent = "applications/-"
                 $0.inputID = "display-keyboard"
                 $0.input.target.display = "displays/1"
-                $0.input.action.pressKey.key = "a"
+                $0.input.action.keyPress.key = "a"
             }
             await expectInputExecutionRPCError(.invalidArgument) {
                 let _: Exactmac_V1_Input = try await inputExecutionUnary(
@@ -707,7 +707,7 @@ struct InputExecutionContractGRPCTests {
         try await withInputExecutionClient(composition) { client in
             var character = inputExecutionCreateRequest(id: "missing-layout-fingerprint")
             character.input.action = Exactmac_V1_InputAction.with {
-                $0.pressKey.key = "a"
+                $0.keyPress.key = "a"
             }
             await expectInputExecutionRPCError(.invalidArgument) {
                 let _: Exactmac_V1_Input = try await inputExecutionUnary(
@@ -719,7 +719,7 @@ struct InputExecutionContractGRPCTests {
 
             var named = inputExecutionCreateRequest(id: "layout-independent-return")
             named.input.action = Exactmac_V1_InputAction.with {
-                $0.pressKey.key = "return"
+                $0.keyPress.key = "return"
             }
             let completed: Exactmac_V1_Input = try await inputExecutionUnary(
                 client: client,
@@ -1368,7 +1368,7 @@ private func inputExecutionCreateRequest(
         $0.parent = "applications/-"
         $0.inputID = id
         $0.input.target.desktop = true
-        $0.input.action.click = Exactmac_V1_MouseClick.with {
+        $0.input.action.mouseClick = Exactmac_V1_MouseClick.with {
             $0.position = Exactmac_Type_Point.with {
                 $0.x = 10
                 $0.y = 20
@@ -1386,7 +1386,7 @@ private func inputExecutionClickRequest(
         $0.parent = "applications/-"
         $0.inputID = id
         $0.input.target.destination = target
-        $0.input.action.click.position = Exactmac_Type_Point.with {
+        $0.input.action.mouseClick.position = Exactmac_Type_Point.with {
             $0.x = point.x
             $0.y = point.y
         }
@@ -1415,7 +1415,7 @@ private func terminalInputFixture(
 ) -> Exactmac_V1_Input {
     Exactmac_V1_Input.with {
         $0.name = name
-        $0.action.click.position = Exactmac_Type_Point.with {
+        $0.action.mouseClick.position = Exactmac_Type_Point.with {
             $0.x = 10
             $0.y = 20
         }

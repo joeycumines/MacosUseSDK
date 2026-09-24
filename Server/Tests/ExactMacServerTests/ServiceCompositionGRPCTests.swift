@@ -204,7 +204,6 @@ struct ServiceCompositionGRPCTests {
                                 method: "ListElements",
                                 parameters: [
                                     ("parent", "applications/111"),
-                                    ("page_size", "100"),
                                 ],
                             ),
                         )
@@ -1641,7 +1640,7 @@ struct ServiceCompositionGRPCTests {
                     $0.parent = "applications/-"
                     $0.inputID = "click"
                     $0.input.target.desktop = true
-                    $0.input.action.click = Exactmac_V1_MouseClick.with {
+                    $0.input.action.mouseClick = Exactmac_V1_MouseClick.with {
                         $0.position = Exactmac_Type_Point.with {
                             $0.x = 10
                             $0.y = 20
@@ -1659,7 +1658,7 @@ struct ServiceCompositionGRPCTests {
                     $0.parent = applicationName
                     $0.inputID = "type"
                     $0.input.target.application = applicationName
-                    $0.input.action.typeText = Exactmac_V1_TextInput.with {
+                    $0.input.action.textInput = Exactmac_V1_TextInput.with {
                         $0.text = "ab"
                         $0.charDelay = 0.125
                     }
@@ -1672,7 +1671,7 @@ struct ServiceCompositionGRPCTests {
                     $0.parent = "applications/-"
                     $0.inputID = "key"
                     $0.input.target.desktop = true
-                    $0.input.action.pressKey = Exactmac_V1_KeyPress.with {
+                    $0.input.action.keyPress = Exactmac_V1_KeyPress.with {
                         $0.key = "return"
                         $0.modifiers = [.option, .control]
                         $0.holdDuration = 0.25
@@ -1686,7 +1685,7 @@ struct ServiceCompositionGRPCTests {
                     $0.parent = "applications/-"
                     $0.inputID = "move"
                     $0.input.target.desktop = true
-                    $0.input.action.moveMouse = Exactmac_V1_MouseMove.with {
+                    $0.input.action.mouseMove = Exactmac_V1_MouseMove.with {
                         $0.position = Exactmac_Type_Point.with {
                             $0.x = 30
                             $0.y = 40
@@ -1703,10 +1702,10 @@ struct ServiceCompositionGRPCTests {
                     $0.parent = "applications/-"
                     $0.inputID = "drag"
                     $0.input.target.desktop = true
-                    $0.input.action.drag = Exactmac_V1_MouseDrag.with {
+                    $0.input.action.mouseDrag = Exactmac_V1_MouseDrag.with {
                         $0.startPosition = Exactmac_Type_Point.with { $0.x = 1; $0.y = 2 }
                         $0.endPosition = Exactmac_Type_Point.with { $0.x = 5; $0.y = 6 }
-                        $0.path = [
+                        $0.waypoints = [
                             Exactmac_Type_Point.with { $0.x = 1; $0.y = 2 },
                             Exactmac_Type_Point.with { $0.x = 3; $0.y = 9 },
                             Exactmac_Type_Point.with { $0.x = 5; $0.y = 6 },
@@ -1724,7 +1723,7 @@ struct ServiceCompositionGRPCTests {
                     $0.parent = "applications/-"
                     $0.inputID = "scroll"
                     $0.input.target.desktop = true
-                    $0.input.action.scroll = Exactmac_V1_Scroll.with {
+                    $0.input.action.scrollAction = Exactmac_V1_Scroll.with {
                         $0.position = Exactmac_Type_Point.with {
                             $0.x = 100
                             $0.y = 200
@@ -1743,7 +1742,7 @@ struct ServiceCompositionGRPCTests {
                     $0.parent = "applications/-"
                     $0.inputID = "hover"
                     $0.input.target.desktop = true
-                    $0.input.action.hover = Exactmac_V1_Hover.with {
+                    $0.input.action.hoverAction = Exactmac_V1_Hover.with {
                         $0.position = Exactmac_Type_Point.with {
                             $0.x = 300
                             $0.y = 400
@@ -1871,7 +1870,7 @@ struct ServiceCompositionGRPCTests {
             }
 
             let knownAction = Exactmac_V1_InputAction.with {
-                $0.click = Exactmac_V1_MouseClick.with {
+                $0.mouseClick = Exactmac_V1_MouseClick.with {
                     $0.position = Exactmac_Type_Point.with { $0.x = 10; $0.y = 20 }
                 }
             }
@@ -2439,7 +2438,7 @@ private func createInjectedInputRequest(
         $0.input = Exactmac_V1_Input.with {
             $0.target.desktop = true
             $0.action = Exactmac_V1_InputAction.with {
-                $0.moveMouse = Exactmac_V1_MouseMove.with {
+                $0.mouseMove = Exactmac_V1_MouseMove.with {
                     $0.position = Exactmac_Type_Point.with {
                         $0.x = x
                         $0.y = 100

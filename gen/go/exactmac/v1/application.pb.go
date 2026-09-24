@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/v1/application.proto
 
-package exactmacv1
+package exactmacpb
 
 import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -296,8 +296,8 @@ const file_exactmac_v1_application_proto_rawDesc = "" +
 	"\x0fApplicationView\x12 \n" +
 	"\x1cAPPLICATION_VIEW_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16APPLICATION_VIEW_BASIC\x10\x01\x12\x19\n" +
-	"\x15APPLICATION_VIEW_FULL\x10\x02B\xc1\x01\n" +
-	"!io.github.joeycumines.exactmac.v1B\x10ApplicationProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1\xa2\x02\x03EXX\xaa\x02\vExactmac.V1\xca\x02\vExactmac\\V1\xe2\x02\x17Exactmac\\V1\\GPBMetadata\xea\x02\fExactmac::V1b\x06proto3"
+	"\x15APPLICATION_VIEW_FULL\x10\x02Bv\n" +
+	"!io.github.joeycumines.exactmac.v1B\x10ApplicationProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpbb\x06proto3"
 
 var (
 	file_exactmac_v1_application_proto_rawDescOnce sync.Once

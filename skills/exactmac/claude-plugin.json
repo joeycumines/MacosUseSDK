@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "exactmac",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "macOS desktop automation skill for the ExactMac MCP server. Covers opening apps, finding and interacting with UI elements via Accessibility APIs, typing text, clicking, window management, clipboard operations, scripts, macros, and display queries.",
   "author": {
     "name": "Joseph Cumines"

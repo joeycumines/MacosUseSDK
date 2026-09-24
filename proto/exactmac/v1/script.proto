@@ -7,16 +7,27 @@ syntax = "proto3";
 package exactmac.v1;
 
 import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
 
-option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpb";
 option java_multiple_files = true;
 option java_outer_classname = "ScriptProto";
 option java_package = "io.github.joeycumines.exactmac.v1";
 
-// Scripting dictionaries.
-message ScriptingDictionaries {
+// Catalog of scripting dictionaries.
+message ScriptingDictionaryCatalog {
+  option (google.api.resource) = {
+    type: "exactmac/ScriptingDictionaryCatalog"
+    pattern: "scriptingDictionaryCatalog"
+    singular: "scriptingDictionaryCatalog"
+    plural: "scriptingDictionaryCatalogs"
+  };
+
+  // Resource name for the singleton scripting dictionary catalog.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
   // Available scripting dictionaries.
-  repeated ScriptingDictionary dictionaries = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  repeated ScriptingDictionary dictionaries = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Scripting dictionary for an application.

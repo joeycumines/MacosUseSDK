@@ -100,9 +100,9 @@ extension ExactMacService {
                     let hasChanges = !added.isEmpty || !removed.isEmpty || !modified.isEmpty
                     if hasChanges {
                         let resp = Exactmac_V1_WatchAccessibilityResponse.with {
-                            $0.added = added
-                            $0.removed = removed
-                            $0.modified = modified
+                            $0.addedElements = added
+                            $0.removedElements = removed
+                            $0.modifiedElements = modified
                         }
                         try await writer.write(resp)
                     }
@@ -241,7 +241,7 @@ extension ExactMacService {
     /// Handles empty paths by using role + position + size as fallback to avoid collisions.
     /// - Note: Static for testing with @testable import.
     static func elementPathKey(_ element: Exactmac_V1_Element) -> String {
-        if element.path.isEmpty {
+        if element.pathIndices.isEmpty {
             // Fallback: use elementId + role + position + size to distinguish elements
             // without path info. Including elementId avoids collisions for same-role
             // siblings at identical coordinates (e.g., two identical buttons stacked).
@@ -254,7 +254,7 @@ extension ExactMacService {
             }
             return "root:\(element.role)@\(x),\(y)/\(w)x\(h)"
         }
-        return element.path.map(String.init).joined(separator: "/")
+        return element.pathIndices.map(String.init).joined(separator: "/")
     }
 
     /// Safely converts a Double to Int, returning 0 for NaN, Infinity, or values outside Int range.
@@ -277,26 +277,27 @@ extension ExactMacService {
         request: ServerRequest<Exactmac_V1_FindElementsRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Exactmac_V1_FindElementsResponse> {
         let req = request.message
-        Self.logger.info("findElements called (forceRefresh=\(req.forceRefresh, privacy: .public))")
+        Self.logger.info("findElements called (cacheBypass=\(req.cacheBypass, privacy: .public))")
 
         // Validate and parse the selector
         let selector = try SelectorParser.shared.parseSelector(req.selector)
         let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
-        let queryBinding = try ParsingHelpers.pageTokenQuery(
+        let skip = try RequestNumericValidation.skip(req.skip)
+        let queryBinding = ParsingHelpers.pageTokenQuery(
             method: "FindElements",
             parameters: [
                 ("parent", req.parent),
-                ("selector", req.selector.serializedData().base64EncodedString()),
+                ("selector", ParsingHelpers.selectorQueryIdentity(req.selector)),
                 ("visible_only", String(req.visibleOnly)),
-                ("force_refresh", String(req.forceRefresh)),
-                ("page_size", String(pageSize)),
+                ("cache_bypass", String(req.cacheBypass)),
             ],
         )
-        let offset = try ParsingHelpers.pageOffset(
+        let cursor = try ParsingHelpers.pageCursor(
             token: req.pageToken,
+            skip: skip,
             queryBinding: queryBinding,
         )
-        let (offsetAndPage, pageOverflow) = offset.addingReportingOverflow(pageSize)
+        let (offsetAndPage, pageOverflow) = cursor.offset.addingReportingOverflow(pageSize)
         let (maxResults, sentinelOverflow) = offsetAndPage.addingReportingOverflow(1)
         guard !pageOverflow, !sentinelOverflow else {
             throw RPCErrorHelpers.validationError(
@@ -307,13 +308,13 @@ extension ExactMacService {
         }
 
         let pid = try await resolveApplicationOrWindowParentPID(fromName: req.parent)
-        if req.forceRefresh, offset == 0 {
+        if req.cacheBypass, req.pageToken.isEmpty {
             let cleared = await elementRegistry.clearElements(
                 forPid: pid,
                 scope: req.parent,
             )
             if cleared > 0 {
-                Self.logger.info("forceRefresh: cleared \(cleared, privacy: .public) cached elements for PID \(pid, privacy: .public)")
+                Self.logger.info("cacheBypass: cleared \(cleared, privacy: .public) cached elements for PID \(pid, privacy: .public)")
             }
         }
 
@@ -328,9 +329,9 @@ extension ExactMacService {
         // Apply pagination slice
         let totalCount = elementsWithPaths.count
         let range = try ParsingHelpers.pageRange(
-            offset: offset,
+            cursor: cursor,
             pageSize: pageSize,
-            totalCount: totalCount,
+            totalCount: elementsWithPaths.count,
         )
         let pageElementsWithPaths = Array(elementsWithPaths[range])
         let nextPageToken = ParsingHelpers.nextPageToken(
@@ -344,7 +345,7 @@ extension ExactMacService {
         var elements = [Exactmac_V1_Element]()
         for (element, path) in pageElementsWithPaths {
             var protoWithPath = element
-            protoWithPath.path = path
+            protoWithPath.pathIndices = path
             elements.append(protoWithPath)
         }
 
@@ -359,7 +360,7 @@ extension ExactMacService {
         request: ServerRequest<Exactmac_V1_FindRegionElementsRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Exactmac_V1_FindRegionElementsResponse> {
         let req = request.message
-        Self.logger.info("findRegionElements called (forceRefresh=\(req.forceRefresh, privacy: .public))")
+        Self.logger.info("findRegionElements called (cacheBypass=\(req.cacheBypass, privacy: .public))")
 
         // Validate region coordinates are finite
         guard req.region.x.isFinite else {
@@ -399,21 +400,22 @@ extension ExactMacService {
         let selector =
             req.hasSelector ? try SelectorParser.shared.parseSelector(req.selector) : nil
         let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let skip = try RequestNumericValidation.skip(req.skip)
         let queryBinding = try ParsingHelpers.pageTokenQuery(
             method: "FindRegionElements",
             parameters: [
                 ("parent", req.parent),
                 ("region", req.region.serializedData().base64EncodedString()),
-                ("selector", req.hasSelector ? req.selector.serializedData().base64EncodedString() : ""),
-                ("force_refresh", String(req.forceRefresh)),
-                ("page_size", String(pageSize)),
+                ("selector", req.hasSelector ? ParsingHelpers.selectorQueryIdentity(req.selector) : ""),
+                ("cache_bypass", String(req.cacheBypass)),
             ],
         )
-        let offset = try ParsingHelpers.pageOffset(
+        let cursor = try ParsingHelpers.pageCursor(
             token: req.pageToken,
+            skip: skip,
             queryBinding: queryBinding,
         )
-        let (offsetAndPage, pageOverflow) = offset.addingReportingOverflow(pageSize)
+        let (offsetAndPage, pageOverflow) = cursor.offset.addingReportingOverflow(pageSize)
         let (maxResults, sentinelOverflow) = offsetAndPage.addingReportingOverflow(1)
         guard !pageOverflow, !sentinelOverflow else {
             throw RPCErrorHelpers.validationError(
@@ -424,13 +426,13 @@ extension ExactMacService {
         }
 
         let pid = try await resolveApplicationOrWindowParentPID(fromName: req.parent)
-        if req.forceRefresh, offset == 0 {
+        if req.cacheBypass, req.pageToken.isEmpty {
             let cleared = await elementRegistry.clearElements(
                 forPid: pid,
                 scope: req.parent,
             )
             if cleared > 0 {
-                Self.logger.info("forceRefresh: cleared \(cleared, privacy: .public) cached elements for PID \(pid, privacy: .public)")
+                Self.logger.info("cacheBypass: cleared \(cleared, privacy: .public) cached elements for PID \(pid, privacy: .public)")
             }
         }
 
@@ -446,9 +448,9 @@ extension ExactMacService {
         // Apply pagination slice
         let totalCount = elementsWithPaths.count
         let range = try ParsingHelpers.pageRange(
-            offset: offset,
+            cursor: cursor,
             pageSize: pageSize,
-            totalCount: totalCount,
+            totalCount: elementsWithPaths.count,
         )
         let pageElementsWithPaths = Array(elementsWithPaths[range])
         let nextPageToken = ParsingHelpers.nextPageToken(
@@ -462,7 +464,7 @@ extension ExactMacService {
         var elements = [Exactmac_V1_Element]()
         for (element, path) in pageElementsWithPaths {
             var protoWithPath = element
-            protoWithPath.path = path
+            protoWithPath.pathIndices = path
             elements.append(protoWithPath)
         }
 
@@ -515,22 +517,23 @@ extension ExactMacService {
             )
         }
         let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let skip = try RequestNumericValidation.skip(req.skip)
         let queryBinding = ParsingHelpers.pageTokenQuery(
             method: "ListElements",
             parameters: [
                 ("parent", req.parent),
-                ("page_size", String(pageSize)),
             ],
         )
-        let offset = try ParsingHelpers.pageOffset(
+        let cursor = try ParsingHelpers.pageCursor(
             token: req.pageToken,
+            skip: skip,
             queryBinding: queryBinding,
         )
         let pid = try await resolveApplicationPID(fromName: req.parent)
 
         let elements = await elementRegistry.listElements(forPID: pid)
         let range = try ParsingHelpers.pageRange(
-            offset: offset,
+            cursor: cursor,
             pageSize: pageSize,
             totalCount: elements.count,
         )
@@ -1263,7 +1266,7 @@ extension ExactMacService {
                             // Element found! Complete the operation
                             // Element already has elementID from findElements() registration
                             var elementWithId = firstElement.element
-                            elementWithId.path = firstElement.path
+                            elementWithId.pathIndices = firstElement.path
 
                             let response = Exactmac_V1_WaitElementResponse.with {
                                 $0.element = elementWithId
@@ -1332,7 +1335,7 @@ extension ExactMacService {
                     expectedPID: pid,
                     expectedScope: req.parent,
                 )
-                initialElementWithPath = (target.element, target.element.path)
+                initialElementWithPath = (target.element, target.element.pathIndices)
             } catch let error as ElementMutationResolutionError {
                 switch error {
                 case .admissionClosed:
@@ -1435,7 +1438,7 @@ extension ExactMacService {
                             // Condition met! Complete the operation
                             var elementWithId = currentElement
                             elementWithId.elementID = trackedElementId
-                            elementWithId.path = currentElementWithPath.path
+                            elementWithId.pathIndices = currentElementWithPath.path
 
                             let response = Exactmac_V1_WaitElementStateResponse.with {
                                 $0.element = elementWithId

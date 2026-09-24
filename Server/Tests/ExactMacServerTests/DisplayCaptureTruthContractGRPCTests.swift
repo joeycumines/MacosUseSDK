@@ -34,7 +34,7 @@ struct DisplayCaptureTruthContractGRPCTests {
             #expect(left.frame == displayCaptureTruthRegion(displayCaptureTruthDisplays[1].frame))
             #expect(left.visibleFrame == displayCaptureTruthRegion(displayCaptureTruthDisplays[1].visibleFrame))
             #expect(left.scale == 1.5)
-            #expect(!left.isMain)
+            #expect(!left.main)
         }
 
         #expect(await provider.snapshotCount == 1)

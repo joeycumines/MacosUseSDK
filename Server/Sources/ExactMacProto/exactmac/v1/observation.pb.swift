@@ -156,9 +156,9 @@ public nonisolated struct Exactmac_V1_Observation: @unchecked Sendable {
   /// Whether observation polling should activate (bring to foreground) the
   /// target application on each poll cycle. When false (the default), polling
   /// is performed passively without disturbing window ordering.
-  public var activate: Bool {
-    get {_storage._activate}
-    set {_uniqueStorage()._activate = newValue}
+  public var activation: Bool {
+    get {_storage._activation}
+    set {_uniqueStorage()._activation = newValue}
   }
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -298,31 +298,31 @@ public nonisolated struct Exactmac_V1_ObservationEvent: @unchecked Sendable {
     set {_uniqueStorage()._eventType = newValue}
   }
 
-  /// Element was added.
-  public var elementAdded: Exactmac_V1_ElementEvent {
+  /// Element addition.
+  public var elementAddition: Exactmac_V1_ElementEvent {
     get {
-      if case .elementAdded(let v)? = _storage._eventType {return v}
+      if case .elementAddition(let v)? = _storage._eventType {return v}
       return Exactmac_V1_ElementEvent()
     }
-    set {_uniqueStorage()._eventType = .elementAdded(newValue)}
+    set {_uniqueStorage()._eventType = .elementAddition(newValue)}
   }
 
-  /// Element was removed.
-  public var elementRemoved: Exactmac_V1_ElementEvent {
+  /// Element removal.
+  public var elementRemoval: Exactmac_V1_ElementEvent {
     get {
-      if case .elementRemoved(let v)? = _storage._eventType {return v}
+      if case .elementRemoval(let v)? = _storage._eventType {return v}
       return Exactmac_V1_ElementEvent()
     }
-    set {_uniqueStorage()._eventType = .elementRemoved(newValue)}
+    set {_uniqueStorage()._eventType = .elementRemoval(newValue)}
   }
 
-  /// Element was modified.
-  public var elementModified: Exactmac_V1_ElementModified {
+  /// Element modification.
+  public var elementModification: Exactmac_V1_ElementModified {
     get {
-      if case .elementModified(let v)? = _storage._eventType {return v}
+      if case .elementModification(let v)? = _storage._eventType {return v}
       return Exactmac_V1_ElementModified()
     }
-    set {_uniqueStorage()._eventType = .elementModified(newValue)}
+    set {_uniqueStorage()._eventType = .elementModification(newValue)}
   }
 
   /// Window event occurred.
@@ -347,12 +347,12 @@ public nonisolated struct Exactmac_V1_ObservationEvent: @unchecked Sendable {
 
   /// The specific event type and data.
   public nonisolated enum OneOf_EventType: Equatable, Sendable {
-    /// Element was added.
-    case elementAdded(Exactmac_V1_ElementEvent)
-    /// Element was removed.
-    case elementRemoved(Exactmac_V1_ElementEvent)
-    /// Element was modified.
-    case elementModified(Exactmac_V1_ElementModified)
+    /// Element addition.
+    case elementAddition(Exactmac_V1_ElementEvent)
+    /// Element removal.
+    case elementRemoval(Exactmac_V1_ElementEvent)
+    /// Element modification.
+    case elementModification(Exactmac_V1_ElementModified)
     /// Window event occurred.
     case windowEvent(Exactmac_V1_WindowEvent)
     /// Application event occurred.
@@ -635,7 +635,7 @@ nonisolated extension Exactmac_V1_ObservationType: SwiftProtobuf._ProtoNameProvi
 
 nonisolated extension Exactmac_V1_Observation: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Observation"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}type\0\u{1}state\0\u{3}create_time\0\u{3}start_time\0\u{3}end_time\0\u{1}filter\0\u{1}activate\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}type\0\u{1}state\0\u{3}create_time\0\u{3}start_time\0\u{3}end_time\0\u{1}filter\0\u{1}activation\0")
 
   fileprivate class _StorageClass {
     var _name: String = String()
@@ -645,7 +645,7 @@ nonisolated extension Exactmac_V1_Observation: SwiftProtobuf.Message, SwiftProto
     var _startTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
     var _endTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
     var _filter: Exactmac_V1_ObservationFilter? = nil
-    var _activate: Bool = false
+    var _activation: Bool = false
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -663,7 +663,7 @@ nonisolated extension Exactmac_V1_Observation: SwiftProtobuf.Message, SwiftProto
       _startTime = source._startTime
       _endTime = source._endTime
       _filter = source._filter
-      _activate = source._activate
+      _activation = source._activation
     }
   }
 
@@ -689,7 +689,7 @@ nonisolated extension Exactmac_V1_Observation: SwiftProtobuf.Message, SwiftProto
         case 5: try { try decoder.decodeSingularMessageField(value: &_storage._startTime) }()
         case 6: try { try decoder.decodeSingularMessageField(value: &_storage._endTime) }()
         case 7: try { try decoder.decodeSingularMessageField(value: &_storage._filter) }()
-        case 8: try { try decoder.decodeSingularBoolField(value: &_storage._activate) }()
+        case 8: try { try decoder.decodeSingularBoolField(value: &_storage._activation) }()
         default: break
         }
       }
@@ -723,8 +723,8 @@ nonisolated extension Exactmac_V1_Observation: SwiftProtobuf.Message, SwiftProto
       try { if let v = _storage._filter {
         try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
       } }()
-      if _storage._activate != false {
-        try visitor.visitSingularBoolField(value: _storage._activate, fieldNumber: 8)
+      if _storage._activation != false {
+        try visitor.visitSingularBoolField(value: _storage._activation, fieldNumber: 8)
       }
     }
     try unknownFields.traverse(visitor: &visitor)
@@ -742,7 +742,7 @@ nonisolated extension Exactmac_V1_Observation: SwiftProtobuf.Message, SwiftProto
         if _storage._startTime != rhs_storage._startTime {return false}
         if _storage._endTime != rhs_storage._endTime {return false}
         if _storage._filter != rhs_storage._filter {return false}
-        if _storage._activate != rhs_storage._activate {return false}
+        if _storage._activation != rhs_storage._activation {return false}
         return true
       }
       if !storagesAreEqual {return false}
@@ -818,7 +818,7 @@ nonisolated extension Exactmac_V1_ObservationFilter: SwiftProtobuf.Message, Swif
 
 nonisolated extension Exactmac_V1_ObservationEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ObservationEvent"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}observation\0\u{3}event_time\0\u{1}sequence\0\u{4}\u{7}element_added\0\u{3}element_removed\0\u{3}element_modified\0\u{3}window_event\0\u{3}application_event\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}observation\0\u{3}event_time\0\u{1}sequence\0\u{3}element_addition\0\u{3}element_removal\0\u{3}element_modification\0\u{3}window_event\0\u{3}application_event\0")
 
   fileprivate class _StorageClass {
     var _observation: String = String()
@@ -860,46 +860,46 @@ nonisolated extension Exactmac_V1_ObservationEvent: SwiftProtobuf.Message, Swift
         case 1: try { try decoder.decodeSingularStringField(value: &_storage._observation) }()
         case 2: try { try decoder.decodeSingularMessageField(value: &_storage._eventTime) }()
         case 3: try { try decoder.decodeSingularInt64Field(value: &_storage._sequence) }()
-        case 10: try {
+        case 4: try {
           var v: Exactmac_V1_ElementEvent?
           var hadOneofValue = false
           if let current = _storage._eventType {
             hadOneofValue = true
-            if case .elementAdded(let m) = current {v = m}
+            if case .elementAddition(let m) = current {v = m}
           }
           try decoder.decodeSingularMessageField(value: &v)
           if let v = v {
             if hadOneofValue {try decoder.handleConflictingOneOf()}
-            _storage._eventType = .elementAdded(v)
+            _storage._eventType = .elementAddition(v)
           }
         }()
-        case 11: try {
+        case 5: try {
           var v: Exactmac_V1_ElementEvent?
           var hadOneofValue = false
           if let current = _storage._eventType {
             hadOneofValue = true
-            if case .elementRemoved(let m) = current {v = m}
+            if case .elementRemoval(let m) = current {v = m}
           }
           try decoder.decodeSingularMessageField(value: &v)
           if let v = v {
             if hadOneofValue {try decoder.handleConflictingOneOf()}
-            _storage._eventType = .elementRemoved(v)
+            _storage._eventType = .elementRemoval(v)
           }
         }()
-        case 12: try {
+        case 6: try {
           var v: Exactmac_V1_ElementModified?
           var hadOneofValue = false
           if let current = _storage._eventType {
             hadOneofValue = true
-            if case .elementModified(let m) = current {v = m}
+            if case .elementModification(let m) = current {v = m}
           }
           try decoder.decodeSingularMessageField(value: &v)
           if let v = v {
             if hadOneofValue {try decoder.handleConflictingOneOf()}
-            _storage._eventType = .elementModified(v)
+            _storage._eventType = .elementModification(v)
           }
         }()
-        case 13: try {
+        case 7: try {
           var v: Exactmac_V1_WindowEvent?
           var hadOneofValue = false
           if let current = _storage._eventType {
@@ -912,7 +912,7 @@ nonisolated extension Exactmac_V1_ObservationEvent: SwiftProtobuf.Message, Swift
             _storage._eventType = .windowEvent(v)
           }
         }()
-        case 14: try {
+        case 8: try {
           var v: Exactmac_V1_ApplicationEvent?
           var hadOneofValue = false
           if let current = _storage._eventType {
@@ -947,25 +947,25 @@ nonisolated extension Exactmac_V1_ObservationEvent: SwiftProtobuf.Message, Swift
         try visitor.visitSingularInt64Field(value: _storage._sequence, fieldNumber: 3)
       }
       switch _storage._eventType {
-      case .elementAdded?: try {
-        guard case .elementAdded(let v)? = _storage._eventType else { preconditionFailure() }
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 10)
+      case .elementAddition?: try {
+        guard case .elementAddition(let v)? = _storage._eventType else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
       }()
-      case .elementRemoved?: try {
-        guard case .elementRemoved(let v)? = _storage._eventType else { preconditionFailure() }
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 11)
+      case .elementRemoval?: try {
+        guard case .elementRemoval(let v)? = _storage._eventType else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
       }()
-      case .elementModified?: try {
-        guard case .elementModified(let v)? = _storage._eventType else { preconditionFailure() }
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 12)
+      case .elementModification?: try {
+        guard case .elementModification(let v)? = _storage._eventType else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
       }()
       case .windowEvent?: try {
         guard case .windowEvent(let v)? = _storage._eventType else { preconditionFailure() }
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 13)
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
       }()
       case .applicationEvent?: try {
         guard case .applicationEvent(let v)? = _storage._eventType else { preconditionFailure() }
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 14)
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
       }()
       case nil: break
       }

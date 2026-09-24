@@ -276,24 +276,30 @@ struct ScreenshotPerformanceTests {
     @MainActor
     func `Small region capture latency`() async throws {
         var durations: [TimeInterval] = []
-
-        // Small 200x200 region
-        let region = CGRect(x: 100, y: 100, width: 200, height: 200)
+        let (display, region) = try await admittedBenchmarkRegion(
+            requested: CGRect(x: 100, y: 100, width: 200, height: 200),
+        )
 
         for _ in 0 ..< iterations {
             let start = CFAbsoluteTimeGetCurrent()
             let result = try await ScreenshotCapture.captureRegion(
-                bounds: region,
+                region,
+                display: display,
                 format: .png,
+                quality: 85,
                 includeOCR: false,
             )
             let duration = CFAbsoluteTimeGetCurrent() - start
 
             durations.append(duration)
-            _ = result // Suppress unused warning
+            expectRegionCaptureMetadata(result, region: region, display: display)
         }
 
-        printMetrics(name: "Small Region (200x200)", durations: durations, dataSizes: nil)
+        printMetrics(
+            name: "Small Region (\(Int(region.width))x\(Int(region.height)))",
+            durations: durations,
+            dataSizes: nil,
+        )
         let minDuration = try #require(durations.min())
         #expect(minDuration < 1.0, "Small region capture should complete under 1 second")
     }
@@ -303,24 +309,30 @@ struct ScreenshotPerformanceTests {
     @MainActor
     func `Large region capture latency`() async throws {
         var durations: [TimeInterval] = []
-
-        // Large 1000x800 region
-        let region = CGRect(x: 0, y: 0, width: 1000, height: 800)
+        let (display, region) = try await admittedBenchmarkRegion(
+            requested: CGRect(x: 0, y: 0, width: 1000, height: 800),
+        )
 
         for _ in 0 ..< iterations {
             let start = CFAbsoluteTimeGetCurrent()
             let result = try await ScreenshotCapture.captureRegion(
-                bounds: region,
+                region,
+                display: display,
                 format: .png,
+                quality: 85,
                 includeOCR: false,
             )
             let duration = CFAbsoluteTimeGetCurrent() - start
 
             durations.append(duration)
-            _ = result
+            expectRegionCaptureMetadata(result, region: region, display: display)
         }
 
-        printMetrics(name: "Large Region (1000x800)", durations: durations, dataSizes: nil)
+        printMetrics(
+            name: "Large Region (\(Int(region.width))x\(Int(region.height)))",
+            durations: durations,
+            dataSizes: nil,
+        )
         let minDuration = try #require(durations.min())
         #expect(minDuration < 2.0, "Large region capture should complete under 2 seconds")
     }
@@ -377,6 +389,56 @@ struct ScreenshotPerformanceTests {
 
         output += "\n" + String(repeating: "=", count: name.count + 18)
         print(output)
+    }
+
+    private func admittedBenchmarkRegion(
+        requested: CGRect,
+    ) async throws -> (DisplayTopologyDisplay, CGRect) {
+        guard EndpointSafeGeometry.containsValidEndpoints(
+            requested,
+            requiresPositiveSize: true,
+        ) else {
+            throw ScreenshotError.invalidRegion
+        }
+
+        let topology = try await ProductionDisplayTopologyProvider().snapshot()
+        let display = try topology.mainDisplay()
+        let frame = display.frame
+        let width = min(requested.width, frame.width)
+        let height = min(requested.height, frame.height)
+        let originX = min(
+            max(requested.minX, frame.minX),
+            frame.maxX - width,
+        )
+        let originY = min(
+            max(requested.minY, frame.minY),
+            frame.maxY - height,
+        )
+        let region = CGRect(x: originX, y: originY, width: width, height: height)
+        guard width > 0,
+              height > 0,
+              frame.contains(region)
+        else {
+            throw ScreenshotError.captureFailedRegion(region)
+        }
+        return (display, region)
+    }
+
+    private func expectRegionCaptureMetadata(
+        _ result: ScreenshotCaptureOutput,
+        region: CGRect,
+        display: DisplayTopologyDisplay,
+    ) {
+        #expect(result.displayID == display.displayID)
+        #expect(result.format == .png)
+        #expect(!result.data.isEmpty)
+        #expect(result.pixelWidth > 0)
+        #expect(result.pixelHeight > 0)
+        #expect(abs(result.scale - display.scale) < 0.001)
+        #expect(abs(result.logicalFrame.minX - region.minX) < 1)
+        #expect(abs(result.logicalFrame.minY - region.minY) < 1)
+        #expect(abs(result.logicalFrame.width - region.width) < 1)
+        #expect(abs(result.logicalFrame.height - region.height) < 1)
     }
 }
 

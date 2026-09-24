@@ -8,7 +8,7 @@
 // - protoc             (unknown)
 // source: exactmac/v1/exact_mac.proto
 
-package exactmacv1
+package exactmacpb
 
 import (
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
@@ -25,74 +25,74 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ExactMac_GetApplicationBundle_FullMethodName     = "/exactmac.v1.ExactMac/GetApplicationBundle"
-	ExactMac_ListApplicationBundles_FullMethodName   = "/exactmac.v1.ExactMac/ListApplicationBundles"
-	ExactMac_OpenApplication_FullMethodName          = "/exactmac.v1.ExactMac/OpenApplication"
-	ExactMac_GetApplication_FullMethodName           = "/exactmac.v1.ExactMac/GetApplication"
-	ExactMac_ListApplications_FullMethodName         = "/exactmac.v1.ExactMac/ListApplications"
-	ExactMac_ActivateApplication_FullMethodName      = "/exactmac.v1.ExactMac/ActivateApplication"
-	ExactMac_CloseApplication_FullMethodName         = "/exactmac.v1.ExactMac/CloseApplication"
-	ExactMac_CreateInput_FullMethodName              = "/exactmac.v1.ExactMac/CreateInput"
-	ExactMac_GetInput_FullMethodName                 = "/exactmac.v1.ExactMac/GetInput"
-	ExactMac_ListInputs_FullMethodName               = "/exactmac.v1.ExactMac/ListInputs"
-	ExactMac_TraverseAccessibility_FullMethodName    = "/exactmac.v1.ExactMac/TraverseAccessibility"
-	ExactMac_WatchAccessibility_FullMethodName       = "/exactmac.v1.ExactMac/WatchAccessibility"
-	ExactMac_GetWindow_FullMethodName                = "/exactmac.v1.ExactMac/GetWindow"
-	ExactMac_ListWindows_FullMethodName              = "/exactmac.v1.ExactMac/ListWindows"
-	ExactMac_GetWindowState_FullMethodName           = "/exactmac.v1.ExactMac/GetWindowState"
-	ExactMac_FocusWindow_FullMethodName              = "/exactmac.v1.ExactMac/FocusWindow"
-	ExactMac_MoveWindow_FullMethodName               = "/exactmac.v1.ExactMac/MoveWindow"
-	ExactMac_ResizeWindow_FullMethodName             = "/exactmac.v1.ExactMac/ResizeWindow"
-	ExactMac_MinimizeWindow_FullMethodName           = "/exactmac.v1.ExactMac/MinimizeWindow"
-	ExactMac_RestoreWindow_FullMethodName            = "/exactmac.v1.ExactMac/RestoreWindow"
-	ExactMac_CloseWindow_FullMethodName              = "/exactmac.v1.ExactMac/CloseWindow"
-	ExactMac_FindElements_FullMethodName             = "/exactmac.v1.ExactMac/FindElements"
-	ExactMac_FindRegionElements_FullMethodName       = "/exactmac.v1.ExactMac/FindRegionElements"
-	ExactMac_GetElement_FullMethodName               = "/exactmac.v1.ExactMac/GetElement"
-	ExactMac_ListElements_FullMethodName             = "/exactmac.v1.ExactMac/ListElements"
-	ExactMac_ClickElement_FullMethodName             = "/exactmac.v1.ExactMac/ClickElement"
-	ExactMac_WriteElementValue_FullMethodName        = "/exactmac.v1.ExactMac/WriteElementValue"
-	ExactMac_GetElementActions_FullMethodName        = "/exactmac.v1.ExactMac/GetElementActions"
-	ExactMac_PerformElementAction_FullMethodName     = "/exactmac.v1.ExactMac/PerformElementAction"
-	ExactMac_WaitElement_FullMethodName              = "/exactmac.v1.ExactMac/WaitElement"
-	ExactMac_WaitElementState_FullMethodName         = "/exactmac.v1.ExactMac/WaitElementState"
-	ExactMac_CreateObservation_FullMethodName        = "/exactmac.v1.ExactMac/CreateObservation"
-	ExactMac_GetObservation_FullMethodName           = "/exactmac.v1.ExactMac/GetObservation"
-	ExactMac_ListObservations_FullMethodName         = "/exactmac.v1.ExactMac/ListObservations"
-	ExactMac_CancelObservation_FullMethodName        = "/exactmac.v1.ExactMac/CancelObservation"
-	ExactMac_StreamObservations_FullMethodName       = "/exactmac.v1.ExactMac/StreamObservations"
-	ExactMac_CreateSession_FullMethodName            = "/exactmac.v1.ExactMac/CreateSession"
-	ExactMac_GetSession_FullMethodName               = "/exactmac.v1.ExactMac/GetSession"
-	ExactMac_ListSessions_FullMethodName             = "/exactmac.v1.ExactMac/ListSessions"
-	ExactMac_DeleteSession_FullMethodName            = "/exactmac.v1.ExactMac/DeleteSession"
-	ExactMac_BeginTransaction_FullMethodName         = "/exactmac.v1.ExactMac/BeginTransaction"
-	ExactMac_CommitTransaction_FullMethodName        = "/exactmac.v1.ExactMac/CommitTransaction"
-	ExactMac_RollbackTransaction_FullMethodName      = "/exactmac.v1.ExactMac/RollbackTransaction"
-	ExactMac_GetSessionSnapshot_FullMethodName       = "/exactmac.v1.ExactMac/GetSessionSnapshot"
-	ExactMac_CaptureScreenshot_FullMethodName        = "/exactmac.v1.ExactMac/CaptureScreenshot"
-	ExactMac_CaptureWindowScreenshot_FullMethodName  = "/exactmac.v1.ExactMac/CaptureWindowScreenshot"
-	ExactMac_CaptureElementScreenshot_FullMethodName = "/exactmac.v1.ExactMac/CaptureElementScreenshot"
-	ExactMac_CaptureRegionScreenshot_FullMethodName  = "/exactmac.v1.ExactMac/CaptureRegionScreenshot"
-	ExactMac_ListDisplays_FullMethodName             = "/exactmac.v1.ExactMac/ListDisplays"
-	ExactMac_GetDisplay_FullMethodName               = "/exactmac.v1.ExactMac/GetDisplay"
-	ExactMac_CaptureCursorPosition_FullMethodName    = "/exactmac.v1.ExactMac/CaptureCursorPosition"
-	ExactMac_GetClipboard_FullMethodName             = "/exactmac.v1.ExactMac/GetClipboard"
-	ExactMac_WriteClipboard_FullMethodName           = "/exactmac.v1.ExactMac/WriteClipboard"
-	ExactMac_ClearClipboard_FullMethodName           = "/exactmac.v1.ExactMac/ClearClipboard"
-	ExactMac_GetClipboardHistory_FullMethodName      = "/exactmac.v1.ExactMac/GetClipboardHistory"
-	ExactMac_AutomateOpenFileDialog_FullMethodName   = "/exactmac.v1.ExactMac/AutomateOpenFileDialog"
-	ExactMac_AutomateSaveFileDialog_FullMethodName   = "/exactmac.v1.ExactMac/AutomateSaveFileDialog"
-	ExactMac_CreateMacro_FullMethodName              = "/exactmac.v1.ExactMac/CreateMacro"
-	ExactMac_GetMacro_FullMethodName                 = "/exactmac.v1.ExactMac/GetMacro"
-	ExactMac_ListMacros_FullMethodName               = "/exactmac.v1.ExactMac/ListMacros"
-	ExactMac_UpdateMacro_FullMethodName              = "/exactmac.v1.ExactMac/UpdateMacro"
-	ExactMac_DeleteMacro_FullMethodName              = "/exactmac.v1.ExactMac/DeleteMacro"
-	ExactMac_ExecuteMacro_FullMethodName             = "/exactmac.v1.ExactMac/ExecuteMacro"
-	ExactMac_ExecuteAppleScript_FullMethodName       = "/exactmac.v1.ExactMac/ExecuteAppleScript"
-	ExactMac_ExecuteJavaScript_FullMethodName        = "/exactmac.v1.ExactMac/ExecuteJavaScript"
-	ExactMac_ExecuteShellCommand_FullMethodName      = "/exactmac.v1.ExactMac/ExecuteShellCommand"
-	ExactMac_ValidateScript_FullMethodName           = "/exactmac.v1.ExactMac/ValidateScript"
-	ExactMac_GetScriptingDictionaries_FullMethodName = "/exactmac.v1.ExactMac/GetScriptingDictionaries"
+	ExactMac_GetApplicationBundle_FullMethodName          = "/exactmac.v1.ExactMac/GetApplicationBundle"
+	ExactMac_ListApplicationBundles_FullMethodName        = "/exactmac.v1.ExactMac/ListApplicationBundles"
+	ExactMac_OpenApplication_FullMethodName               = "/exactmac.v1.ExactMac/OpenApplication"
+	ExactMac_GetApplication_FullMethodName                = "/exactmac.v1.ExactMac/GetApplication"
+	ExactMac_ListApplications_FullMethodName              = "/exactmac.v1.ExactMac/ListApplications"
+	ExactMac_ActivateApplication_FullMethodName           = "/exactmac.v1.ExactMac/ActivateApplication"
+	ExactMac_CloseApplication_FullMethodName              = "/exactmac.v1.ExactMac/CloseApplication"
+	ExactMac_CreateInput_FullMethodName                   = "/exactmac.v1.ExactMac/CreateInput"
+	ExactMac_GetInput_FullMethodName                      = "/exactmac.v1.ExactMac/GetInput"
+	ExactMac_ListInputs_FullMethodName                    = "/exactmac.v1.ExactMac/ListInputs"
+	ExactMac_TraverseAccessibility_FullMethodName         = "/exactmac.v1.ExactMac/TraverseAccessibility"
+	ExactMac_WatchAccessibility_FullMethodName            = "/exactmac.v1.ExactMac/WatchAccessibility"
+	ExactMac_GetWindow_FullMethodName                     = "/exactmac.v1.ExactMac/GetWindow"
+	ExactMac_ListWindows_FullMethodName                   = "/exactmac.v1.ExactMac/ListWindows"
+	ExactMac_GetWindowState_FullMethodName                = "/exactmac.v1.ExactMac/GetWindowState"
+	ExactMac_FocusWindow_FullMethodName                   = "/exactmac.v1.ExactMac/FocusWindow"
+	ExactMac_MoveWindow_FullMethodName                    = "/exactmac.v1.ExactMac/MoveWindow"
+	ExactMac_ResizeWindow_FullMethodName                  = "/exactmac.v1.ExactMac/ResizeWindow"
+	ExactMac_MinimizeWindow_FullMethodName                = "/exactmac.v1.ExactMac/MinimizeWindow"
+	ExactMac_RestoreWindow_FullMethodName                 = "/exactmac.v1.ExactMac/RestoreWindow"
+	ExactMac_CloseWindow_FullMethodName                   = "/exactmac.v1.ExactMac/CloseWindow"
+	ExactMac_FindElements_FullMethodName                  = "/exactmac.v1.ExactMac/FindElements"
+	ExactMac_FindRegionElements_FullMethodName            = "/exactmac.v1.ExactMac/FindRegionElements"
+	ExactMac_GetElement_FullMethodName                    = "/exactmac.v1.ExactMac/GetElement"
+	ExactMac_ListElements_FullMethodName                  = "/exactmac.v1.ExactMac/ListElements"
+	ExactMac_ClickElement_FullMethodName                  = "/exactmac.v1.ExactMac/ClickElement"
+	ExactMac_WriteElementValue_FullMethodName             = "/exactmac.v1.ExactMac/WriteElementValue"
+	ExactMac_GetElementActions_FullMethodName             = "/exactmac.v1.ExactMac/GetElementActions"
+	ExactMac_PerformElementAction_FullMethodName          = "/exactmac.v1.ExactMac/PerformElementAction"
+	ExactMac_WaitElement_FullMethodName                   = "/exactmac.v1.ExactMac/WaitElement"
+	ExactMac_WaitElementState_FullMethodName              = "/exactmac.v1.ExactMac/WaitElementState"
+	ExactMac_CreateObservation_FullMethodName             = "/exactmac.v1.ExactMac/CreateObservation"
+	ExactMac_GetObservation_FullMethodName                = "/exactmac.v1.ExactMac/GetObservation"
+	ExactMac_ListObservations_FullMethodName              = "/exactmac.v1.ExactMac/ListObservations"
+	ExactMac_CancelObservation_FullMethodName             = "/exactmac.v1.ExactMac/CancelObservation"
+	ExactMac_StreamObservations_FullMethodName            = "/exactmac.v1.ExactMac/StreamObservations"
+	ExactMac_CreateSession_FullMethodName                 = "/exactmac.v1.ExactMac/CreateSession"
+	ExactMac_GetSession_FullMethodName                    = "/exactmac.v1.ExactMac/GetSession"
+	ExactMac_ListSessions_FullMethodName                  = "/exactmac.v1.ExactMac/ListSessions"
+	ExactMac_DeleteSession_FullMethodName                 = "/exactmac.v1.ExactMac/DeleteSession"
+	ExactMac_BeginTransaction_FullMethodName              = "/exactmac.v1.ExactMac/BeginTransaction"
+	ExactMac_CommitTransaction_FullMethodName             = "/exactmac.v1.ExactMac/CommitTransaction"
+	ExactMac_RollbackTransaction_FullMethodName           = "/exactmac.v1.ExactMac/RollbackTransaction"
+	ExactMac_GetSessionSnapshot_FullMethodName            = "/exactmac.v1.ExactMac/GetSessionSnapshot"
+	ExactMac_CaptureScreenshot_FullMethodName             = "/exactmac.v1.ExactMac/CaptureScreenshot"
+	ExactMac_CaptureWindowScreenshot_FullMethodName       = "/exactmac.v1.ExactMac/CaptureWindowScreenshot"
+	ExactMac_CaptureElementScreenshot_FullMethodName      = "/exactmac.v1.ExactMac/CaptureElementScreenshot"
+	ExactMac_CaptureRegionScreenshot_FullMethodName       = "/exactmac.v1.ExactMac/CaptureRegionScreenshot"
+	ExactMac_ListDisplays_FullMethodName                  = "/exactmac.v1.ExactMac/ListDisplays"
+	ExactMac_GetDisplay_FullMethodName                    = "/exactmac.v1.ExactMac/GetDisplay"
+	ExactMac_CaptureCursorPosition_FullMethodName         = "/exactmac.v1.ExactMac/CaptureCursorPosition"
+	ExactMac_GetClipboard_FullMethodName                  = "/exactmac.v1.ExactMac/GetClipboard"
+	ExactMac_WriteClipboard_FullMethodName                = "/exactmac.v1.ExactMac/WriteClipboard"
+	ExactMac_ClearClipboard_FullMethodName                = "/exactmac.v1.ExactMac/ClearClipboard"
+	ExactMac_GetClipboardHistory_FullMethodName           = "/exactmac.v1.ExactMac/GetClipboardHistory"
+	ExactMac_AutomateOpenFileDialog_FullMethodName        = "/exactmac.v1.ExactMac/AutomateOpenFileDialog"
+	ExactMac_AutomateSaveFileDialog_FullMethodName        = "/exactmac.v1.ExactMac/AutomateSaveFileDialog"
+	ExactMac_CreateMacro_FullMethodName                   = "/exactmac.v1.ExactMac/CreateMacro"
+	ExactMac_GetMacro_FullMethodName                      = "/exactmac.v1.ExactMac/GetMacro"
+	ExactMac_ListMacros_FullMethodName                    = "/exactmac.v1.ExactMac/ListMacros"
+	ExactMac_UpdateMacro_FullMethodName                   = "/exactmac.v1.ExactMac/UpdateMacro"
+	ExactMac_DeleteMacro_FullMethodName                   = "/exactmac.v1.ExactMac/DeleteMacro"
+	ExactMac_ExecuteMacro_FullMethodName                  = "/exactmac.v1.ExactMac/ExecuteMacro"
+	ExactMac_ExecuteAppleScript_FullMethodName            = "/exactmac.v1.ExactMac/ExecuteAppleScript"
+	ExactMac_ExecuteJavaScript_FullMethodName             = "/exactmac.v1.ExactMac/ExecuteJavaScript"
+	ExactMac_ExecuteShellCommand_FullMethodName           = "/exactmac.v1.ExactMac/ExecuteShellCommand"
+	ExactMac_ValidateScript_FullMethodName                = "/exactmac.v1.ExactMac/ValidateScript"
+	ExactMac_GetScriptingDictionaryCatalog_FullMethodName = "/exactmac.v1.ExactMac/GetScriptingDictionaryCatalog"
 )
 
 // ExactMacClient is the client API for ExactMac service.
@@ -238,7 +238,7 @@ type ExactMacClient interface {
 	// Validates a script without executing.
 	ValidateScript(ctx context.Context, in *ValidateScriptRequest, opts ...grpc.CallOption) (*ValidateScriptResponse, error)
 	// Gets scripting dictionaries.
-	GetScriptingDictionaries(ctx context.Context, in *GetScriptingDictionariesRequest, opts ...grpc.CallOption) (*ScriptingDictionaries, error)
+	GetScriptingDictionaryCatalog(ctx context.Context, in *GetScriptingDictionaryCatalogRequest, opts ...grpc.CallOption) (*ScriptingDictionaryCatalog, error)
 }
 
 type exactMacClient struct {
@@ -937,10 +937,10 @@ func (c *exactMacClient) ValidateScript(ctx context.Context, in *ValidateScriptR
 	return out, nil
 }
 
-func (c *exactMacClient) GetScriptingDictionaries(ctx context.Context, in *GetScriptingDictionariesRequest, opts ...grpc.CallOption) (*ScriptingDictionaries, error) {
+func (c *exactMacClient) GetScriptingDictionaryCatalog(ctx context.Context, in *GetScriptingDictionaryCatalogRequest, opts ...grpc.CallOption) (*ScriptingDictionaryCatalog, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ScriptingDictionaries)
-	err := c.cc.Invoke(ctx, ExactMac_GetScriptingDictionaries_FullMethodName, in, out, cOpts...)
+	out := new(ScriptingDictionaryCatalog)
+	err := c.cc.Invoke(ctx, ExactMac_GetScriptingDictionaryCatalog_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1090,7 +1090,7 @@ type ExactMacServer interface {
 	// Validates a script without executing.
 	ValidateScript(context.Context, *ValidateScriptRequest) (*ValidateScriptResponse, error)
 	// Gets scripting dictionaries.
-	GetScriptingDictionaries(context.Context, *GetScriptingDictionariesRequest) (*ScriptingDictionaries, error)
+	GetScriptingDictionaryCatalog(context.Context, *GetScriptingDictionaryCatalogRequest) (*ScriptingDictionaryCatalog, error)
 	mustEmbedUnimplementedExactMacServer()
 }
 
@@ -1302,8 +1302,8 @@ func (UnimplementedExactMacServer) ExecuteShellCommand(context.Context, *Execute
 func (UnimplementedExactMacServer) ValidateScript(context.Context, *ValidateScriptRequest) (*ValidateScriptResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ValidateScript not implemented")
 }
-func (UnimplementedExactMacServer) GetScriptingDictionaries(context.Context, *GetScriptingDictionariesRequest) (*ScriptingDictionaries, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetScriptingDictionaries not implemented")
+func (UnimplementedExactMacServer) GetScriptingDictionaryCatalog(context.Context, *GetScriptingDictionaryCatalogRequest) (*ScriptingDictionaryCatalog, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetScriptingDictionaryCatalog not implemented")
 }
 func (UnimplementedExactMacServer) mustEmbedUnimplementedExactMacServer() {}
 func (UnimplementedExactMacServer) testEmbeddedByValue()                  {}
@@ -2518,20 +2518,20 @@ func _ExactMac_ValidateScript_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ExactMac_GetScriptingDictionaries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetScriptingDictionariesRequest)
+func _ExactMac_GetScriptingDictionaryCatalog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetScriptingDictionaryCatalogRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ExactMacServer).GetScriptingDictionaries(ctx, in)
+		return srv.(ExactMacServer).GetScriptingDictionaryCatalog(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ExactMac_GetScriptingDictionaries_FullMethodName,
+		FullMethod: ExactMac_GetScriptingDictionaryCatalog_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExactMacServer).GetScriptingDictionaries(ctx, req.(*GetScriptingDictionariesRequest))
+		return srv.(ExactMacServer).GetScriptingDictionaryCatalog(ctx, req.(*GetScriptingDictionaryCatalogRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2804,8 +2804,8 @@ var ExactMac_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ExactMac_ValidateScript_Handler,
 		},
 		{
-			MethodName: "GetScriptingDictionaries",
-			Handler:    _ExactMac_GetScriptingDictionaries_Handler,
+			MethodName: "GetScriptingDictionaryCatalog",
+			Handler:    _ExactMac_GetScriptingDictionaryCatalog_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

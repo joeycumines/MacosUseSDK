@@ -34,7 +34,7 @@ import "google/protobuf/timestamp.proto";
 import "google/rpc/error_details.proto";
 import "google/rpc/status.proto";
 
-option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpb";
 option java_multiple_files = true;
 option java_outer_classname = "ExactMacProto";
 option java_package = "io.github.joeycumines.exactmac.v1";
@@ -500,7 +500,7 @@ service ExactMac {
 
   // Gets clipboard history (if available).
   rpc GetClipboardHistory(GetClipboardHistoryRequest) returns (ClipboardHistory) {
-    option (google.api.http) = {get: "/v1/{name=clipboard/history}"};
+    option (google.api.http) = {get: "/v1/{name=clipboardHistory}"};
     option (google.api.method_signature) = "name";
   }
 
@@ -607,8 +607,8 @@ service ExactMac {
   }
 
   // Gets scripting dictionaries.
-  rpc GetScriptingDictionaries(GetScriptingDictionariesRequest) returns (ScriptingDictionaries) {
-    option (google.api.http) = {get: "/v1/{name=scriptingDictionaries}"};
+  rpc GetScriptingDictionaryCatalog(GetScriptingDictionaryCatalogRequest) returns (ScriptingDictionaryCatalog) {
+    option (google.api.http) = {get: "/v1/{name=scriptingDictionaryCatalog}"};
     option (google.api.method_signature) = "name";
   }
 }
@@ -631,8 +631,9 @@ message ListApplicationBundlesRequest {
   // negative values are invalid and values above 1000 are clamped to 1000.
   int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
 
-  // Opaque token from a previous request with identical semantic query inputs,
-  // including the effective page size after defaulting and clamping.
+  // Opaque token from a previous request with identical non-pagination query
+  // inputs. The page size may change on a continuation request; clients must
+  // treat the token as opaque.
   string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
 
   // Ordering specification. Supported fields are name, display_name,
@@ -645,6 +646,12 @@ message ListApplicationBundlesRequest {
 
   // Amount of metadata to return. Unspecified defaults to BASIC.
   ApplicationView view = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Number of individual resources to skip before returning this page.
+  // A continuation adds this value to the position encoded by page_token.
+  // If the requested position is beyond the collection, return an empty page
+  // without a next_page_token.
+  int32 skip = 6 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing installed application bundles.
@@ -686,9 +693,6 @@ message OpenApplicationResponse {
 
 // Request to get an application.
 message GetApplicationRequest {
-  reserved 2;
-  reserved "read_mask";
-
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
@@ -696,7 +700,7 @@ message GetApplicationRequest {
   ];
 
   // Amount of metadata to return. Unspecified defaults to BASIC.
-  ApplicationView view = 3 [(google.api.field_behavior) = OPTIONAL];
+  ApplicationView view = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Request to list applications.
@@ -704,9 +708,9 @@ message ListApplicationsRequest {
   // Maximum number of applications to return.
   int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
 
-  // Page token from a previous ListApplications call.
-  // This token is opaque and its structure must not be relied upon by clients.
-  // Only its presence or absence should be used to determine pagination state.
+  // Page token from a previous call. The token is bound to the other semantic
+  // query inputs, not page_size or skip; clients may change either when continuing.
+  // Its structure is opaque and must not be relied upon by clients.
   string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
 
   // Ordering specification. Supported fields are name, pid, display_name,
@@ -719,6 +723,12 @@ message ListApplicationsRequest {
 
   // Amount of metadata to return. Unspecified defaults to BASIC.
   ApplicationView view = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Number of individual resources to skip before returning this page.
+  // A continuation adds this value to the position encoded by page_token.
+  // If the requested position is beyond the collection, return an empty page
+  // without a next_page_token.
+  int32 skip = 6 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing applications.
@@ -811,14 +821,20 @@ message ListInputsRequest {
   // Maximum number of inputs to return.
   int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
 
-  // Page token from a previous ListInputs call.
-  // This token is opaque and its structure must not be relied upon by clients.
-  // Only its presence or absence should be used to determine pagination state.
+  // Page token from a previous call. The token is bound to the other semantic
+  // query inputs, not page_size or skip; clients may change either when continuing.
+  // Its structure is opaque and must not be relied upon by clients.
   string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
 
   // Filter inputs by state. Valid values: PENDING, EXECUTING, COMPLETED,
   // FAILED, CANCELLED.
   string filter = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Number of individual resources to skip before returning this page.
+  // A continuation adds this value to the position encoded by page_token.
+  // If the requested position is beyond the collection, return an empty page
+  // without a next_page_token.
+  int32 skip = 5 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing inputs.
@@ -834,9 +850,6 @@ message ListInputsResponse {
 
 // Request to traverse accessibility tree.
 message TraverseAccessibilityRequest {
-  reserved 3;
-  reserved "activate";
-
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
@@ -850,7 +863,7 @@ message TraverseAccessibilityRequest {
 // Response from traversing accessibility tree.
 message TraverseAccessibilityResponse {
   // Name of the application.
-  string app = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string application = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Elements found in the traversal.
   repeated Element elements = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -879,14 +892,14 @@ message WatchAccessibilityRequest {
 
 // Response streamed from watching accessibility.
 message WatchAccessibilityResponse {
-  // Elements added since last update.
-  repeated Element added = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Elements added since the last update.
+  repeated Element added_elements = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // Elements removed since last update.
-  repeated Element removed = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Elements removed since the last update.
+  repeated Element removed_elements = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // Elements modified since last update.
-  repeated ModifiedElement modified = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Elements modified since the last update.
+  repeated ModifiedElement modified_elements = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // An element that was modified.
@@ -917,25 +930,30 @@ message FindElementsRequest {
   // Maximum number of elements to return.
   int32 page_size = 3 [(google.api.field_behavior) = OPTIONAL];
 
-  // Page token from a previous FindElements call.
-  // This token is opaque and its structure must not be relied upon by clients.
-  // Only its presence or absence should be used to determine pagination state.
+  // Page token from a previous call. The token is bound to the other semantic
+  // query inputs, not page_size or skip; clients may change either when continuing.
+  // Its structure is opaque and must not be relied upon by clients.
   string page_token = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to search only visible elements.
   bool visible_only = 5 [(google.api.field_behavior) = OPTIONAL];
 
-  // If true, the server discards any cached element data for the target
-  // application's PID before traversing the accessibility tree, so the
-  // returned element IDs and metadata reflect the *current* UI state rather
-  // than possibly-stale cached data. Defaults to false for backward
-  // compatibility and performance. Set to true after interactions that may
-  // mutate the app's UI (e.g. typing into a text field, dismissing a
-  // sheet) when the next find_elements call must observe the new state.
-  // Element IDs returned by this call are guaranteed fresh; any callers
-  // holding previously-issued element IDs must re-resolve them with
-  // get_element or a subsequent find_elements.
-  bool force_refresh = 6 [(google.api.field_behavior) = OPTIONAL];
+  // If true on an initial request (with no page_token), the server discards
+  // cached element data for the target application's PID before traversing the
+  // accessibility tree, so the returned element IDs and metadata reflect the
+  // current UI state rather than possibly-stale cached data. Continuations
+  // retain the existing element handles so page results remain stable. Defaults
+  // to false for compatibility and performance. Set to true after interactions
+  // that may mutate the app's UI when the next initial find_elements call must
+  // observe the new state. Callers holding previously-issued IDs must
+  // re-resolve them with get_element or a subsequent find_elements call.
+  bool cache_bypass = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Number of individual resources to skip before returning this page.
+  // A continuation adds this value to the position encoded by page_token.
+  // If the requested position is beyond the collection, return an empty page
+  // without a next_page_token.
+  int32 skip = 7 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from finding elements.
@@ -968,22 +986,27 @@ message FindRegionElementsRequest {
   // Maximum number of elements to return.
   int32 page_size = 4 [(google.api.field_behavior) = OPTIONAL];
 
-  // Page token from a previous call.
-  // This token is opaque and its structure must not be relied upon by clients.
-  // Only its presence or absence should be used to determine pagination state.
+  // Page token from a previous call. The token is bound to the other semantic
+  // query inputs, not page_size or skip; clients may change either when continuing.
+  // Its structure is opaque and must not be relied upon by clients.
   string page_token = 5 [(google.api.field_behavior) = OPTIONAL];
 
-  // If true, the server discards any cached element data for the target
-  // application's PID before traversing the accessibility tree, so the
-  // returned element IDs and metadata reflect the *current* UI state rather
-  // than possibly-stale cached data. Defaults to false for backward
-  // compatibility and performance. Set to true after interactions that may
-  // mutate the app's UI (e.g. typing into a text field, dismissing a
-  // sheet) when the next find_region_elements call must observe the new
-  // state. Element IDs returned by this call are guaranteed fresh; any
-  // callers holding previously-issued element IDs must re-resolve them
-  // with get_element or a subsequent find_region_elements.
-  bool force_refresh = 6 [(google.api.field_behavior) = OPTIONAL];
+  // If true on an initial request (with no page_token), the server discards
+  // cached element data for the target application's PID before traversing the
+  // accessibility tree, so the returned element IDs and metadata reflect the
+  // current UI state rather than possibly-stale cached data. Continuations
+  // retain the existing element handles so page results remain stable. Defaults
+  // to false for compatibility and performance. Set to true after interactions
+  // that may mutate the app's UI when the next initial find_region_elements call
+  // must observe the new state. Callers holding previously-issued IDs must
+  // re-resolve them with get_element or a subsequent find_region_elements call.
+  bool cache_bypass = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Number of individual resources to skip before returning this page.
+  // A continuation adds this value to the position encoded by page_token.
+  // If the requested position is beyond the collection, return an empty page
+  // without a next_page_token.
+  int32 skip = 7 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from finding elements in a region.
@@ -1019,9 +1042,16 @@ message ListElementsRequest {
   // above 1000 are coerced to 1000; negative values are invalid.
   int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
 
-  // Opaque token from a previous ListElements request. The parent must match
-  // the request that produced the token.
+  // Page token from a previous call. The token is bound to the other semantic
+  // query inputs, not page_size or skip; clients may change either when continuing.
+  // Its structure is opaque and must not be relied upon by clients.
   string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Number of individual resources to skip before returning this page.
+  // A continuation adds this value to the position encoded by page_token.
+  // If the requested position is beyond the collection, return an empty page
+  // without a next_page_token.
+  int32 skip = 4 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing retained element resources.
@@ -1264,10 +1294,10 @@ message StateCondition {
     bool focused = 2;
 
     // Wait for element text to match.
-    string text_equals = 3;
+    string text = 3;
 
-    // Wait for element text to contain substring.
-    string text_contains = 4;
+    // Wait for element text to contain a substring.
+    string text_substring = 4;
 
     // Wait for element to have specific attribute value.
     AttributeCondition attribute = 5;
@@ -1317,9 +1347,9 @@ message ListWindowsRequest {
   // that produced the token.
   int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
 
-  // Page token from a previous ListWindows call.
-  // This token is opaque and its structure must not be relied upon by clients.
-  // Only its presence or absence should be used to determine pagination state.
+  // Page token from a previous call. The token is bound to the other semantic
+  // query inputs, not page_size or skip; clients may change either when continuing.
+  // Its structure is opaque and must not be relied upon by clients.
   string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
 
   // Ordering specification. Supported fields are name, title, and layer in a
@@ -1331,6 +1361,12 @@ message ListWindowsRequest {
   // equality with the * wildcard and visible=true/false;
   // multiple conditions use whitespace or AND semantics.
   string filter = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Number of individual resources to skip before returning this page.
+  // A continuation adds this value to the position encoded by page_token.
+  // If the requested position is beyond the collection, return an empty page
+  // without a next_page_token.
+  int32 skip = 6 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Request to get the state of a window.
@@ -1476,10 +1512,16 @@ message ListObservationsRequest {
   // Maximum number of observations to return.
   int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
 
-  // Page token from a previous ListObservations call.
-  // This token is opaque and its structure must not be relied upon by clients.
-  // Only its presence or absence should be used to determine pagination state.
+  // Page token from a previous call. The token is bound to the other semantic
+  // query inputs, not page_size or skip; clients may change either when continuing.
+  // Its structure is opaque and must not be relied upon by clients.
   string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Number of individual resources to skip before returning this page.
+  // A continuation adds this value to the position encoded by page_token.
+  // If the requested position is beyond the collection, return an empty page
+  // without a next_page_token.
+  int32 skip = 4 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing observations.
@@ -1540,10 +1582,16 @@ message ListSessionsRequest {
   // Maximum number of sessions to return.
   int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
 
-  // Page token from a previous ListSessions call.
-  // This token is opaque and its structure must not be relied upon by clients.
-  // Only its presence or absence should be used to determine pagination state.
+  // Page token from a previous call. The token is bound to the other semantic
+  // query inputs, not page_size or skip; clients may change either when continuing.
+  // Its structure is opaque and must not be relied upon by clients.
   string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Number of individual resources to skip before returning this page.
+  // A continuation adds this value to the position encoded by page_token.
+  // If the requested position is beyond the collection, return an empty page
+  // without a next_page_token.
+  int32 skip = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing sessions.
@@ -1592,10 +1640,16 @@ message ListMacrosRequest {
   // Maximum number of macros to return.
   int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
 
-  // Page token from a previous ListMacros call.
-  // This token is opaque and its structure must not be relied upon by clients.
-  // Only its presence or absence should be used to determine pagination state.
+  // Page token from a previous call. The token is bound to the other semantic
+  // query inputs, not page_size or skip; clients may change either when continuing.
+  // Its structure is opaque and must not be relied upon by clients.
   string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Number of individual resources to skip before returning this page.
+  // A continuation adds this value to the position encoded by page_token.
+  // If the requested position is beyond the collection, return an empty page
+  // without a next_page_token.
+  int32 skip = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing macros.
@@ -1656,11 +1710,8 @@ message ExecuteMacroRequest {
 
 // Options for macro execution.
 message ExecutionOptions {
-  reserved 1, 2, 4;
-  reserved "speed", "continue_on_error", "record_execution";
-
   // Maximum execution time in seconds.
-  double timeout = 3 [(google.api.field_behavior) = OPTIONAL];
+  double timeout = 1 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from executing a macro.
@@ -1669,7 +1720,7 @@ message ExecuteMacroResponse {
   bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Number of actions executed.
-  int32 actions_executed = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  int32 executed_action_count = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Execution duration.
   google.protobuf.Duration execution_duration = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -1677,8 +1728,8 @@ message ExecuteMacroResponse {
   // Error message if failed.
   string error = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // Execution log (if recording was enabled).
-  repeated ExecutionLogEntry log = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Execution log entries.
+  repeated ExecutionLogEntry log_entries = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Metadata for ExecuteMacro operation.
@@ -1690,7 +1741,7 @@ message ExecuteMacroMetadata {
   ];
 
   // Current action index.
-  int32 current_action = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  int32 current_action_index = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Total actions in macro.
   int32 total_actions = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -1715,9 +1766,6 @@ message BeginTransactionRequest {
 
   // Isolation level for transactions.
   enum IsolationLevel {
-    reserved 2;
-    reserved "ISOLATION_LEVEL_READ_COMMITTED";
-
     // Default isolation level (SERIALIZABLE).
     ISOLATION_LEVEL_UNSPECIFIED = 0;
 
@@ -1779,8 +1827,6 @@ message GetSessionSnapshotRequest {
 
 // Request to capture a screenshot of the entire screen.
 message CaptureScreenshotRequest {
-  reserved 3;
-
   // Image format.
   ImageFormat format = 1 [(google.api.field_behavior) = OPTIONAL];
 
@@ -1788,11 +1834,11 @@ message CaptureScreenshotRequest {
   // effective default quality of 85.
   int32 quality = 2 [(google.api.field_behavior) = OPTIONAL];
 
-  // Whether to include OCR text extraction.
-  bool include_ocr_text = 4 [(google.api.field_behavior) = OPTIONAL];
+  // Whether to enable OCR text extraction.
+  bool ocr_enabled = 3 [(google.api.field_behavior) = OPTIONAL];
 
   // Exact display resource to capture. If omitted, captures the main display.
-  string display = 5 [
+  string display = 4 [
     (google.api.field_behavior) = OPTIONAL,
     (google.api.resource_reference) = {type: "exactmac/Display"}
   ];
@@ -1800,7 +1846,8 @@ message CaptureScreenshotRequest {
 
 // Response from capturing a screenshot.
 message CaptureScreenshotResponse {
-  // Image data (encoded according to format).
+  // Image data (encoded according to format). PNG and TIFF preserve source
+  // alpha when present; JPEG discards alpha because JPEG is opaque-only.
   bytes image_data = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image format used.
@@ -1819,20 +1866,20 @@ message CaptureScreenshotResponse {
     string ocr_text = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
     // OCR extraction failure for an otherwise successful image capture.
-    google.rpc.Status ocr_error = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+    google.rpc.Status ocr_error = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
   }
 
   // Exact active display resource captured from the admitted topology snapshot.
-  string display = 6 [
+  string display = 7 [
     (google.api.field_behavior) = OUTPUT_ONLY,
     (google.api.resource_reference) = {type: "exactmac/Display"}
   ];
 
   // Exact captured logical region in Global Display Coordinates (top-left origin).
-  exactmac.type.Region region = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+  exactmac.type.Region region = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Encoded image pixels per logical display point.
-  double scale = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+  double scale = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to capture a screenshot of a specific window.
@@ -1851,15 +1898,16 @@ message CaptureWindowScreenshotRequest {
   int32 quality = 3 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to include window shadow.
-  bool include_shadow = 4 [(google.api.field_behavior) = OPTIONAL];
+  bool shadow_enabled = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to include OCR text extraction.
-  bool include_ocr_text = 5 [(google.api.field_behavior) = OPTIONAL];
+  bool ocr_enabled = 5 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from capturing a window screenshot.
 message CaptureWindowScreenshotResponse {
-  // Image data (encoded according to format).
+  // Image data (encoded according to format). PNG and TIFF preserve source
+  // alpha when present; JPEG discards alpha because JPEG is opaque-only.
   bytes image_data = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image format used.
@@ -1927,12 +1975,13 @@ message CaptureElementScreenshotRequest {
   int32 padding = 5 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to include OCR text extraction.
-  bool include_ocr_text = 6 [(google.api.field_behavior) = OPTIONAL];
+  bool ocr_enabled = 6 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from capturing an element screenshot.
 message CaptureElementScreenshotResponse {
-  // Image data (encoded according to format).
+  // Image data (encoded according to format). PNG and TIFF preserve source
+  // alpha when present; JPEG discards alpha because JPEG is opaque-only.
   bytes image_data = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image format used.
@@ -1988,8 +2037,6 @@ message CaptureElementScreenshotResponse {
 
 // Request to capture a screenshot of a screen region.
 message CaptureRegionScreenshotRequest {
-  reserved 4;
-
   // Region to capture.
   // Uses Global Display Coordinates (top-left origin, Y increases downward).
   // See exactmac.type.Point message documentation for detailed coordinate system explanation.
@@ -2002,12 +2049,12 @@ message CaptureRegionScreenshotRequest {
   // effective default quality of 85.
   int32 quality = 3 [(google.api.field_behavior) = OPTIONAL];
 
-  // Whether to include OCR text extraction.
-  bool include_ocr_text = 5 [(google.api.field_behavior) = OPTIONAL];
+  // Whether to enable OCR text extraction.
+  bool ocr_enabled = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Exact display resource containing the region. If omitted, the display is
   // inferred from the region in Global Display Coordinates (top-left origin).
-  string display = 6 [
+  string display = 5 [
     (google.api.field_behavior) = OPTIONAL,
     (google.api.resource_reference) = {type: "exactmac/Display"}
   ];
@@ -2015,7 +2062,8 @@ message CaptureRegionScreenshotRequest {
 
 // Response from capturing a region screenshot.
 message CaptureRegionScreenshotResponse {
-  // Image data (encoded according to format).
+  // Image data (encoded according to format). PNG and TIFF preserve source
+  // alpha when present; JPEG discards alpha because JPEG is opaque-only.
   bytes image_data = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image format used.
@@ -2037,17 +2085,17 @@ message CaptureRegionScreenshotResponse {
     string ocr_text = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 
     // OCR extraction failure for an otherwise successful image capture.
-    google.rpc.Status ocr_error = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+    google.rpc.Status ocr_error = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
   }
 
   // Exact active display resource from which the region was captured.
-  string display = 7 [
+  string display = 8 [
     (google.api.field_behavior) = OUTPUT_ONLY,
     (google.api.resource_reference) = {type: "exactmac/Display"}
   ];
 
   // Encoded image pixels per logical display point.
-  double scale = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+  double scale = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get clipboard contents.
@@ -2062,9 +2110,6 @@ message GetClipboardRequest {
 
 // Request to write clipboard contents.
 message WriteClipboardRequest {
-  reserved 2;
-  reserved "clear_existing";
-
   // Content to write on clipboard.
   ClipboardContent content = 1 [(google.api.field_behavior) = REQUIRED];
 }
@@ -2087,10 +2132,10 @@ message ClearClipboardResponse {
 // Request to get clipboard history (if available).
 message GetClipboardHistoryRequest {
   // The name of the clipboard history resource.
-  // Format: clipboard/history (singleton)
+  // Format: clipboardHistory (singleton)
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "*"}
+    (google.api.resource_reference) = {type: "exactmac/ClipboardHistory"}
   ];
 }
 
@@ -2115,7 +2160,7 @@ message AutomateOpenFileDialogRequest {
   double timeout = 5 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to allow multiple file selection.
-  bool allow_multiple = 6 [(google.api.field_behavior) = OPTIONAL];
+  bool multiple_selection = 6 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from automating an open file dialog.
@@ -2151,7 +2196,7 @@ message AutomateSaveFileDialogRequest {
   double timeout = 5 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to confirm overwrite.
-  bool confirm_overwrite = 6 [(google.api.field_behavior) = OPTIONAL];
+  bool overwrite_confirmation = 6 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from automating a save file dialog.
@@ -2174,8 +2219,8 @@ message ExecuteAppleScriptRequest {
   // Timeout for script execution.
   google.protobuf.Duration timeout = 2 [(google.api.field_behavior) = OPTIONAL];
 
-  // Whether to compile the script (for validation).
-  bool compile_only = 3 [(google.api.field_behavior) = OPTIONAL];
+  // Validate the script without executing it.
+  bool validation_only = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from executing an AppleScript.
@@ -2201,8 +2246,8 @@ message ExecuteJavaScriptRequest {
   // Timeout for script execution.
   google.protobuf.Duration timeout = 2 [(google.api.field_behavior) = OPTIONAL];
 
-  // Whether to compile the script (for validation).
-  bool compile_only = 3 [(google.api.field_behavior) = OPTIONAL];
+  // Validate the script without executing it.
+  bool validation_only = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from executing JXA.
@@ -2232,7 +2277,7 @@ message ExecuteShellCommandRequest {
   string working_directory = 3 [(google.api.field_behavior) = OPTIONAL];
 
   // Environment variables (key-value pairs).
-  map<string, string> environment = 4 [(google.api.field_behavior) = OPTIONAL];
+  map<string, string> environment_variables = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Timeout for command execution.
   google.protobuf.Duration timeout = 5 [(google.api.field_behavior) = OPTIONAL];
@@ -2287,12 +2332,12 @@ message ValidateScriptResponse {
 }
 
 // Request to get available scripting dictionaries.
-message GetScriptingDictionariesRequest {
-  // The name of the scripting dictionaries resource.
-  // Format: scriptingDictionaries (singleton)
+message GetScriptingDictionaryCatalogRequest {
+  // The name of the scripting dictionary catalog resource.
+  // Format: scriptingDictionaryCatalog (singleton)
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "*"}
+    (google.api.resource_reference) = {type: "exactmac/ScriptingDictionaryCatalog"}
   ];
 }
 
@@ -2314,9 +2359,6 @@ enum ApplicationCloseDisposition {
 
 // Controls how OpenApplication resolves or creates an application process.
 enum ApplicationOpenMode {
-  reserved 3;
-  reserved "APPLICATION_OPEN_MODE_ACTIVATE_ONLY";
-
   // Use launch-or-activate behavior.
   APPLICATION_OPEN_MODE_UNSPECIFIED = 0;
 

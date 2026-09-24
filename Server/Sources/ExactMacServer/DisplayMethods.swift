@@ -33,18 +33,20 @@ extension ExactMacService {
         let req = request.message
         Self.logger.info("listDisplays called")
         let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let skip = try RequestNumericValidation.skip(req.skip)
         let queryBinding = ParsingHelpers.pageTokenQuery(
             method: "ListDisplays",
-            parameters: [("page_size", String(pageSize))],
+            parameters: [],
         )
-        let offset = try ParsingHelpers.pageOffset(
+        let cursor = try ParsingHelpers.pageCursor(
             token: req.pageToken,
+            skip: skip,
             queryBinding: queryBinding,
         )
         let snapshot = try await displayTopologyProvider.snapshot().validated()
         let displays = snapshot.displays.map(displayMessage)
         let range = try ParsingHelpers.pageRange(
-            offset: offset,
+            cursor: cursor,
             pageSize: pageSize,
             totalCount: displays.count,
         )
@@ -102,7 +104,7 @@ extension ExactMacService {
             $0.displayID = Int64(display.displayID)
             $0.frame = regionMessage(display.frame)
             $0.visibleFrame = regionMessage(display.visibleFrame)
-            $0.isMain = display.isMain
+            $0.main = display.isMain
             $0.scale = display.scale
         }
     }

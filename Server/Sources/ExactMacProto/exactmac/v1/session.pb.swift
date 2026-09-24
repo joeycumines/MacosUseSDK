@@ -286,8 +286,8 @@ public nonisolated struct Exactmac_V1_SessionSnapshot: Sendable {
   /// Active observations in session context.
   public var observations: [String] = []
 
-  /// Operation history.
-  public var history: [Exactmac_V1_OperationRecord] = []
+  /// Operation records.
+  public var operationRecords: [Exactmac_V1_OperationRecord] = []
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -340,7 +340,7 @@ fileprivate nonisolated let _protobuf_package = "exactmac.v1"
 
 nonisolated extension Exactmac_V1_Session: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Session"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}display_name\0\u{1}state\0\u{3}create_time\0\u{3}last_access_time\0\u{4}\u{2}expire_time\0\u{3}transaction_id\0\u{1}metadata\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}display_name\0\u{1}state\0\u{3}create_time\0\u{3}last_access_time\0\u{3}expire_time\0\u{3}transaction_id\0\u{1}metadata\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -353,9 +353,9 @@ nonisolated extension Exactmac_V1_Session: SwiftProtobuf.Message, SwiftProtobuf.
       case 3: try { try decoder.decodeSingularEnumField(value: &self.state) }()
       case 4: try { try decoder.decodeSingularMessageField(value: &self._createTime) }()
       case 5: try { try decoder.decodeSingularMessageField(value: &self._lastAccessTime) }()
-      case 7: try { try decoder.decodeSingularMessageField(value: &self._expireTime) }()
-      case 8: try { try decoder.decodeSingularStringField(value: &self.transactionID) }()
-      case 9: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.metadata) }()
+      case 6: try { try decoder.decodeSingularMessageField(value: &self._expireTime) }()
+      case 7: try { try decoder.decodeSingularStringField(value: &self.transactionID) }()
+      case 8: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.metadata) }()
       default: break
       }
     }
@@ -382,13 +382,13 @@ nonisolated extension Exactmac_V1_Session: SwiftProtobuf.Message, SwiftProtobuf.
       try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
     } }()
     try { if let v = self._expireTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
     } }()
     if !self.transactionID.isEmpty {
-      try visitor.visitSingularStringField(value: self.transactionID, fieldNumber: 8)
+      try visitor.visitSingularStringField(value: self.transactionID, fieldNumber: 7)
     }
     if !self.metadata.isEmpty {
-      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: self.metadata, fieldNumber: 9)
+      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: self.metadata, fieldNumber: 8)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -522,7 +522,7 @@ nonisolated extension Exactmac_V1_Transaction.State: SwiftProtobuf._ProtoNamePro
 
 nonisolated extension Exactmac_V1_SessionSnapshot: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SessionSnapshot"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}session\0\u{1}applications\0\u{1}observations\0\u{1}history\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}session\0\u{1}applications\0\u{1}observations\0\u{3}operation_records\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -533,7 +533,7 @@ nonisolated extension Exactmac_V1_SessionSnapshot: SwiftProtobuf.Message, SwiftP
       case 1: try { try decoder.decodeSingularMessageField(value: &self._session) }()
       case 2: try { try decoder.decodeRepeatedStringField(value: &self.applications) }()
       case 3: try { try decoder.decodeRepeatedStringField(value: &self.observations) }()
-      case 4: try { try decoder.decodeRepeatedMessageField(value: &self.history) }()
+      case 4: try { try decoder.decodeRepeatedMessageField(value: &self.operationRecords) }()
       default: break
       }
     }
@@ -553,8 +553,8 @@ nonisolated extension Exactmac_V1_SessionSnapshot: SwiftProtobuf.Message, SwiftP
     if !self.observations.isEmpty {
       try visitor.visitRepeatedStringField(value: self.observations, fieldNumber: 3)
     }
-    if !self.history.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.history, fieldNumber: 4)
+    if !self.operationRecords.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.operationRecords, fieldNumber: 4)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -563,7 +563,7 @@ nonisolated extension Exactmac_V1_SessionSnapshot: SwiftProtobuf.Message, SwiftP
     if lhs._session != rhs._session {return false}
     if lhs.applications != rhs.applications {return false}
     if lhs.observations != rhs.observations {return false}
-    if lhs.history != rhs.history {return false}
+    if lhs.operationRecords != rhs.operationRecords {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

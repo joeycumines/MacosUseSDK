@@ -452,7 +452,7 @@ func fixtureDisplay() *pb.Display {
 		DisplayId:    17,
 		Frame:        &pbtype.Region{X: -100.5, Y: -50.25, Width: 300.75, Height: 200.5},
 		VisibleFrame: &pbtype.Region{X: -100.125, Y: -49.75, Width: 299.5, Height: 199.25},
-		IsMain:       true,
+		Main:         true,
 		Scale:        1.234375,
 	}
 }

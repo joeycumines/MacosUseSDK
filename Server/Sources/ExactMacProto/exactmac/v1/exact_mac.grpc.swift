@@ -896,16 +896,16 @@ public enum Exactmac_V1_ExactMac: Sendable {
                 type: .unary
             )
         }
-        /// Namespace for "GetScriptingDictionaries" metadata.
-        public enum GetScriptingDictionaries: Sendable {
-            /// Request type for "GetScriptingDictionaries".
-            public typealias Input = Exactmac_V1_GetScriptingDictionariesRequest
-            /// Response type for "GetScriptingDictionaries".
-            public typealias Output = Exactmac_V1_ScriptingDictionaries
-            /// Descriptor for "GetScriptingDictionaries".
+        /// Namespace for "GetScriptingDictionaryCatalog" metadata.
+        public enum GetScriptingDictionaryCatalog: Sendable {
+            /// Request type for "GetScriptingDictionaryCatalog".
+            public typealias Input = Exactmac_V1_GetScriptingDictionaryCatalogRequest
+            /// Response type for "GetScriptingDictionaryCatalog".
+            public typealias Output = Exactmac_V1_ScriptingDictionaryCatalog
+            /// Descriptor for "GetScriptingDictionaryCatalog".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "exactmac.v1.ExactMac"),
-                method: "GetScriptingDictionaries",
+                method: "GetScriptingDictionaryCatalog",
                 type: .unary
             )
         }
@@ -978,7 +978,7 @@ public enum Exactmac_V1_ExactMac: Sendable {
             ExecuteJavaScript.descriptor,
             ExecuteShellCommand.descriptor,
             ValidateScript.descriptor,
-            GetScriptingDictionaries.descriptor
+            GetScriptingDictionaryCatalog.descriptor
         ]
     }
 }
@@ -2216,23 +2216,23 @@ extension Exactmac_V1_ExactMac {
             context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Exactmac_V1_ValidateScriptResponse>
 
-        /// Handle the "GetScriptingDictionaries" method.
+        /// Handle the "GetScriptingDictionaryCatalog" method.
         ///
         /// > Source IDL Documentation:
         /// >
         /// > Gets scripting dictionaries.
         ///
         /// - Parameters:
-        ///   - request: A streaming request of `Exactmac_V1_GetScriptingDictionariesRequest` messages.
+        ///   - request: A streaming request of `Exactmac_V1_GetScriptingDictionaryCatalogRequest` messages.
         ///   - context: Context providing information about the RPC.
         /// - Throws: Any error which occurred during the processing of the request. Thrown errors
         ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
         ///     to an internal error.
-        /// - Returns: A streaming response of `Exactmac_V1_ScriptingDictionaries` messages.
-        func getScriptingDictionaries(
-            request: GRPCCore.StreamingServerRequest<Exactmac_V1_GetScriptingDictionariesRequest>,
+        /// - Returns: A streaming response of `Exactmac_V1_ScriptingDictionaryCatalog` messages.
+        func getScriptingDictionaryCatalog(
+            request: GRPCCore.StreamingServerRequest<Exactmac_V1_GetScriptingDictionaryCatalogRequest>,
             context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.StreamingServerResponse<Exactmac_V1_ScriptingDictionaries>
+        ) async throws -> GRPCCore.StreamingServerResponse<Exactmac_V1_ScriptingDictionaryCatalog>
     }
 
     /// Service protocol for the "exactmac.v1.ExactMac" service.
@@ -3455,23 +3455,23 @@ extension Exactmac_V1_ExactMac {
             context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Exactmac_V1_ValidateScriptResponse>
 
-        /// Handle the "GetScriptingDictionaries" method.
+        /// Handle the "GetScriptingDictionaryCatalog" method.
         ///
         /// > Source IDL Documentation:
         /// >
         /// > Gets scripting dictionaries.
         ///
         /// - Parameters:
-        ///   - request: A request containing a single `Exactmac_V1_GetScriptingDictionariesRequest` message.
+        ///   - request: A request containing a single `Exactmac_V1_GetScriptingDictionaryCatalogRequest` message.
         ///   - context: Context providing information about the RPC.
         /// - Throws: Any error which occurred during the processing of the request. Thrown errors
         ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
         ///     to an internal error.
-        /// - Returns: A response containing a single `Exactmac_V1_ScriptingDictionaries` message.
-        func getScriptingDictionaries(
-            request: GRPCCore.ServerRequest<Exactmac_V1_GetScriptingDictionariesRequest>,
+        /// - Returns: A response containing a single `Exactmac_V1_ScriptingDictionaryCatalog` message.
+        func getScriptingDictionaryCatalog(
+            request: GRPCCore.ServerRequest<Exactmac_V1_GetScriptingDictionaryCatalogRequest>,
             context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.ServerResponse<Exactmac_V1_ScriptingDictionaries>
+        ) async throws -> GRPCCore.ServerResponse<Exactmac_V1_ScriptingDictionaryCatalog>
     }
 
     /// Simple service protocol for the "exactmac.v1.ExactMac" service.
@@ -4694,23 +4694,23 @@ extension Exactmac_V1_ExactMac {
             context: GRPCCore.ServerContext
         ) async throws -> Exactmac_V1_ValidateScriptResponse
 
-        /// Handle the "GetScriptingDictionaries" method.
+        /// Handle the "GetScriptingDictionaryCatalog" method.
         ///
         /// > Source IDL Documentation:
         /// >
         /// > Gets scripting dictionaries.
         ///
         /// - Parameters:
-        ///   - request: A `Exactmac_V1_GetScriptingDictionariesRequest` message.
+        ///   - request: A `Exactmac_V1_GetScriptingDictionaryCatalogRequest` message.
         ///   - context: Context providing information about the RPC.
         /// - Throws: Any error which occurred during the processing of the request. Thrown errors
         ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
         ///     to an internal error.
-        /// - Returns: A `Exactmac_V1_ScriptingDictionaries` to respond with.
-        func getScriptingDictionaries(
-            request: Exactmac_V1_GetScriptingDictionariesRequest,
+        /// - Returns: A `Exactmac_V1_ScriptingDictionaryCatalog` to respond with.
+        func getScriptingDictionaryCatalog(
+            request: Exactmac_V1_GetScriptingDictionaryCatalogRequest,
             context: GRPCCore.ServerContext
-        ) async throws -> Exactmac_V1_ScriptingDictionaries
+        ) async throws -> Exactmac_V1_ScriptingDictionaryCatalog
     }
 }
 
@@ -5456,11 +5456,11 @@ extension Exactmac_V1_ExactMac.StreamingServiceProtocol {
             }
         )
         router.registerHandler(
-            forMethod: Exactmac_V1_ExactMac.Method.GetScriptingDictionaries.descriptor,
-            deserializer: GRPCProtobuf.ProtobufDeserializer<Exactmac_V1_GetScriptingDictionariesRequest>(),
-            serializer: GRPCProtobuf.ProtobufSerializer<Exactmac_V1_ScriptingDictionaries>(),
+            forMethod: Exactmac_V1_ExactMac.Method.GetScriptingDictionaryCatalog.descriptor,
+            deserializer: GRPCProtobuf.ProtobufDeserializer<Exactmac_V1_GetScriptingDictionaryCatalogRequest>(),
+            serializer: GRPCProtobuf.ProtobufSerializer<Exactmac_V1_ScriptingDictionaryCatalog>(),
             handler: { request, context in
-                try await self.getScriptingDictionaries(
+                try await self.getScriptingDictionaryCatalog(
                     request: request,
                     context: context
                 )
@@ -6209,11 +6209,11 @@ extension Exactmac_V1_ExactMac.ServiceProtocol {
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    public func getScriptingDictionaries(
-        request: GRPCCore.StreamingServerRequest<Exactmac_V1_GetScriptingDictionariesRequest>,
+    public func getScriptingDictionaryCatalog(
+        request: GRPCCore.StreamingServerRequest<Exactmac_V1_GetScriptingDictionaryCatalogRequest>,
         context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.StreamingServerResponse<Exactmac_V1_ScriptingDictionaries> {
-        let response = try await self.getScriptingDictionaries(
+    ) async throws -> GRPCCore.StreamingServerResponse<Exactmac_V1_ScriptingDictionaryCatalog> {
+        let response = try await self.getScriptingDictionaryCatalog(
             request: GRPCCore.ServerRequest(stream: request),
             context: context
         )
@@ -7103,12 +7103,12 @@ extension Exactmac_V1_ExactMac.SimpleServiceProtocol {
         )
     }
 
-    public func getScriptingDictionaries(
-        request: GRPCCore.ServerRequest<Exactmac_V1_GetScriptingDictionariesRequest>,
+    public func getScriptingDictionaryCatalog(
+        request: GRPCCore.ServerRequest<Exactmac_V1_GetScriptingDictionaryCatalogRequest>,
         context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.ServerResponse<Exactmac_V1_ScriptingDictionaries> {
-        return GRPCCore.ServerResponse<Exactmac_V1_ScriptingDictionaries>(
-            message: try await self.getScriptingDictionaries(
+    ) async throws -> GRPCCore.ServerResponse<Exactmac_V1_ScriptingDictionaryCatalog> {
+        return GRPCCore.ServerResponse<Exactmac_V1_ScriptingDictionaryCatalog>(
+            message: try await self.getScriptingDictionaryCatalog(
                 request: request.message,
                 context: context
             ),

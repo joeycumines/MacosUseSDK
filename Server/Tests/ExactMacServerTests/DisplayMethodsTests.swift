@@ -164,7 +164,7 @@ final class DisplayMethodsTests: XCTestCase {
         let response = try await service.listDisplays(request: makeListDisplaysRequest(), context: makeListDisplaysContext())
         let msg = try response.message
 
-        let mainDisplays = msg.displays.filter(\.isMain)
+        let mainDisplays = msg.displays.filter(\.main)
 
         XCTAssertEqual(
             mainDisplays.count, 1,
@@ -176,7 +176,7 @@ final class DisplayMethodsTests: XCTestCase {
         let response = try await service.listDisplays(request: makeListDisplaysRequest(), context: makeListDisplaysContext())
         let msg = try response.message
 
-        guard let mainDisplay = msg.displays.first(where: { $0.isMain }) else {
+        guard let mainDisplay = msg.displays.first(where: { $0.main }) else {
             XCTFail("No main display found")
             return
         }
@@ -365,7 +365,7 @@ final class DisplayMethodsTests: XCTestCase {
             let getMsg = try getResponse.message
 
             XCTAssertEqual(
-                getMsg.isMain, listedDisplay.isMain,
+                getMsg.main, listedDisplay.main,
                 "GetDisplay isMain should match ListDisplays for display \(listedDisplay.displayID)",
             )
         }
@@ -458,7 +458,7 @@ final class DisplayMethodsTests: XCTestCase {
         let listResponse = try await service.listDisplays(request: makeListDisplaysRequest(), context: makeListDisplaysContext())
         let msg = try listResponse.message
 
-        guard let mainDisplay = msg.displays.first(where: { $0.isMain }) else {
+        guard let mainDisplay = msg.displays.first(where: { $0.main }) else {
             XCTFail("No main display found")
             return
         }
@@ -471,7 +471,7 @@ final class DisplayMethodsTests: XCTestCase {
         let listResponse = try await service.listDisplays(request: makeListDisplaysRequest(), context: makeListDisplaysContext())
         let msg = try listResponse.message
 
-        guard let mainDisplay = msg.displays.first(where: { $0.isMain }) else {
+        guard let mainDisplay = msg.displays.first(where: { $0.main }) else {
             XCTFail("No main display found")
             return
         }

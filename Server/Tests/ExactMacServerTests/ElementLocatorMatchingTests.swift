@@ -265,7 +265,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
         // NOT(role=AXButton)
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .not
+                $0.logicalOperator = .not
                 $0.selectors = [
                     Exactmac_Type_ElementSelector.with { $0.role = "AXButton" },
                 ]
@@ -293,11 +293,11 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
 
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .not
+                $0.logicalOperator = .not
                 $0.selectors = [
                     Exactmac_Type_ElementSelector.with {
                         $0.compound = Exactmac_Type_CompoundSelector.with {
-                            $0.operator = .and
+                            $0.logicalOperator = .and
                             $0.selectors = [
                                 Exactmac_Type_ElementSelector.with { $0.role = "AXButton" },
                                 Exactmac_Type_ElementSelector.with { $0.text = "Submit" },
@@ -325,10 +325,10 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
 
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .and
+                $0.logicalOperator = .and
                 $0.selectors = [
                     Exactmac_Type_ElementSelector.with { $0.role = "AXButton" },
-                    Exactmac_Type_ElementSelector.with { $0.textContains = "Sub" },
+                    Exactmac_Type_ElementSelector.with { $0.textSubstring = "Sub" },
                 ]
             }
         }
@@ -345,10 +345,10 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
 
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .and
+                $0.logicalOperator = .and
                 $0.selectors = [
                     Exactmac_Type_ElementSelector.with { $0.role = "AXButton" },
-                    Exactmac_Type_ElementSelector.with { $0.textContains = "Sub" },
+                    Exactmac_Type_ElementSelector.with { $0.textSubstring = "Sub" },
                 ]
             }
         }
@@ -372,7 +372,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
 
         let selector = Exactmac_Type_ElementSelector.with {
             $0.compound = Exactmac_Type_CompoundSelector.with {
-                $0.operator = .or
+                $0.logicalOperator = .or
                 $0.selectors = [
                     Exactmac_Type_ElementSelector.with { $0.role = "AXButton" },
                     Exactmac_Type_ElementSelector.with { $0.role = "AXLink" },
@@ -439,7 +439,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
         }
 
         let selector = Exactmac_Type_ElementSelector.with {
-            $0.textContains = "World"
+            $0.textSubstring = "World"
         }
 
         let matches = await locator.matchesSelector(element, selector: selector)
@@ -467,7 +467,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
         }
 
         let selector = Exactmac_Type_ElementSelector.with {
-            $0.textContains = "anything"
+            $0.textSubstring = "anything"
         }
 
         let matches = await locator.matchesSelector(element, selector: selector)

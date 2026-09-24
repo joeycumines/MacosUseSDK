@@ -8,7 +8,7 @@ package exactmac.type;
 
 import "google/api/field_behavior.proto";
 
-option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/type;exactmactype";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/type;exactmactypepb";
 option java_multiple_files = true;
 option java_outer_classname = "SelectorProto";
 option java_package = "io.github.joeycumines.exactmac.type";
@@ -20,9 +20,9 @@ option java_package = "io.github.joeycumines.exactmac.type";
 // 1. SIMPLE SELECTORS (all fully implemented):
 //    - role: "button"                     → Match by AXRole (case-sensitive)
 //    - text: "Submit"                     → Exact text match (AXValue or AXTitle)
-//    - text_contains: "Submit"            → Substring match (case-sensitive)
+//    - text_substring: "Submit"            → Substring match (case-sensitive)
 //    - text_regex: "^Submit.*"            → Regex match using NSRegularExpression
-//    - position: {x: 100, y: 200, tol: 5} → Match element at Global Display Coordinates ±tolerance
+//    - position: {x: 100, y: 200, tolerance: 5} → Match element at Global Display Coordinates ±tolerance
 //    - attributes: {"AXEnabled": "1"}     → Match custom accessibility attributes (all must match)
 //
 // 2. COMPOUND SELECTORS (fully implemented):
@@ -35,20 +35,20 @@ option java_package = "io.github.joeycumines.exactmac.type";
 //
 // 4. VALIDATION RULES (enforced by SelectorParser):
 //    - role: cannot be empty string
-//    - text_contains: cannot be empty string
+//    - text_substring: cannot be empty string
 //    - text_regex: must be valid NSRegularExpression pattern
 //    - position: tolerance cannot be negative
 //    - attributes: must have at least one key-value pair
-//    - compound: must have at least one selector; NOT requires exactly one
+//    - compound: logical_operator is required; must have at least one selector; NOT requires exactly one
 //
 // 5. MATCHING SEMANTICS:
-//    - text/text_contains/text_regex: Check AXValue first, fall back to AXTitle
+//    - text/text_substring/text_regex: Check AXValue first, fall back to AXTitle
 //    - role: Exact match against AXRole (e.g., "AXButton", "AXTextField")
 //    - position: Element bounds must contain point (x,y) within tolerance
 //    - attributes: All specified attributes must match element's accessibility attributes
 //
 // 6. PERFORMANCE CONSIDERATIONS:
-//    - Simple selectors (role, text, text_contains, position) are optimized
+//    - Simple selectors (role, text, text_substring, position) are optimized
 //    - Regex and attribute selectors require full tree traversal
 //    - Compound selectors with AND can short-circuit on first failure
 //
@@ -56,28 +56,24 @@ option java_package = "io.github.joeycumines.exactmac.type";
 //
 //   // Find button with text "Submit"
 //   { role: "AXButton", text: "Submit" }  // INVALID: can't mix criteria in oneof
-//   { compound: { operator: AND, selectors: [
+//   { compound: { logical_operator: OPERATOR_AND, selectors: [
 //       { role: "AXButton" },
 //       { text: "Submit" }
 //   ]}}
 //
 //   // Find any button OR link
-//   { compound: { operator: OR, selectors: [
+//   { compound: { logical_operator: OPERATOR_OR, selectors: [
 //       { role: "AXButton" },
 //       { role: "AXLink" }
 //   ]}}
 //
 //   // Find elements NOT containing "Error"
-//   { compound: { operator: NOT, selectors: [
-//       { text_contains: "Error" }
+//   { compound: { logical_operator: OPERATOR_NOT, selectors: [
+//       { text_substring: "Error" }
 //   ]}}
 //
 //   // Find element at screen position (100, 200) with 10px tolerance
 //   { position: { x: 100, y: 200, tolerance: 10 }}
-//
-// FILES:
-//   - Implementation: Server/Sources/ExactMacServer/SelectorParser.swift
-//   - Matching logic: Server/Sources/ExactMacServer/ElementLocator.swift
 message ElementSelector {
   // Selector criteria (at least one must be specified).
   oneof criteria {
@@ -88,7 +84,7 @@ message ElementSelector {
     string text = 2;
 
     // Select by text containing a substring.
-    string text_contains = 3;
+    string text_substring = 3;
 
     // Select by text matching a regular expression.
     string text_regex = 4;
@@ -127,8 +123,10 @@ message AttributeSelector {
 
 // Compound selector combining multiple criteria.
 message CompoundSelector {
-  // Operator for combining selectors.
-  Operator operator = 1 [(google.api.field_behavior) = REQUIRED];
+  // Logical operator for combining selectors. The field is named
+  // logical_operator to avoid the common language keyword `operator`; the
+  // enum type remains Operator.
+  Operator logical_operator = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Selectors to combine.
   repeated ElementSelector selectors = 2 [(google.api.field_behavior) = REQUIRED];

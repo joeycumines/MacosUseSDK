@@ -394,8 +394,8 @@ func performInput(t *testing.T, ctx context.Context, client pb.ExactMacClient, a
 		app.GetName(),
 		applicationInputTarget(app.GetName()),
 		&pb.InputAction{
-			InputType: &pb.InputAction_TypeText{
-				TypeText: &pb.TextInput{
+			InputType: &pb.InputAction_TextInput{
+				TextInput: &pb.TextInput{
 					Text: text,
 				},
 			},

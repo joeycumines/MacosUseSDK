@@ -4,7 +4,7 @@ import ExactMacProto
 
 struct ValidatedInputAction: Sendable {
     let action: ExactMac.InputAction
-    let showAnimation: Bool
+    let visualFeedback: Bool
     let animationDuration: Double
 
     var requiresKeyboardFocus: Bool {
@@ -20,20 +20,20 @@ struct ValidatedInputAction: Sendable {
 
 struct PreparedInputAction: Sendable {
     let action: ExactMac.InputAction
-    let showAnimation: Bool
+    let visualFeedback: Bool
     let animationDuration: Double
     let keyboardSourceIdentity: ExactMac.KeyboardInputSourceIdentity?
     let textPasteKeyCode: CGKeyCode?
 
     init(
         action: ExactMac.InputAction,
-        showAnimation: Bool,
+        visualFeedback: Bool,
         animationDuration: Double,
         keyboardSourceIdentity: ExactMac.KeyboardInputSourceIdentity? = nil,
         textPasteKeyCode: CGKeyCode? = nil,
     ) {
         self.action = action
-        self.showAnimation = showAnimation
+        self.visualFeedback = visualFeedback
         self.animationDuration = animationDuration
         self.keyboardSourceIdentity = keyboardSourceIdentity
         self.textPasteKeyCode = textPasteKeyCode
@@ -45,7 +45,7 @@ enum InputActionAdmission {
         protoAction: Exactmac_V1_InputAction,
         sdkAction: ExactMac.InputAction,
     ) throws -> ValidatedInputAction {
-        let showAnimation = protoAction.showAnimation
+        let visualFeedback = protoAction.visualFeedback
         let animationDuration = protoAction.animationDuration
 
         guard animationDuration.isFinite, animationDuration >= 0, animationDuration <= 3600 else {
@@ -53,41 +53,41 @@ enum InputActionAdmission {
                 "animation_duration must be between 0 and 3600 seconds",
             )
         }
-        guard showAnimation || animationDuration == 0 else {
+        guard visualFeedback || animationDuration == 0 else {
             throw CoordinatorError.invalidKeyCombo(
-                "animation_duration requires show_animation",
+                "animation_duration requires visual_feedback",
             )
         }
 
         switch sdkAction {
         case .type, .typeText:
-            guard !showAnimation || animationDuration == 0 else {
+            guard !visualFeedback || animationDuration == 0 else {
                 throw CoordinatorError.invalidKeyCombo(
-                    "custom animation_duration is not supported for type_text",
+                    "custom animation_duration is not supported for text_input",
                 )
             }
         case .pressHold, .pressKeyCodeHold:
-            guard !showAnimation else {
+            guard !visualFeedback else {
                 throw CoordinatorError.invalidKeyCombo(
-                    "show_animation is not supported for a held key",
+                    "visual_feedback is not supported for a held key",
                 )
             }
         case .drag, .dragPath:
-            guard !showAnimation else {
+            guard !visualFeedback else {
                 throw CoordinatorError.invalidKeyCombo(
-                    "show_animation is not supported for drag",
+                    "visual_feedback is not supported for drag",
                 )
             }
         case .scroll:
-            guard !showAnimation else {
+            guard !visualFeedback else {
                 throw CoordinatorError.invalidKeyCombo(
-                    "show_animation is not supported for scroll",
+                    "visual_feedback is not supported for scroll",
                 )
             }
         case .hover:
-            guard !showAnimation else {
+            guard !visualFeedback else {
                 throw CoordinatorError.invalidKeyCombo(
-                    "show_animation is not supported for hover",
+                    "visual_feedback is not supported for hover",
                 )
             }
         case .click, .doubleClick, .rightClick, .clickSequence, .press,
@@ -97,7 +97,7 @@ enum InputActionAdmission {
 
         return ValidatedInputAction(
             action: sdkAction,
-            showAnimation: showAnimation,
+            visualFeedback: visualFeedback,
             animationDuration: animationDuration,
         )
     }

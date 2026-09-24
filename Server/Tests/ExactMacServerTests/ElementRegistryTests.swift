@@ -549,7 +549,7 @@ final class ElementRegistryTests: XCTestCase {
 
     func testClearElementsForPidReturnValueReflectsRemovalCount() async throws {
         // The return value of clearElements(forPid:) is consumed by the
-        // findElements/findRegionElements forceRefresh path to log how many
+        // findElements/findRegionElements cacheBypass path to log how many
         // stale entries were evicted; pin the contract here.
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["p1_a", "p1_b", "p1_c", "p2_a"])

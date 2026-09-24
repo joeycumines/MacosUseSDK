@@ -304,7 +304,7 @@ final class ObservationMethodsTests: XCTestCase {
     func testCreateObservationWithActivateOption() async throws {
         var observation = Exactmac_V1_Observation()
         observation.type = .windowChanges
-        observation.activate = true
+        observation.activation = true
 
         var request = Exactmac_V1_CreateObservationRequest()
         request.parent = "applications/1"

@@ -50,7 +50,7 @@ func (s *MCPServer) registerTools() {
 		"description": "Exact keyboard authority: desktop, applications/{application}, or applications/{application}/windows/{window}",
 	}
 	// macroActionSchema models the proto MacroAction oneof container as a closed
-	// object schema. Each oneof branch (input, wait, conditional, loop, assign,
+	// object schema. Each oneof branch (input, wait, conditional, loop, assignment,
 	// method_call) wraps a sub-message whose own fields the Swift handler
 	// validates via protojson unmarshal; those branch objects are therefore
 	// declared additionalProperties:true (an explicit opt-out that
@@ -66,7 +66,7 @@ func (s *MCPServer) registerTools() {
 			"wait":        macroActionBranch,
 			"conditional": macroActionBranch,
 			"loop":        macroActionBranch,
-			"assign":      macroActionBranch,
+			"assignment":  macroActionBranch,
 			"method_call": macroActionBranch,
 			"description": map[string]any{"type": "string"},
 		},
@@ -92,14 +92,14 @@ func (s *MCPServer) registerTools() {
 							`/windows/` + cuaOpaqueInputTargetIDPattern + `$`,
 						"description": "Exact applications/{application}/windows/{window} resource name returned by list_windows",
 					},
-					"x":       map[string]any{"type": "number", "description": "Region origin X (Global Display Coordinates)"},
-					"y":       map[string]any{"type": "number", "description": "Region origin Y (Global Display Coordinates)"},
-					"width":   map[string]any{"type": "number", "description": "Region width in logical display points"},
-					"height":  map[string]any{"type": "number", "description": "Region height in logical display points"},
-					"format":  map[string]any{"type": "string", "description": "png (default), jpeg, tiff", "enum": []string{"png", "jpeg", "tiff"}},
-					"quality": map[string]any{"type": "integer", "minimum": 0, "maximum": 100, "description": "JPEG quality 1-100; zero selects 85 for JPEG and is required for PNG/TIFF"},
-					"ocr":     map[string]any{"type": "boolean", "description": "Include OCR text extraction"},
-					"include_shadow": map[string]any{
+					"x":           map[string]any{"type": "number", "description": "Region origin X (Global Display Coordinates)"},
+					"y":           map[string]any{"type": "number", "description": "Region origin Y (Global Display Coordinates)"},
+					"width":       map[string]any{"type": "number", "description": "Region width in logical display points"},
+					"height":      map[string]any{"type": "number", "description": "Region height in logical display points"},
+					"format":      map[string]any{"type": "string", "description": "png (default), jpeg, tiff", "enum": []string{"png", "jpeg", "tiff"}},
+					"quality":     map[string]any{"type": "integer", "minimum": 0, "maximum": 100, "description": "JPEG quality 1-100; zero selects 85 for JPEG and is required for PNG/TIFF"},
+					"ocr_enabled": map[string]any{"type": "boolean", "description": "Include OCR text extraction"},
+					"shadow_enabled": map[string]any{
 						"type":        "boolean",
 						"description": "Include the window shadow; valid only with window capture",
 					},
@@ -331,11 +331,11 @@ func (s *MCPServer) registerTools() {
 			InputSchema: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"parent":        map[string]any{"type": "string", "description": "Exact application or window resource search scope"},
-					"selector":      map[string]any{"type": "string", "description": "One selector in key:value form, e.g. role:AXButton, text:Save, text_contains:submit"},
-					"force_refresh": map[string]any{"type": "boolean", "description": "Discard cached data (default: false)"},
-					"page_size":     map[string]any{"type": "integer", "description": "Maximum elements to return"},
-					"page_token":    map[string]any{"type": "string", "description": "Opaque page token from previous response"},
+					"parent":       map[string]any{"type": "string", "description": "Exact application or window resource search scope"},
+					"selector":     map[string]any{"type": "string", "description": "One selector in key:value form, e.g. role:AXButton, text:Save, text_substring:submit"},
+					"cache_bypass": map[string]any{"type": "boolean", "description": "Discard cached data (default: false)"},
+					"page_size":    map[string]any{"type": "integer", "description": "Maximum elements to return"},
+					"page_token":   map[string]any{"type": "string", "description": "Opaque page token from previous response"},
 				},
 				"required":             []string{"parent", "selector"},
 				"additionalProperties": false,
@@ -351,7 +351,7 @@ func (s *MCPServer) registerTools() {
 				"properties": map[string]any{
 					"parent":   map[string]any{"type": "string", "description": "Parent context"},
 					"element":  map[string]any{"type": "string", "description": "Parent-bound element handle from find_elements for one exact AX identity"},
-					"selector": map[string]any{"type": "string", "description": "One key:value selector that must match exactly one element, e.g. role:AXButton, text:Save, text_contains:submit"},
+					"selector": map[string]any{"type": "string", "description": "One key:value selector that must match exactly one element, e.g. role:AXButton, text:Save, text_substring:submit"},
 				},
 				"required": []string{"parent"},
 			},
@@ -366,7 +366,7 @@ func (s *MCPServer) registerTools() {
 				"properties": map[string]any{
 					"parent":       map[string]any{"type": "string", "description": "Parent context"},
 					"element":      map[string]any{"type": "string", "description": "Parent-bound element handle from find_elements for one exact AX identity"},
-					"selector":     map[string]any{"type": "string", "description": "One key:value selector that must match exactly one element, e.g. role:AXTextArea, text:hello, text_contains:world"},
+					"selector":     map[string]any{"type": "string", "description": "One key:value selector that must match exactly one element, e.g. role:AXTextArea, text:hello, text_substring:world"},
 					"text":         map[string]any{"type": "string", "description": "Value to write. The current JSON handler treats omission and an explicit empty string as CLEAR; provide non-empty text to write a value."},
 					"input_method": map[string]any{"type": "string", "description": "Input delivery method: 'ax' (default) uses direct AX value mutation; 'keystrokes' sends physical keyboard events for web/Electron DOM-event compatibility", "enum": []string{"ax", "keystrokes"}},
 				},

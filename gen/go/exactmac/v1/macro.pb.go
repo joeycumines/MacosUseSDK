@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/v1/macro.proto
 
-package exactmacv1
+package exactmacpb
 
 import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -272,20 +272,18 @@ func (x *Macro) GetTags() []string {
 // Log entry for macro execution.
 type ExecutionLogEntry struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Resource name.
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// When the action executed.
-	ExecutionTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=execution_time,json=executionTime,proto3" json:"execution_time,omitempty"`
+	ExecutionTime *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=execution_time,json=executionTime,proto3" json:"execution_time,omitempty"`
 	// Action index in macro.
-	ActionIndex int32 `protobuf:"varint,3,opt,name=action_index,json=actionIndex,proto3" json:"action_index,omitempty"`
+	ActionIndex int32 `protobuf:"varint,2,opt,name=action_index,json=actionIndex,proto3" json:"action_index,omitempty"`
 	// Action description.
-	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	// Whether action succeeded.
-	Success bool `protobuf:"varint,5,opt,name=success,proto3" json:"success,omitempty"`
+	Success bool `protobuf:"varint,4,opt,name=success,proto3" json:"success,omitempty"`
 	// Error message if failed.
-	Error string `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
+	Error string `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
 	// Duration in seconds.
-	Duration      float64 `protobuf:"fixed64,7,opt,name=duration,proto3" json:"duration,omitempty"`
+	Duration      float64 `protobuf:"fixed64,6,opt,name=duration,proto3" json:"duration,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -318,13 +316,6 @@ func (x *ExecutionLogEntry) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ExecutionLogEntry.ProtoReflect.Descriptor instead.
 func (*ExecutionLogEntry) Descriptor() ([]byte, []int) {
 	return file_exactmac_v1_macro_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *ExecutionLogEntry) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
 }
 
 func (x *ExecutionLogEntry) GetExecutionTime() *timestamppb.Timestamp {
@@ -380,11 +371,11 @@ type MacroAction struct {
 	//	*MacroAction_Wait
 	//	*MacroAction_Conditional
 	//	*MacroAction_Loop
-	//	*MacroAction_Assign
+	//	*MacroAction_Assignment
 	//	*MacroAction_MethodCall
 	Action isMacroAction_Action `protobuf_oneof:"action"`
 	// Human-readable description of this action.
-	Description   string `protobuf:"bytes,10,opt,name=description,proto3" json:"description,omitempty"`
+	Description   string `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -462,10 +453,10 @@ func (x *MacroAction) GetLoop() *LoopAction {
 	return nil
 }
 
-func (x *MacroAction) GetAssign() *AssignAction {
+func (x *MacroAction) GetAssignment() *AssignAction {
 	if x != nil {
-		if x, ok := x.Action.(*MacroAction_Assign); ok {
-			return x.Assign
+		if x, ok := x.Action.(*MacroAction_Assignment); ok {
+			return x.Assignment
 		}
 	}
 	return nil
@@ -511,9 +502,9 @@ type MacroAction_Loop struct {
 	Loop *LoopAction `protobuf:"bytes,4,opt,name=loop,proto3,oneof"`
 }
 
-type MacroAction_Assign struct {
-	// Variable assignment.
-	Assign *AssignAction `protobuf:"bytes,5,opt,name=assign,proto3,oneof"`
+type MacroAction_Assignment struct {
+	// Assignment action.
+	Assignment *AssignAction `protobuf:"bytes,5,opt,name=assignment,proto3,oneof"`
 }
 
 type MacroAction_MethodCall struct {
@@ -529,7 +520,7 @@ func (*MacroAction_Conditional) isMacroAction_Action() {}
 
 func (*MacroAction_Loop) isMacroAction_Action() {}
 
-func (*MacroAction_Assign) isMacroAction_Action() {}
+func (*MacroAction_Assignment) isMacroAction_Action() {}
 
 func (*MacroAction_MethodCall) isMacroAction_Action() {}
 
@@ -600,7 +591,7 @@ type WaitCondition struct {
 	//	*WaitCondition_Application
 	Condition isWaitCondition_Condition `protobuf_oneof:"condition"`
 	// Timeout in seconds.
-	Timeout       float64 `protobuf:"fixed64,10,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	Timeout       float64 `protobuf:"fixed64,4,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -772,10 +763,10 @@ type MacroCondition struct {
 	//
 	// Types that are valid to be assigned to Condition:
 	//
-	//	*MacroCondition_ElementExists
-	//	*MacroCondition_WindowExists
-	//	*MacroCondition_ApplicationRunning
-	//	*MacroCondition_VariableEquals
+	//	*MacroCondition_ElementSelector
+	//	*MacroCondition_WindowTitle
+	//	*MacroCondition_RunningApplicationBundleId
+	//	*MacroCondition_VariableCondition
 	//	*MacroCondition_Compound
 	Condition     isMacroCondition_Condition `protobuf_oneof:"condition"`
 	unknownFields protoimpl.UnknownFields
@@ -819,37 +810,37 @@ func (x *MacroCondition) GetCondition() isMacroCondition_Condition {
 	return nil
 }
 
-func (x *MacroCondition) GetElementExists() string {
+func (x *MacroCondition) GetElementSelector() string {
 	if x != nil {
-		if x, ok := x.Condition.(*MacroCondition_ElementExists); ok {
-			return x.ElementExists
+		if x, ok := x.Condition.(*MacroCondition_ElementSelector); ok {
+			return x.ElementSelector
 		}
 	}
 	return ""
 }
 
-func (x *MacroCondition) GetWindowExists() string {
+func (x *MacroCondition) GetWindowTitle() string {
 	if x != nil {
-		if x, ok := x.Condition.(*MacroCondition_WindowExists); ok {
-			return x.WindowExists
+		if x, ok := x.Condition.(*MacroCondition_WindowTitle); ok {
+			return x.WindowTitle
 		}
 	}
 	return ""
 }
 
-func (x *MacroCondition) GetApplicationRunning() string {
+func (x *MacroCondition) GetRunningApplicationBundleId() string {
 	if x != nil {
-		if x, ok := x.Condition.(*MacroCondition_ApplicationRunning); ok {
-			return x.ApplicationRunning
+		if x, ok := x.Condition.(*MacroCondition_RunningApplicationBundleId); ok {
+			return x.RunningApplicationBundleId
 		}
 	}
 	return ""
 }
 
-func (x *MacroCondition) GetVariableEquals() *VariableCondition {
+func (x *MacroCondition) GetVariableCondition() *VariableCondition {
 	if x != nil {
-		if x, ok := x.Condition.(*MacroCondition_VariableEquals); ok {
-			return x.VariableEquals
+		if x, ok := x.Condition.(*MacroCondition_VariableCondition); ok {
+			return x.VariableCondition
 		}
 	}
 	return nil
@@ -868,24 +859,24 @@ type isMacroCondition_Condition interface {
 	isMacroCondition_Condition()
 }
 
-type MacroCondition_ElementExists struct {
-	// Element exists.
-	ElementExists string `protobuf:"bytes,1,opt,name=element_exists,json=elementExists,proto3,oneof"`
+type MacroCondition_ElementSelector struct {
+	// Element selector.
+	ElementSelector string `protobuf:"bytes,1,opt,name=element_selector,json=elementSelector,proto3,oneof"`
 }
 
-type MacroCondition_WindowExists struct {
-	// Window exists.
-	WindowExists string `protobuf:"bytes,2,opt,name=window_exists,json=windowExists,proto3,oneof"`
+type MacroCondition_WindowTitle struct {
+	// Window title.
+	WindowTitle string `protobuf:"bytes,2,opt,name=window_title,json=windowTitle,proto3,oneof"`
 }
 
-type MacroCondition_ApplicationRunning struct {
-	// Application is running.
-	ApplicationRunning string `protobuf:"bytes,3,opt,name=application_running,json=applicationRunning,proto3,oneof"`
+type MacroCondition_RunningApplicationBundleId struct {
+	// Running application bundle identifier.
+	RunningApplicationBundleId string `protobuf:"bytes,3,opt,name=running_application_bundle_id,json=runningApplicationBundleId,proto3,oneof"`
 }
 
-type MacroCondition_VariableEquals struct {
-	// Variable equals value.
-	VariableEquals *VariableCondition `protobuf:"bytes,4,opt,name=variable_equals,json=variableEquals,proto3,oneof"`
+type MacroCondition_VariableCondition struct {
+	// Variable condition.
+	VariableCondition *VariableCondition `protobuf:"bytes,4,opt,name=variable_condition,json=variableCondition,proto3,oneof"`
 }
 
 type MacroCondition_Compound struct {
@@ -893,13 +884,13 @@ type MacroCondition_Compound struct {
 	Compound *CompoundCondition `protobuf:"bytes,5,opt,name=compound,proto3,oneof"`
 }
 
-func (*MacroCondition_ElementExists) isMacroCondition_Condition() {}
+func (*MacroCondition_ElementSelector) isMacroCondition_Condition() {}
 
-func (*MacroCondition_WindowExists) isMacroCondition_Condition() {}
+func (*MacroCondition_WindowTitle) isMacroCondition_Condition() {}
 
-func (*MacroCondition_ApplicationRunning) isMacroCondition_Condition() {}
+func (*MacroCondition_RunningApplicationBundleId) isMacroCondition_Condition() {}
 
-func (*MacroCondition_VariableEquals) isMacroCondition_Condition() {}
+func (*MacroCondition_VariableCondition) isMacroCondition_Condition() {}
 
 func (*MacroCondition_Compound) isMacroCondition_Condition() {}
 
@@ -961,8 +952,9 @@ func (x *VariableCondition) GetValue() string {
 // Compound condition (AND/OR/NOT).
 type CompoundCondition struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Operator.
-	Operator CompoundCondition_Operator `protobuf:"varint,1,opt,name=operator,proto3,enum=exactmac.v1.CompoundCondition_Operator" json:"operator,omitempty"`
+	// Logical operator. The field is named logical_operator to avoid the
+	// common language keyword `operator`; the enum type remains Operator.
+	LogicalOperator CompoundCondition_Operator `protobuf:"varint,1,opt,name=logical_operator,json=logicalOperator,proto3,enum=exactmac.v1.CompoundCondition_Operator" json:"logical_operator,omitempty"`
 	// Sub-conditions.
 	Conditions    []*MacroCondition `protobuf:"bytes,2,rep,name=conditions,proto3" json:"conditions,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -999,9 +991,9 @@ func (*CompoundCondition) Descriptor() ([]byte, []int) {
 	return file_exactmac_v1_macro_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *CompoundCondition) GetOperator() CompoundCondition_Operator {
+func (x *CompoundCondition) GetLogicalOperator() CompoundCondition_Operator {
 	if x != nil {
-		return x.Operator
+		return x.LogicalOperator
 	}
 	return CompoundCondition_OPERATOR_UNSPECIFIED
 }
@@ -1022,10 +1014,10 @@ type LoopAction struct {
 	//
 	//	*LoopAction_Count
 	//	*LoopAction_WhileCondition
-	//	*LoopAction_Foreach
+	//	*LoopAction_EachItemLoop
 	LoopType isLoopAction_LoopType `protobuf_oneof:"loop_type"`
 	// Actions to execute in each iteration.
-	Actions       []*MacroAction `protobuf:"bytes,10,rep,name=actions,proto3" json:"actions,omitempty"`
+	Actions       []*MacroAction `protobuf:"bytes,4,rep,name=actions,proto3" json:"actions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1085,10 +1077,10 @@ func (x *LoopAction) GetWhileCondition() *MacroCondition {
 	return nil
 }
 
-func (x *LoopAction) GetForeach() *ForEachLoop {
+func (x *LoopAction) GetEachItemLoop() *ForEachLoop {
 	if x != nil {
-		if x, ok := x.LoopType.(*LoopAction_Foreach); ok {
-			return x.Foreach
+		if x, ok := x.LoopType.(*LoopAction_EachItemLoop); ok {
+			return x.EachItemLoop
 		}
 	}
 	return nil
@@ -1115,16 +1107,16 @@ type LoopAction_WhileCondition struct {
 	WhileCondition *MacroCondition `protobuf:"bytes,2,opt,name=while_condition,json=whileCondition,proto3,oneof"`
 }
 
-type LoopAction_Foreach struct {
+type LoopAction_EachItemLoop struct {
 	// Loop over each item in collection.
-	Foreach *ForEachLoop `protobuf:"bytes,3,opt,name=foreach,proto3,oneof"`
+	EachItemLoop *ForEachLoop `protobuf:"bytes,3,opt,name=each_item_loop,json=eachItemLoop,proto3,oneof"`
 }
 
 func (*LoopAction_Count) isLoopAction_LoopType() {}
 
 func (*LoopAction_WhileCondition) isLoopAction_LoopType() {}
 
-func (*LoopAction_Foreach) isLoopAction_LoopType() {}
+func (*LoopAction_EachItemLoop) isLoopAction_LoopType() {}
 
 // For-each loop over collection.
 type ForEachLoop struct {
@@ -1138,7 +1130,7 @@ type ForEachLoop struct {
 	//	*ForEachLoop_Values
 	Collection isForEachLoop_Collection `protobuf_oneof:"collection"`
 	// Variable name for current item.
-	ItemVariable  string `protobuf:"bytes,10,opt,name=item_variable,json=itemVariable,proto3" json:"item_variable,omitempty"`
+	ItemVariable  string `protobuf:"bytes,4,opt,name=item_variable,json=itemVariable,proto3" json:"item_variable,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1580,26 +1572,25 @@ const file_exactmac_v1_macro_proto_rawDesc = "" +
 	"updateTime\x12,\n" +
 	"\x0fexecution_count\x18\b \x01(\x03B\x03\xe0A\x03R\x0eexecutionCount\x12\x17\n" +
 	"\x04tags\x18\t \x03(\tB\x03\xe0A\x01R\x04tags:2\xeaA/\n" +
-	"\x0eexactmac/Macro\x12\x0emacros/{macro}*\x06macros2\x05macro\"\xa7\x03\n" +
-	"\x11ExecutionLogEntry\x12\x17\n" +
-	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12F\n" +
-	"\x0eexecution_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\rexecutionTime\x12&\n" +
-	"\faction_index\x18\x03 \x01(\x05B\x03\xe0A\x03R\vactionIndex\x12%\n" +
-	"\vdescription\x18\x04 \x01(\tB\x03\xe0A\x03R\vdescription\x12\x1d\n" +
-	"\asuccess\x18\x05 \x01(\bB\x03\xe0A\x03R\asuccess\x12\x19\n" +
-	"\x05error\x18\x06 \x01(\tB\x03\xe0A\x03R\x05error\x12\x1f\n" +
-	"\bduration\x18\a \x01(\x01B\x03\xe0A\x03R\bduration:\x86\x01\xeaA\x82\x01\n" +
-	"\x1aexactmac/ExecutionLogEntry\x12<macros/{macro}/executions/{execution}/logEntries/{log_entry}*\x13executionLogEntries2\x11executionLogEntry\"\x83\x03\n" +
+	"\x0eexactmac/Macro\x12\x0emacros/{macro}*\x06macros2\x05macro\"\x85\x02\n" +
+	"\x11ExecutionLogEntry\x12F\n" +
+	"\x0eexecution_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\rexecutionTime\x12&\n" +
+	"\faction_index\x18\x02 \x01(\x05B\x03\xe0A\x03R\vactionIndex\x12%\n" +
+	"\vdescription\x18\x03 \x01(\tB\x03\xe0A\x03R\vdescription\x12\x1d\n" +
+	"\asuccess\x18\x04 \x01(\bB\x03\xe0A\x03R\asuccess\x12\x19\n" +
+	"\x05error\x18\x05 \x01(\tB\x03\xe0A\x03R\x05error\x12\x1f\n" +
+	"\bduration\x18\x06 \x01(\x01B\x03\xe0A\x03R\bduration\"\x8b\x03\n" +
 	"\vMacroAction\x120\n" +
 	"\x05input\x18\x01 \x01(\v2\x18.exactmac.v1.InputActionH\x00R\x05input\x12-\n" +
 	"\x04wait\x18\x02 \x01(\v2\x17.exactmac.v1.WaitActionH\x00R\x04wait\x12B\n" +
 	"\vconditional\x18\x03 \x01(\v2\x1e.exactmac.v1.ConditionalActionH\x00R\vconditional\x12-\n" +
-	"\x04loop\x18\x04 \x01(\v2\x17.exactmac.v1.LoopActionH\x00R\x04loop\x123\n" +
-	"\x06assign\x18\x05 \x01(\v2\x19.exactmac.v1.AssignActionH\x00R\x06assign\x12:\n" +
+	"\x04loop\x18\x04 \x01(\v2\x17.exactmac.v1.LoopActionH\x00R\x04loop\x12;\n" +
+	"\n" +
+	"assignment\x18\x05 \x01(\v2\x19.exactmac.v1.AssignActionH\x00R\n" +
+	"assignment\x12:\n" +
 	"\vmethod_call\x18\x06 \x01(\v2\x17.exactmac.v1.MethodCallH\x00R\n" +
 	"methodCall\x12%\n" +
-	"\vdescription\x18\n" +
-	" \x01(\tB\x03\xe0A\x01R\vdescriptionB\b\n" +
+	"\vdescription\x18\a \x01(\tB\x03\xe0A\x01R\vdescriptionB\b\n" +
 	"\x06action\"l\n" +
 	"\n" +
 	"WaitAction\x12\x1f\n" +
@@ -1609,25 +1600,24 @@ const file_exactmac_v1_macro_proto_rawDesc = "" +
 	"\x10element_selector\x18\x01 \x01(\tH\x00R\x0felementSelector\x12#\n" +
 	"\fwindow_title\x18\x02 \x01(\tH\x00R\vwindowTitle\x12\"\n" +
 	"\vapplication\x18\x03 \x01(\tH\x00R\vapplication\x12\x1d\n" +
-	"\atimeout\x18\n" +
-	" \x01(\x01B\x03\xe0A\x01R\atimeoutB\v\n" +
+	"\atimeout\x18\x04 \x01(\x01B\x03\xe0A\x01R\atimeoutB\v\n" +
 	"\tcondition\"\xd7\x01\n" +
 	"\x11ConditionalAction\x12>\n" +
 	"\tcondition\x18\x01 \x01(\v2\x1b.exactmac.v1.MacroConditionB\x03\xe0A\x02R\tcondition\x12@\n" +
 	"\fthen_actions\x18\x02 \x03(\v2\x18.exactmac.v1.MacroActionB\x03\xe0A\x02R\vthenActions\x12@\n" +
-	"\felse_actions\x18\x03 \x03(\v2\x18.exactmac.v1.MacroActionB\x03\xe0A\x01R\velseActions\"\xa9\x02\n" +
-	"\x0eMacroCondition\x12'\n" +
-	"\x0eelement_exists\x18\x01 \x01(\tH\x00R\relementExists\x12%\n" +
-	"\rwindow_exists\x18\x02 \x01(\tH\x00R\fwindowExists\x121\n" +
-	"\x13application_running\x18\x03 \x01(\tH\x00R\x12applicationRunning\x12I\n" +
-	"\x0fvariable_equals\x18\x04 \x01(\v2\x1e.exactmac.v1.VariableConditionH\x00R\x0evariableEquals\x12<\n" +
+	"\felse_actions\x18\x03 \x03(\v2\x18.exactmac.v1.MacroActionB\x03\xe0A\x01R\velseActions\"\xc3\x02\n" +
+	"\x0eMacroCondition\x12+\n" +
+	"\x10element_selector\x18\x01 \x01(\tH\x00R\x0felementSelector\x12#\n" +
+	"\fwindow_title\x18\x02 \x01(\tH\x00R\vwindowTitle\x12C\n" +
+	"\x1drunning_application_bundle_id\x18\x03 \x01(\tH\x00R\x1arunningApplicationBundleId\x12O\n" +
+	"\x12variable_condition\x18\x04 \x01(\v2\x1e.exactmac.v1.VariableConditionH\x00R\x11variableCondition\x12<\n" +
 	"\bcompound\x18\x05 \x01(\v2\x1e.exactmac.v1.CompoundConditionH\x00R\bcompoundB\v\n" +
 	"\tcondition\"O\n" +
 	"\x11VariableCondition\x12\x1f\n" +
 	"\bvariable\x18\x01 \x01(\tB\x03\xe0A\x02R\bvariable\x12\x19\n" +
-	"\x05value\x18\x02 \x01(\tB\x03\xe0A\x02R\x05value\"\xfa\x01\n" +
-	"\x11CompoundCondition\x12H\n" +
-	"\boperator\x18\x01 \x01(\x0e2'.exactmac.v1.CompoundCondition.OperatorB\x03\xe0A\x02R\boperator\x12@\n" +
+	"\x05value\x18\x02 \x01(\tB\x03\xe0A\x02R\x05value\"\x89\x02\n" +
+	"\x11CompoundCondition\x12W\n" +
+	"\x10logical_operator\x18\x01 \x01(\x0e2'.exactmac.v1.CompoundCondition.OperatorB\x03\xe0A\x02R\x0flogicalOperator\x12@\n" +
 	"\n" +
 	"conditions\x18\x02 \x03(\v2\x1b.exactmac.v1.MacroConditionB\x03\xe0A\x02R\n" +
 	"conditions\"Y\n" +
@@ -1635,21 +1625,19 @@ const file_exactmac_v1_macro_proto_rawDesc = "" +
 	"\x14OPERATOR_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fOPERATOR_AND\x10\x01\x12\x0f\n" +
 	"\vOPERATOR_OR\x10\x02\x12\x10\n" +
-	"\fOPERATOR_NOT\x10\x03\"\xe8\x01\n" +
+	"\fOPERATOR_NOT\x10\x03\"\xf4\x01\n" +
 	"\n" +
 	"LoopAction\x12\x16\n" +
 	"\x05count\x18\x01 \x01(\x05H\x00R\x05count\x12F\n" +
-	"\x0fwhile_condition\x18\x02 \x01(\v2\x1b.exactmac.v1.MacroConditionH\x00R\x0ewhileCondition\x124\n" +
-	"\aforeach\x18\x03 \x01(\v2\x18.exactmac.v1.ForEachLoopH\x00R\aforeach\x127\n" +
-	"\aactions\x18\n" +
-	" \x03(\v2\x18.exactmac.v1.MacroActionB\x03\xe0A\x02R\aactionsB\v\n" +
+	"\x0fwhile_condition\x18\x02 \x01(\v2\x1b.exactmac.v1.MacroConditionH\x00R\x0ewhileCondition\x12@\n" +
+	"\x0eeach_item_loop\x18\x03 \x01(\v2\x18.exactmac.v1.ForEachLoopH\x00R\feachItemLoop\x127\n" +
+	"\aactions\x18\x04 \x03(\v2\x18.exactmac.v1.MacroActionB\x03\xe0A\x02R\aactionsB\v\n" +
 	"\tloop_type\"\xb5\x01\n" +
 	"\vForEachLoop\x12+\n" +
 	"\x10element_selector\x18\x01 \x01(\tH\x00R\x0felementSelector\x12'\n" +
 	"\x0ewindow_pattern\x18\x02 \x01(\tH\x00R\rwindowPattern\x12\x18\n" +
 	"\x06values\x18\x03 \x01(\tH\x00R\x06values\x12(\n" +
-	"\ritem_variable\x18\n" +
-	" \x01(\tB\x03\xe0A\x02R\fitemVariableB\f\n" +
+	"\ritem_variable\x18\x04 \x01(\tB\x03\xe0A\x02R\fitemVariableB\f\n" +
 	"\n" +
 	"collection\"\xe9\x01\n" +
 	"\fAssignAction\x12\x1f\n" +
@@ -1684,9 +1672,9 @@ const file_exactmac_v1_macro_proto_rawDesc = "" +
 	"\x16PARAMETER_TYPE_BOOLEAN\x10\x03\x12\x1b\n" +
 	"\x17PARAMETER_TYPE_SELECTOR\x10\x04\x12\x17\n" +
 	"\x13PARAMETER_TYPE_PATH\x10\x05B\v\n" +
-	"\t_requiredB\xbb\x01\n" +
+	"\t_requiredBp\n" +
 	"!io.github.joeycumines.exactmac.v1B\n" +
-	"MacroProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1\xa2\x02\x03EXX\xaa\x02\vExactmac.V1\xca\x02\vExactmac\\V1\xe2\x02\x17Exactmac\\V1\\GPBMetadata\xea\x02\fExactmac::V1b\x06proto3"
+	"MacroProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpbb\x06proto3"
 
 var (
 	file_exactmac_v1_macro_proto_rawDescOnce sync.Once
@@ -1734,18 +1722,18 @@ var file_exactmac_v1_macro_proto_depIdxs = []int32{
 	5,  // 6: exactmac.v1.MacroAction.wait:type_name -> exactmac.v1.WaitAction
 	7,  // 7: exactmac.v1.MacroAction.conditional:type_name -> exactmac.v1.ConditionalAction
 	11, // 8: exactmac.v1.MacroAction.loop:type_name -> exactmac.v1.LoopAction
-	13, // 9: exactmac.v1.MacroAction.assign:type_name -> exactmac.v1.AssignAction
+	13, // 9: exactmac.v1.MacroAction.assignment:type_name -> exactmac.v1.AssignAction
 	15, // 10: exactmac.v1.MacroAction.method_call:type_name -> exactmac.v1.MethodCall
 	6,  // 11: exactmac.v1.WaitAction.condition:type_name -> exactmac.v1.WaitCondition
 	8,  // 12: exactmac.v1.ConditionalAction.condition:type_name -> exactmac.v1.MacroCondition
 	4,  // 13: exactmac.v1.ConditionalAction.then_actions:type_name -> exactmac.v1.MacroAction
 	4,  // 14: exactmac.v1.ConditionalAction.else_actions:type_name -> exactmac.v1.MacroAction
-	9,  // 15: exactmac.v1.MacroCondition.variable_equals:type_name -> exactmac.v1.VariableCondition
+	9,  // 15: exactmac.v1.MacroCondition.variable_condition:type_name -> exactmac.v1.VariableCondition
 	10, // 16: exactmac.v1.MacroCondition.compound:type_name -> exactmac.v1.CompoundCondition
-	0,  // 17: exactmac.v1.CompoundCondition.operator:type_name -> exactmac.v1.CompoundCondition.Operator
+	0,  // 17: exactmac.v1.CompoundCondition.logical_operator:type_name -> exactmac.v1.CompoundCondition.Operator
 	8,  // 18: exactmac.v1.CompoundCondition.conditions:type_name -> exactmac.v1.MacroCondition
 	8,  // 19: exactmac.v1.LoopAction.while_condition:type_name -> exactmac.v1.MacroCondition
-	12, // 20: exactmac.v1.LoopAction.foreach:type_name -> exactmac.v1.ForEachLoop
+	12, // 20: exactmac.v1.LoopAction.each_item_loop:type_name -> exactmac.v1.ForEachLoop
 	4,  // 21: exactmac.v1.LoopAction.actions:type_name -> exactmac.v1.MacroAction
 	14, // 22: exactmac.v1.AssignAction.element_attribute:type_name -> exactmac.v1.ElementAttributeValue
 	17, // 23: exactmac.v1.MethodCall.args:type_name -> exactmac.v1.MethodCall.ArgsEntry
@@ -1768,7 +1756,7 @@ func file_exactmac_v1_macro_proto_init() {
 		(*MacroAction_Wait)(nil),
 		(*MacroAction_Conditional)(nil),
 		(*MacroAction_Loop)(nil),
-		(*MacroAction_Assign)(nil),
+		(*MacroAction_Assignment)(nil),
 		(*MacroAction_MethodCall)(nil),
 	}
 	file_exactmac_v1_macro_proto_msgTypes[4].OneofWrappers = []any{
@@ -1777,16 +1765,16 @@ func file_exactmac_v1_macro_proto_init() {
 		(*WaitCondition_Application)(nil),
 	}
 	file_exactmac_v1_macro_proto_msgTypes[6].OneofWrappers = []any{
-		(*MacroCondition_ElementExists)(nil),
-		(*MacroCondition_WindowExists)(nil),
-		(*MacroCondition_ApplicationRunning)(nil),
-		(*MacroCondition_VariableEquals)(nil),
+		(*MacroCondition_ElementSelector)(nil),
+		(*MacroCondition_WindowTitle)(nil),
+		(*MacroCondition_RunningApplicationBundleId)(nil),
+		(*MacroCondition_VariableCondition)(nil),
 		(*MacroCondition_Compound)(nil),
 	}
 	file_exactmac_v1_macro_proto_msgTypes[9].OneofWrappers = []any{
 		(*LoopAction_Count)(nil),
 		(*LoopAction_WhileCondition)(nil),
-		(*LoopAction_Foreach)(nil),
+		(*LoopAction_EachItemLoop)(nil),
 	}
 	file_exactmac_v1_macro_proto_msgTypes[10].OneofWrappers = []any{
 		(*ForEachLoop_ElementSelector)(nil),

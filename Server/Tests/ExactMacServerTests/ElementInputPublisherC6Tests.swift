@@ -78,7 +78,7 @@ final class ElementInputPublisherC6Tests: XCTestCase {
         // The target scope mirrors the element mutation parent (application).
         XCTAssertEqual(published.target.application, parent)
         // The action payload is the real click that was physically delivered.
-        if case let .click(click) = published.action.inputType {
+        if case let .mouseClick(click) = published.action.inputType {
             XCTAssertEqual(click.clickType, Exactmac_V1_MouseClick.ClickType.left)
             XCTAssertEqual(click.clickCount, 1)
         } else {

@@ -9,7 +9,7 @@ package exactmac.v1;
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 
-option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpb";
 option java_multiple_files = true;
 option java_outer_classname = "WindowProto";
 option java_package = "io.github.joeycumines.exactmac.v1";
@@ -18,9 +18,6 @@ option java_package = "io.github.joeycumines.exactmac.v1";
 // Contains only cheap CoreGraphics data. For expensive AX state queries,
 // use GetWindowState to fetch the WindowState singleton sub-resource.
 message Window {
-  reserved 4;
-  reserved "z_index";
-
   option (google.api.resource) = {
     type: "exactmac/Window"
     pattern: "applications/{application}/windows/{window}"
@@ -73,20 +70,20 @@ message Window {
   //   - Use ListWindows for fast enumeration and UI rendering
   //   - Use GetWindow for authoritative visibility after mutations
   //   - Use GetWindowState for expensive AX state details (modal, focused, etc.)
-  bool visible = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+  bool visible = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Bundle identifier of the application that owns this window.
   //
   // Data Source (Registry Authority): Resolved via NSRunningApplication from cached CGWindowList metadata.
   // This is snapshot metadata and may be empty when resolution is unavailable.
   // Empty string if NSRunningApplication resolution fails or registry data is unavailable.
-  string bundle_id = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string bundle_id = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Core Graphics window layer from kCGWindowLayer.
   //
   // This is a compositing layer, not a z-order index. Multiple windows may
   // share the same layer; clients must not infer front-to-back order from it.
-  int32 layer = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+  int32 layer = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Bounding rectangle for window positioning.
@@ -111,9 +108,6 @@ message Bounds {
 // This is a singleton sub-resource that clients must explicitly request.
 // Use GetWindowState to fetch this data on-demand.
 message WindowState {
-  reserved 10;
-  reserved "fullscreen";
-
   option (google.api.resource) = {
     type: "exactmac/WindowState"
     pattern: "applications/{application}/windows/{window}/state"

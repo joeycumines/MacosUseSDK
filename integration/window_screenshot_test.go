@@ -25,6 +25,10 @@ func TestWindowScreenshot_OwnedFinderExactTruth(t *testing.T) {
 	defer conn.Close()
 	client := pb.NewExactMacClient(conn)
 
+	// Finder is a golden application, but it is not guaranteed to be running
+	// in a fresh GUI session. Activate it before asserting the exact process
+	// identity so the fixture proves capture behavior rather than session state.
+	requireFinderFrontmost(t, ctx, client)
 	finder := requireRunningApplicationByBundleID(t, ctx, client, "com.apple.finder")
 	owned, cleanupOwned := createOwnedFinderWindow(t, ctx, client, finder)
 	defer cleanupOwned()
@@ -54,10 +58,10 @@ func TestWindowScreenshot_OwnedFinderExactTruth(t *testing.T) {
 	for _, testCase := range requests {
 		t.Run(testCase.name, func(t *testing.T) {
 			response, err := client.CaptureWindowScreenshot(ctx, &pb.CaptureWindowScreenshotRequest{
-				Window:         window.GetName(),
-				Format:         pb.ImageFormat_IMAGE_FORMAT_PNG,
-				IncludeShadow:  testCase.includeShadow,
-				IncludeOcrText: testCase.includeOCR,
+				Window:        window.GetName(),
+				Format:        pb.ImageFormat_IMAGE_FORMAT_PNG,
+				ShadowEnabled: testCase.includeShadow,
+				OcrEnabled:    testCase.includeOCR,
 			})
 			if err != nil {
 				t.Fatalf("CaptureWindowScreenshot failed: %v", err)

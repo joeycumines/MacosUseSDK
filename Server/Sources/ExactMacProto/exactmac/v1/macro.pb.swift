@@ -87,9 +87,6 @@ public nonisolated struct Exactmac_V1_ExecutionLogEntry: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Resource name.
-  public var name: String = String()
-
   /// When the action executed.
   public var executionTime: SwiftProtobuf.Google_Protobuf_Timestamp {
     get {_executionTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
@@ -167,13 +164,13 @@ public nonisolated struct Exactmac_V1_MacroAction: Sendable {
     set {action = .loop(newValue)}
   }
 
-  /// Variable assignment.
-  public var assign: Exactmac_V1_AssignAction {
+  /// Assignment action.
+  public var assignment: Exactmac_V1_AssignAction {
     get {
-      if case .assign(let v)? = action {return v}
+      if case .assignment(let v)? = action {return v}
       return Exactmac_V1_AssignAction()
     }
-    set {action = .assign(newValue)}
+    set {action = .assignment(newValue)}
   }
 
   /// Custom method call.
@@ -200,8 +197,8 @@ public nonisolated struct Exactmac_V1_MacroAction: Sendable {
     case conditional(Exactmac_V1_ConditionalAction)
     /// Loop action (repeat).
     case loop(Exactmac_V1_LoopAction)
-    /// Variable assignment.
-    case assign(Exactmac_V1_AssignAction)
+    /// Assignment action.
+    case assignment(Exactmac_V1_AssignAction)
     /// Custom method call.
     case methodCall(Exactmac_V1_MethodCall)
 
@@ -329,40 +326,40 @@ public nonisolated struct Exactmac_V1_MacroCondition: Sendable {
   /// Condition type.
   public var condition: Exactmac_V1_MacroCondition.OneOf_Condition? = nil
 
-  /// Element exists.
-  public var elementExists: String {
+  /// Element selector.
+  public var elementSelector: String {
     get {
-      if case .elementExists(let v)? = condition {return v}
+      if case .elementSelector(let v)? = condition {return v}
       return String()
     }
-    set {condition = .elementExists(newValue)}
+    set {condition = .elementSelector(newValue)}
   }
 
-  /// Window exists.
-  public var windowExists: String {
+  /// Window title.
+  public var windowTitle: String {
     get {
-      if case .windowExists(let v)? = condition {return v}
+      if case .windowTitle(let v)? = condition {return v}
       return String()
     }
-    set {condition = .windowExists(newValue)}
+    set {condition = .windowTitle(newValue)}
   }
 
-  /// Application is running.
-  public var applicationRunning: String {
+  /// Running application bundle identifier.
+  public var runningApplicationBundleID: String {
     get {
-      if case .applicationRunning(let v)? = condition {return v}
+      if case .runningApplicationBundleID(let v)? = condition {return v}
       return String()
     }
-    set {condition = .applicationRunning(newValue)}
+    set {condition = .runningApplicationBundleID(newValue)}
   }
 
-  /// Variable equals value.
-  public var variableEquals: Exactmac_V1_VariableCondition {
+  /// Variable condition.
+  public var variableCondition: Exactmac_V1_VariableCondition {
     get {
-      if case .variableEquals(let v)? = condition {return v}
+      if case .variableCondition(let v)? = condition {return v}
       return Exactmac_V1_VariableCondition()
     }
-    set {condition = .variableEquals(newValue)}
+    set {condition = .variableCondition(newValue)}
   }
 
   /// Compound condition.
@@ -378,14 +375,14 @@ public nonisolated struct Exactmac_V1_MacroCondition: Sendable {
 
   /// Condition type.
   public nonisolated enum OneOf_Condition: Equatable, Sendable {
-    /// Element exists.
-    case elementExists(String)
-    /// Window exists.
-    case windowExists(String)
-    /// Application is running.
-    case applicationRunning(String)
-    /// Variable equals value.
-    case variableEquals(Exactmac_V1_VariableCondition)
+    /// Element selector.
+    case elementSelector(String)
+    /// Window title.
+    case windowTitle(String)
+    /// Running application bundle identifier.
+    case runningApplicationBundleID(String)
+    /// Variable condition.
+    case variableCondition(Exactmac_V1_VariableCondition)
     /// Compound condition.
     case compound(Exactmac_V1_CompoundCondition)
 
@@ -417,8 +414,9 @@ public nonisolated struct Exactmac_V1_CompoundCondition: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Operator.
-  public var `operator`: Exactmac_V1_CompoundCondition.Operator = .unspecified
+  /// Logical operator. The field is named logical_operator to avoid the
+  /// common language keyword `operator`; the enum type remains Operator.
+  public var logicalOperator: Exactmac_V1_CompoundCondition.Operator = .unspecified
 
   /// Sub-conditions.
   public var conditions: [Exactmac_V1_MacroCondition] = []
@@ -507,12 +505,12 @@ public nonisolated struct Exactmac_V1_LoopAction: Sendable {
   }
 
   /// Loop over each item in collection.
-  public var foreach: Exactmac_V1_ForEachLoop {
+  public var eachItemLoop: Exactmac_V1_ForEachLoop {
     get {
-      if case .foreach(let v)? = loopType {return v}
+      if case .eachItemLoop(let v)? = loopType {return v}
       return Exactmac_V1_ForEachLoop()
     }
-    set {loopType = .foreach(newValue)}
+    set {loopType = .eachItemLoop(newValue)}
   }
 
   /// Actions to execute in each iteration.
@@ -527,7 +525,7 @@ public nonisolated struct Exactmac_V1_LoopAction: Sendable {
     /// Loop while condition is true.
     case whileCondition(Exactmac_V1_MacroCondition)
     /// Loop over each item in collection.
-    case foreach(Exactmac_V1_ForEachLoop)
+    case eachItemLoop(Exactmac_V1_ForEachLoop)
 
   }
 
@@ -867,7 +865,7 @@ nonisolated extension Exactmac_V1_Macro: SwiftProtobuf.Message, SwiftProtobuf._M
 
 nonisolated extension Exactmac_V1_ExecutionLogEntry: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecutionLogEntry"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}execution_time\0\u{3}action_index\0\u{1}description\0\u{1}success\0\u{1}error\0\u{1}duration\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}execution_time\0\u{3}action_index\0\u{1}description\0\u{1}success\0\u{1}error\0\u{1}duration\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -875,13 +873,12 @@ nonisolated extension Exactmac_V1_ExecutionLogEntry: SwiftProtobuf.Message, Swif
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._executionTime) }()
-      case 3: try { try decoder.decodeSingularInt32Field(value: &self.actionIndex) }()
-      case 4: try { try decoder.decodeSingularStringField(value: &self.description_p) }()
-      case 5: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      case 6: try { try decoder.decodeSingularStringField(value: &self.error) }()
-      case 7: try { try decoder.decodeSingularDoubleField(value: &self.duration) }()
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._executionTime) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.actionIndex) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.description_p) }()
+      case 4: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.error) }()
+      case 6: try { try decoder.decodeSingularDoubleField(value: &self.duration) }()
       default: break
       }
     }
@@ -892,32 +889,28 @@ nonisolated extension Exactmac_V1_ExecutionLogEntry: SwiftProtobuf.Message, Swif
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
-    }
     try { if let v = self._executionTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
     } }()
     if self.actionIndex != 0 {
-      try visitor.visitSingularInt32Field(value: self.actionIndex, fieldNumber: 3)
+      try visitor.visitSingularInt32Field(value: self.actionIndex, fieldNumber: 2)
     }
     if !self.description_p.isEmpty {
-      try visitor.visitSingularStringField(value: self.description_p, fieldNumber: 4)
+      try visitor.visitSingularStringField(value: self.description_p, fieldNumber: 3)
     }
     if self.success != false {
-      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 5)
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 4)
     }
     if !self.error.isEmpty {
-      try visitor.visitSingularStringField(value: self.error, fieldNumber: 6)
+      try visitor.visitSingularStringField(value: self.error, fieldNumber: 5)
     }
     if self.duration.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.duration, fieldNumber: 7)
+      try visitor.visitSingularDoubleField(value: self.duration, fieldNumber: 6)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Exactmac_V1_ExecutionLogEntry, rhs: Exactmac_V1_ExecutionLogEntry) -> Bool {
-    if lhs.name != rhs.name {return false}
     if lhs._executionTime != rhs._executionTime {return false}
     if lhs.actionIndex != rhs.actionIndex {return false}
     if lhs.description_p != rhs.description_p {return false}
@@ -931,7 +924,7 @@ nonisolated extension Exactmac_V1_ExecutionLogEntry: SwiftProtobuf.Message, Swif
 
 nonisolated extension Exactmac_V1_MacroAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MacroAction"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}input\0\u{1}wait\0\u{1}conditional\0\u{1}loop\0\u{1}assign\0\u{3}method_call\0\u{2}\u{4}description\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}input\0\u{1}wait\0\u{1}conditional\0\u{1}loop\0\u{1}assignment\0\u{3}method_call\0\u{1}description\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -996,12 +989,12 @@ nonisolated extension Exactmac_V1_MacroAction: SwiftProtobuf.Message, SwiftProto
         var hadOneofValue = false
         if let current = self.action {
           hadOneofValue = true
-          if case .assign(let m) = current {v = m}
+          if case .assignment(let m) = current {v = m}
         }
         try decoder.decodeSingularMessageField(value: &v)
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.action = .assign(v)
+          self.action = .assignment(v)
         }
       }()
       case 6: try {
@@ -1017,7 +1010,7 @@ nonisolated extension Exactmac_V1_MacroAction: SwiftProtobuf.Message, SwiftProto
           self.action = .methodCall(v)
         }
       }()
-      case 10: try { try decoder.decodeSingularStringField(value: &self.description_p) }()
+      case 7: try { try decoder.decodeSingularStringField(value: &self.description_p) }()
       default: break
       }
     }
@@ -1045,8 +1038,8 @@ nonisolated extension Exactmac_V1_MacroAction: SwiftProtobuf.Message, SwiftProto
       guard case .loop(let v)? = self.action else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
     }()
-    case .assign?: try {
-      guard case .assign(let v)? = self.action else { preconditionFailure() }
+    case .assignment?: try {
+      guard case .assignment(let v)? = self.action else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
     }()
     case .methodCall?: try {
@@ -1056,7 +1049,7 @@ nonisolated extension Exactmac_V1_MacroAction: SwiftProtobuf.Message, SwiftProto
     case nil: break
     }
     if !self.description_p.isEmpty {
-      try visitor.visitSingularStringField(value: self.description_p, fieldNumber: 10)
+      try visitor.visitSingularStringField(value: self.description_p, fieldNumber: 7)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -1110,7 +1103,7 @@ nonisolated extension Exactmac_V1_WaitAction: SwiftProtobuf.Message, SwiftProtob
 
 nonisolated extension Exactmac_V1_WaitCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WaitCondition"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}element_selector\0\u{3}window_title\0\u{1}application\0\u{2}\u{7}timeout\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}element_selector\0\u{3}window_title\0\u{1}application\0\u{1}timeout\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1142,7 +1135,7 @@ nonisolated extension Exactmac_V1_WaitCondition: SwiftProtobuf.Message, SwiftPro
           self.condition = .application(v)
         }
       }()
-      case 10: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
+      case 4: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
       default: break
       }
     }
@@ -1169,7 +1162,7 @@ nonisolated extension Exactmac_V1_WaitCondition: SwiftProtobuf.Message, SwiftPro
     case nil: break
     }
     if self.timeout.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 10)
+      try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 4)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -1228,7 +1221,7 @@ nonisolated extension Exactmac_V1_ConditionalAction: SwiftProtobuf.Message, Swif
 
 nonisolated extension Exactmac_V1_MacroCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MacroCondition"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}element_exists\0\u{3}window_exists\0\u{3}application_running\0\u{3}variable_equals\0\u{1}compound\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}element_selector\0\u{3}window_title\0\u{3}running_application_bundle_id\0\u{3}variable_condition\0\u{1}compound\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1241,7 +1234,7 @@ nonisolated extension Exactmac_V1_MacroCondition: SwiftProtobuf.Message, SwiftPr
         try decoder.decodeSingularStringField(value: &v)
         if let v = v {
           if self.condition != nil {try decoder.handleConflictingOneOf()}
-          self.condition = .elementExists(v)
+          self.condition = .elementSelector(v)
         }
       }()
       case 2: try {
@@ -1249,7 +1242,7 @@ nonisolated extension Exactmac_V1_MacroCondition: SwiftProtobuf.Message, SwiftPr
         try decoder.decodeSingularStringField(value: &v)
         if let v = v {
           if self.condition != nil {try decoder.handleConflictingOneOf()}
-          self.condition = .windowExists(v)
+          self.condition = .windowTitle(v)
         }
       }()
       case 3: try {
@@ -1257,7 +1250,7 @@ nonisolated extension Exactmac_V1_MacroCondition: SwiftProtobuf.Message, SwiftPr
         try decoder.decodeSingularStringField(value: &v)
         if let v = v {
           if self.condition != nil {try decoder.handleConflictingOneOf()}
-          self.condition = .applicationRunning(v)
+          self.condition = .runningApplicationBundleID(v)
         }
       }()
       case 4: try {
@@ -1265,12 +1258,12 @@ nonisolated extension Exactmac_V1_MacroCondition: SwiftProtobuf.Message, SwiftPr
         var hadOneofValue = false
         if let current = self.condition {
           hadOneofValue = true
-          if case .variableEquals(let m) = current {v = m}
+          if case .variableCondition(let m) = current {v = m}
         }
         try decoder.decodeSingularMessageField(value: &v)
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.condition = .variableEquals(v)
+          self.condition = .variableCondition(v)
         }
       }()
       case 5: try {
@@ -1297,20 +1290,20 @@ nonisolated extension Exactmac_V1_MacroCondition: SwiftProtobuf.Message, SwiftPr
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
     switch self.condition {
-    case .elementExists?: try {
-      guard case .elementExists(let v)? = self.condition else { preconditionFailure() }
+    case .elementSelector?: try {
+      guard case .elementSelector(let v)? = self.condition else { preconditionFailure() }
       try visitor.visitSingularStringField(value: v, fieldNumber: 1)
     }()
-    case .windowExists?: try {
-      guard case .windowExists(let v)? = self.condition else { preconditionFailure() }
+    case .windowTitle?: try {
+      guard case .windowTitle(let v)? = self.condition else { preconditionFailure() }
       try visitor.visitSingularStringField(value: v, fieldNumber: 2)
     }()
-    case .applicationRunning?: try {
-      guard case .applicationRunning(let v)? = self.condition else { preconditionFailure() }
+    case .runningApplicationBundleID?: try {
+      guard case .runningApplicationBundleID(let v)? = self.condition else { preconditionFailure() }
       try visitor.visitSingularStringField(value: v, fieldNumber: 3)
     }()
-    case .variableEquals?: try {
-      guard case .variableEquals(let v)? = self.condition else { preconditionFailure() }
+    case .variableCondition?: try {
+      guard case .variableCondition(let v)? = self.condition else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
     }()
     case .compound?: try {
@@ -1366,7 +1359,7 @@ nonisolated extension Exactmac_V1_VariableCondition: SwiftProtobuf.Message, Swif
 
 nonisolated extension Exactmac_V1_CompoundCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CompoundCondition"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}operator\0\u{1}conditions\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}logical_operator\0\u{1}conditions\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1374,7 +1367,7 @@ nonisolated extension Exactmac_V1_CompoundCondition: SwiftProtobuf.Message, Swif
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularEnumField(value: &self.`operator`) }()
+      case 1: try { try decoder.decodeSingularEnumField(value: &self.logicalOperator) }()
       case 2: try { try decoder.decodeRepeatedMessageField(value: &self.conditions) }()
       default: break
       }
@@ -1382,8 +1375,8 @@ nonisolated extension Exactmac_V1_CompoundCondition: SwiftProtobuf.Message, Swif
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.`operator` != .unspecified {
-      try visitor.visitSingularEnumField(value: self.`operator`, fieldNumber: 1)
+    if self.logicalOperator != .unspecified {
+      try visitor.visitSingularEnumField(value: self.logicalOperator, fieldNumber: 1)
     }
     if !self.conditions.isEmpty {
       try visitor.visitRepeatedMessageField(value: self.conditions, fieldNumber: 2)
@@ -1392,7 +1385,7 @@ nonisolated extension Exactmac_V1_CompoundCondition: SwiftProtobuf.Message, Swif
   }
 
   public static func ==(lhs: Exactmac_V1_CompoundCondition, rhs: Exactmac_V1_CompoundCondition) -> Bool {
-    if lhs.`operator` != rhs.`operator` {return false}
+    if lhs.logicalOperator != rhs.logicalOperator {return false}
     if lhs.conditions != rhs.conditions {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -1405,7 +1398,7 @@ nonisolated extension Exactmac_V1_CompoundCondition.Operator: SwiftProtobuf._Pro
 
 nonisolated extension Exactmac_V1_LoopAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".LoopAction"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}count\0\u{3}while_condition\0\u{1}foreach\0\u{2}\u{7}actions\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}count\0\u{3}while_condition\0\u{3}each_item_loop\0\u{1}actions\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1439,15 +1432,15 @@ nonisolated extension Exactmac_V1_LoopAction: SwiftProtobuf.Message, SwiftProtob
         var hadOneofValue = false
         if let current = self.loopType {
           hadOneofValue = true
-          if case .foreach(let m) = current {v = m}
+          if case .eachItemLoop(let m) = current {v = m}
         }
         try decoder.decodeSingularMessageField(value: &v)
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.loopType = .foreach(v)
+          self.loopType = .eachItemLoop(v)
         }
       }()
-      case 10: try { try decoder.decodeRepeatedMessageField(value: &self.actions) }()
+      case 4: try { try decoder.decodeRepeatedMessageField(value: &self.actions) }()
       default: break
       }
     }
@@ -1467,14 +1460,14 @@ nonisolated extension Exactmac_V1_LoopAction: SwiftProtobuf.Message, SwiftProtob
       guard case .whileCondition(let v)? = self.loopType else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     }()
-    case .foreach?: try {
-      guard case .foreach(let v)? = self.loopType else { preconditionFailure() }
+    case .eachItemLoop?: try {
+      guard case .eachItemLoop(let v)? = self.loopType else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
     }()
     case nil: break
     }
     if !self.actions.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.actions, fieldNumber: 10)
+      try visitor.visitRepeatedMessageField(value: self.actions, fieldNumber: 4)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -1489,7 +1482,7 @@ nonisolated extension Exactmac_V1_LoopAction: SwiftProtobuf.Message, SwiftProtob
 
 nonisolated extension Exactmac_V1_ForEachLoop: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ForEachLoop"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}element_selector\0\u{3}window_pattern\0\u{1}values\0\u{4}\u{7}item_variable\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}element_selector\0\u{3}window_pattern\0\u{1}values\0\u{3}item_variable\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1521,7 +1514,7 @@ nonisolated extension Exactmac_V1_ForEachLoop: SwiftProtobuf.Message, SwiftProto
           self.collection = .values(v)
         }
       }()
-      case 10: try { try decoder.decodeSingularStringField(value: &self.itemVariable) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.itemVariable) }()
       default: break
       }
     }
@@ -1548,7 +1541,7 @@ nonisolated extension Exactmac_V1_ForEachLoop: SwiftProtobuf.Message, SwiftProto
     case nil: break
     }
     if !self.itemVariable.isEmpty {
-      try visitor.visitSingularStringField(value: self.itemVariable, fieldNumber: 10)
+      try visitor.visitSingularStringField(value: self.itemVariable, fieldNumber: 4)
     }
     try unknownFields.traverse(visitor: &visitor)
   }

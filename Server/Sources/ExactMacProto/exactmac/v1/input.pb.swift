@@ -315,7 +315,7 @@ public nonisolated struct Exactmac_V1_InputAction: Sendable {
   // methods supported on all messages.
 
   /// Whether to show visual feedback during execution.
-  public var showAnimation: Bool = false
+  public var visualFeedback: Bool = false
 
   /// Duration of visual feedback in seconds.
   public var animationDuration: Double = 0
@@ -323,87 +323,87 @@ public nonisolated struct Exactmac_V1_InputAction: Sendable {
   /// The specific input type and parameters.
   public var inputType: Exactmac_V1_InputAction.OneOf_InputType? = nil
 
-  /// Click at a specific point.
-  public var click: Exactmac_V1_MouseClick {
+  /// Mouse click action.
+  public var mouseClick: Exactmac_V1_MouseClick {
     get {
-      if case .click(let v)? = inputType {return v}
+      if case .mouseClick(let v)? = inputType {return v}
       return Exactmac_V1_MouseClick()
     }
-    set {inputType = .click(newValue)}
+    set {inputType = .mouseClick(newValue)}
   }
 
-  /// Type the specified text.
-  public var typeText: Exactmac_V1_TextInput {
+  /// Text input action.
+  public var textInput: Exactmac_V1_TextInput {
     get {
-      if case .typeText(let v)? = inputType {return v}
+      if case .textInput(let v)? = inputType {return v}
       return Exactmac_V1_TextInput()
     }
-    set {inputType = .typeText(newValue)}
+    set {inputType = .textInput(newValue)}
   }
 
-  /// Press a key combination.
-  public var pressKey: Exactmac_V1_KeyPress {
+  /// Key press action.
+  public var keyPress: Exactmac_V1_KeyPress {
     get {
-      if case .pressKey(let v)? = inputType {return v}
+      if case .keyPress(let v)? = inputType {return v}
       return Exactmac_V1_KeyPress()
     }
-    set {inputType = .pressKey(newValue)}
+    set {inputType = .keyPress(newValue)}
   }
 
-  /// Move mouse to a specific point.
-  public var moveMouse: Exactmac_V1_MouseMove {
+  /// Mouse move action.
+  public var mouseMove: Exactmac_V1_MouseMove {
     get {
-      if case .moveMouse(let v)? = inputType {return v}
+      if case .mouseMove(let v)? = inputType {return v}
       return Exactmac_V1_MouseMove()
     }
-    set {inputType = .moveMouse(newValue)}
+    set {inputType = .mouseMove(newValue)}
   }
 
-  /// Drag from one point to another.
-  public var drag: Exactmac_V1_MouseDrag {
+  /// Mouse drag action.
+  public var mouseDrag: Exactmac_V1_MouseDrag {
     get {
-      if case .drag(let v)? = inputType {return v}
+      if case .mouseDrag(let v)? = inputType {return v}
       return Exactmac_V1_MouseDrag()
     }
-    set {inputType = .drag(newValue)}
+    set {inputType = .mouseDrag(newValue)}
   }
 
-  /// Scroll operation.
-  public var scroll: Exactmac_V1_Scroll {
+  /// Scroll action.
+  public var scrollAction: Exactmac_V1_Scroll {
     get {
-      if case .scroll(let v)? = inputType {return v}
+      if case .scrollAction(let v)? = inputType {return v}
       return Exactmac_V1_Scroll()
     }
-    set {inputType = .scroll(newValue)}
+    set {inputType = .scrollAction(newValue)}
   }
 
-  /// Hover at a point for duration.
-  public var hover: Exactmac_V1_Hover {
+  /// Hover action.
+  public var hoverAction: Exactmac_V1_Hover {
     get {
-      if case .hover(let v)? = inputType {return v}
+      if case .hoverAction(let v)? = inputType {return v}
       return Exactmac_V1_Hover()
     }
-    set {inputType = .hover(newValue)}
+    set {inputType = .hoverAction(newValue)}
   }
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// The specific input type and parameters.
   public nonisolated enum OneOf_InputType: Equatable, Sendable {
-    /// Click at a specific point.
-    case click(Exactmac_V1_MouseClick)
-    /// Type the specified text.
-    case typeText(Exactmac_V1_TextInput)
-    /// Press a key combination.
-    case pressKey(Exactmac_V1_KeyPress)
-    /// Move mouse to a specific point.
-    case moveMouse(Exactmac_V1_MouseMove)
-    /// Drag from one point to another.
-    case drag(Exactmac_V1_MouseDrag)
-    /// Scroll operation.
-    case scroll(Exactmac_V1_Scroll)
-    /// Hover at a point for duration.
-    case hover(Exactmac_V1_Hover)
+    /// Mouse click action.
+    case mouseClick(Exactmac_V1_MouseClick)
+    /// Text input action.
+    case textInput(Exactmac_V1_TextInput)
+    /// Key press action.
+    case keyPress(Exactmac_V1_KeyPress)
+    /// Mouse move action.
+    case mouseMove(Exactmac_V1_MouseMove)
+    /// Mouse drag action.
+    case mouseDrag(Exactmac_V1_MouseDrag)
+    /// Scroll action.
+    case scrollAction(Exactmac_V1_Scroll)
+    /// Hover action.
+    case hoverAction(Exactmac_V1_Hover)
 
   }
 
@@ -698,10 +698,10 @@ public nonisolated struct Exactmac_V1_MouseDrag: Sendable {
   public var modifiers: [Exactmac_V1_KeyPress.Modifier] = []
 
   /// Ordered drag waypoints in Global Display Coordinates. When present, this
-  /// path is authoritative and must contain at least two points. The first and
-  /// last points must equal start_position and end_position when those legacy
-  /// fields are also supplied.
-  public var path: [Exactmac_Type_Point] = []
+  /// field is authoritative and must contain at least two points. The first and
+  /// last points must equal start_position and end_position when those fields
+  /// are also supplied.
+  public var waypoints: [Exactmac_Type_Point] = []
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -1034,7 +1034,7 @@ nonisolated extension Exactmac_V1_InputDeliveryResult.Commitment: SwiftProtobuf.
 
 nonisolated extension Exactmac_V1_InputAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".InputAction"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}show_animation\0\u{3}animation_duration\0\u{2}\u{8}click\0\u{3}type_text\0\u{3}press_key\0\u{3}move_mouse\0\u{1}drag\0\u{1}scroll\0\u{1}hover\0\u{b}gesture\0\u{b}button_down\0\u{b}button_up\0\u{c}\u{11}\u{3}")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}visual_feedback\0\u{3}animation_duration\0\u{3}mouse_click\0\u{3}text_input\0\u{3}key_press\0\u{3}mouse_move\0\u{3}mouse_drag\0\u{3}scroll_action\0\u{3}hover_action\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1042,97 +1042,97 @@ nonisolated extension Exactmac_V1_InputAction: SwiftProtobuf.Message, SwiftProto
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBoolField(value: &self.showAnimation) }()
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.visualFeedback) }()
       case 2: try { try decoder.decodeSingularDoubleField(value: &self.animationDuration) }()
-      case 10: try {
+      case 3: try {
         var v: Exactmac_V1_MouseClick?
         var hadOneofValue = false
         if let current = self.inputType {
           hadOneofValue = true
-          if case .click(let m) = current {v = m}
+          if case .mouseClick(let m) = current {v = m}
         }
         try decoder.decodeSingularMessageField(value: &v)
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.inputType = .click(v)
+          self.inputType = .mouseClick(v)
         }
       }()
-      case 11: try {
+      case 4: try {
         var v: Exactmac_V1_TextInput?
         var hadOneofValue = false
         if let current = self.inputType {
           hadOneofValue = true
-          if case .typeText(let m) = current {v = m}
+          if case .textInput(let m) = current {v = m}
         }
         try decoder.decodeSingularMessageField(value: &v)
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.inputType = .typeText(v)
+          self.inputType = .textInput(v)
         }
       }()
-      case 12: try {
+      case 5: try {
         var v: Exactmac_V1_KeyPress?
         var hadOneofValue = false
         if let current = self.inputType {
           hadOneofValue = true
-          if case .pressKey(let m) = current {v = m}
+          if case .keyPress(let m) = current {v = m}
         }
         try decoder.decodeSingularMessageField(value: &v)
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.inputType = .pressKey(v)
+          self.inputType = .keyPress(v)
         }
       }()
-      case 13: try {
+      case 6: try {
         var v: Exactmac_V1_MouseMove?
         var hadOneofValue = false
         if let current = self.inputType {
           hadOneofValue = true
-          if case .moveMouse(let m) = current {v = m}
+          if case .mouseMove(let m) = current {v = m}
         }
         try decoder.decodeSingularMessageField(value: &v)
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.inputType = .moveMouse(v)
+          self.inputType = .mouseMove(v)
         }
       }()
-      case 14: try {
+      case 7: try {
         var v: Exactmac_V1_MouseDrag?
         var hadOneofValue = false
         if let current = self.inputType {
           hadOneofValue = true
-          if case .drag(let m) = current {v = m}
+          if case .mouseDrag(let m) = current {v = m}
         }
         try decoder.decodeSingularMessageField(value: &v)
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.inputType = .drag(v)
+          self.inputType = .mouseDrag(v)
         }
       }()
-      case 15: try {
+      case 8: try {
         var v: Exactmac_V1_Scroll?
         var hadOneofValue = false
         if let current = self.inputType {
           hadOneofValue = true
-          if case .scroll(let m) = current {v = m}
+          if case .scrollAction(let m) = current {v = m}
         }
         try decoder.decodeSingularMessageField(value: &v)
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.inputType = .scroll(v)
+          self.inputType = .scrollAction(v)
         }
       }()
-      case 16: try {
+      case 9: try {
         var v: Exactmac_V1_Hover?
         var hadOneofValue = false
         if let current = self.inputType {
           hadOneofValue = true
-          if case .hover(let m) = current {v = m}
+          if case .hoverAction(let m) = current {v = m}
         }
         try decoder.decodeSingularMessageField(value: &v)
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.inputType = .hover(v)
+          self.inputType = .hoverAction(v)
         }
       }()
       default: break
@@ -1145,40 +1145,40 @@ nonisolated extension Exactmac_V1_InputAction: SwiftProtobuf.Message, SwiftProto
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
-    if self.showAnimation != false {
-      try visitor.visitSingularBoolField(value: self.showAnimation, fieldNumber: 1)
+    if self.visualFeedback != false {
+      try visitor.visitSingularBoolField(value: self.visualFeedback, fieldNumber: 1)
     }
     if self.animationDuration.bitPattern != 0 {
       try visitor.visitSingularDoubleField(value: self.animationDuration, fieldNumber: 2)
     }
     switch self.inputType {
-    case .click?: try {
-      guard case .click(let v)? = self.inputType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 10)
+    case .mouseClick?: try {
+      guard case .mouseClick(let v)? = self.inputType else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
     }()
-    case .typeText?: try {
-      guard case .typeText(let v)? = self.inputType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 11)
+    case .textInput?: try {
+      guard case .textInput(let v)? = self.inputType else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
     }()
-    case .pressKey?: try {
-      guard case .pressKey(let v)? = self.inputType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 12)
+    case .keyPress?: try {
+      guard case .keyPress(let v)? = self.inputType else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
     }()
-    case .moveMouse?: try {
-      guard case .moveMouse(let v)? = self.inputType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 13)
+    case .mouseMove?: try {
+      guard case .mouseMove(let v)? = self.inputType else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
     }()
-    case .drag?: try {
-      guard case .drag(let v)? = self.inputType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 14)
+    case .mouseDrag?: try {
+      guard case .mouseDrag(let v)? = self.inputType else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
     }()
-    case .scroll?: try {
-      guard case .scroll(let v)? = self.inputType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 15)
+    case .scrollAction?: try {
+      guard case .scrollAction(let v)? = self.inputType else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
     }()
-    case .hover?: try {
-      guard case .hover(let v)? = self.inputType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 16)
+    case .hoverAction?: try {
+      guard case .hoverAction(let v)? = self.inputType else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
     }()
     case nil: break
     }
@@ -1186,7 +1186,7 @@ nonisolated extension Exactmac_V1_InputAction: SwiftProtobuf.Message, SwiftProto
   }
 
   public static func ==(lhs: Exactmac_V1_InputAction, rhs: Exactmac_V1_InputAction) -> Bool {
-    if lhs.showAnimation != rhs.showAnimation {return false}
+    if lhs.visualFeedback != rhs.visualFeedback {return false}
     if lhs.animationDuration != rhs.animationDuration {return false}
     if lhs.inputType != rhs.inputType {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -1249,7 +1249,7 @@ nonisolated extension Exactmac_V1_MouseClick.ClickType: SwiftProtobuf._ProtoName
 
 nonisolated extension Exactmac_V1_TextInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".TextInput"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}text\0\u{4}\u{2}char_delay\0\u{b}use_ime\0\u{c}\u{2}\u{1}")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}text\0\u{3}char_delay\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1258,7 +1258,7 @@ nonisolated extension Exactmac_V1_TextInput: SwiftProtobuf.Message, SwiftProtobu
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.text) }()
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self.charDelay) }()
+      case 2: try { try decoder.decodeSingularDoubleField(value: &self.charDelay) }()
       default: break
       }
     }
@@ -1269,7 +1269,7 @@ nonisolated extension Exactmac_V1_TextInput: SwiftProtobuf.Message, SwiftProtobu
       try visitor.visitSingularStringField(value: self.text, fieldNumber: 1)
     }
     if self.charDelay.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.charDelay, fieldNumber: 3)
+      try visitor.visitSingularDoubleField(value: self.charDelay, fieldNumber: 2)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -1372,7 +1372,7 @@ nonisolated extension Exactmac_V1_MouseMove: SwiftProtobuf.Message, SwiftProtobu
 
 nonisolated extension Exactmac_V1_MouseDrag: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MouseDrag"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}start_position\0\u{3}end_position\0\u{1}duration\0\u{1}button\0\u{1}modifiers\0\u{1}path\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}start_position\0\u{3}end_position\0\u{1}duration\0\u{1}button\0\u{1}modifiers\0\u{1}waypoints\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1385,7 +1385,7 @@ nonisolated extension Exactmac_V1_MouseDrag: SwiftProtobuf.Message, SwiftProtobu
       case 3: try { try decoder.decodeSingularDoubleField(value: &self.duration) }()
       case 4: try { try decoder.decodeSingularEnumField(value: &self._button) }()
       case 5: try { try decoder.decodeRepeatedEnumField(value: &self.modifiers) }()
-      case 6: try { try decoder.decodeRepeatedMessageField(value: &self.path) }()
+      case 6: try { try decoder.decodeRepeatedMessageField(value: &self.waypoints) }()
       default: break
       }
     }
@@ -1411,8 +1411,8 @@ nonisolated extension Exactmac_V1_MouseDrag: SwiftProtobuf.Message, SwiftProtobu
     if !self.modifiers.isEmpty {
       try visitor.visitPackedEnumField(value: self.modifiers, fieldNumber: 5)
     }
-    if !self.path.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.path, fieldNumber: 6)
+    if !self.waypoints.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.waypoints, fieldNumber: 6)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -1423,7 +1423,7 @@ nonisolated extension Exactmac_V1_MouseDrag: SwiftProtobuf.Message, SwiftProtobu
     if lhs.duration != rhs.duration {return false}
     if lhs._button != rhs._button {return false}
     if lhs.modifiers != rhs.modifiers {return false}
-    if lhs.path != rhs.path {return false}
+    if lhs.waypoints != rhs.waypoints {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

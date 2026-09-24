@@ -23,7 +23,7 @@ extension ExactMacService {
         if !req.display.isEmpty {
             _ = try ParsingHelpers.parseDisplayName(req.display, field: "display")
         }
-        let includeOCR = req.includeOcrText
+        let includeOCR = req.ocrEnabled
         return try await captureWorkOwner.withCapture(cancellation: context.cancellation) { [self] in
             let snapshot = try await displayTopologyProvider.snapshot().validated()
             try Task.checkCancellation()
@@ -92,7 +92,7 @@ extension ExactMacService {
         try validateApplicationOrWindowParentResourceName(req.parent)
         _ = try ParsingHelpers.validateResourceID(req.elementID, field: "element_id")
 
-        let includeOCR = req.includeOcrText
+        let includeOCR = req.ocrEnabled
         return try await captureWorkOwner.withCapture(cancellation: context.cancellation) { [self] in
             let parentAuthority = try await resolveElementCaptureParentAuthority(
                 req.parent,
@@ -549,7 +549,7 @@ extension ExactMacService {
             _ = try ParsingHelpers.parseDisplayName(req.display, field: "display")
         }
 
-        let includeOCR = req.includeOcrText
+        let includeOCR = req.ocrEnabled
         return try await captureWorkOwner.withCapture(cancellation: context.cancellation) { [self] in
             let snapshot = try await displayTopologyProvider.snapshot().validated()
             try Task.checkCancellation()

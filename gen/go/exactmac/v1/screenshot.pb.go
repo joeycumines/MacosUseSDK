@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/v1/screenshot.proto
 
-package exactmacv1
+package exactmacpb
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -31,11 +31,14 @@ type ImageFormat int32
 const (
 	// Default format (PNG).
 	ImageFormat_IMAGE_FORMAT_UNSPECIFIED ImageFormat = 0
-	// PNG format (lossless).
+	// PNG format (lossless). PNG preserves source alpha when the capture
+	// supplies an alpha channel.
 	ImageFormat_IMAGE_FORMAT_PNG ImageFormat = 1
-	// JPEG format (lossy, smaller size).
+	// JPEG format (lossy, smaller size). JPEG cannot represent alpha; source
+	// alpha is discarded and the encoded image is opaque.
 	ImageFormat_IMAGE_FORMAT_JPEG ImageFormat = 2
-	// TIFF format (lossless, larger size).
+	// TIFF format (lossless, larger size). TIFF preserves source alpha when the
+	// capture supplies an alpha channel.
 	ImageFormat_IMAGE_FORMAT_TIFF ImageFormat = 3
 )
 
@@ -91,8 +94,8 @@ const file_exactmac_v1_screenshot_proto_rawDesc = "" +
 	"\x18IMAGE_FORMAT_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10IMAGE_FORMAT_PNG\x10\x01\x12\x15\n" +
 	"\x11IMAGE_FORMAT_JPEG\x10\x02\x12\x15\n" +
-	"\x11IMAGE_FORMAT_TIFF\x10\x03B\xc0\x01\n" +
-	"!io.github.joeycumines.exactmac.v1B\x0fScreenshotProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1\xa2\x02\x03EXX\xaa\x02\vExactmac.V1\xca\x02\vExactmac\\V1\xe2\x02\x17Exactmac\\V1\\GPBMetadata\xea\x02\fExactmac::V1b\x06proto3"
+	"\x11IMAGE_FORMAT_TIFF\x10\x03Bu\n" +
+	"!io.github.joeycumines.exactmac.v1B\x0fScreenshotProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpbb\x06proto3"
 
 var (
 	file_exactmac_v1_screenshot_proto_rawDescOnce sync.Once

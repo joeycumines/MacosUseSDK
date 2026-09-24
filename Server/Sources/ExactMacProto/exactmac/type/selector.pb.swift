@@ -31,9 +31,9 @@ fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobu
 /// 1. SIMPLE SELECTORS (all fully implemented):
 ///    - role: "button"                     → Match by AXRole (case-sensitive)
 ///    - text: "Submit"                     → Exact text match (AXValue or AXTitle)
-///    - text_contains: "Submit"            → Substring match (case-sensitive)
+///    - text_substring: "Submit"            → Substring match (case-sensitive)
 ///    - text_regex: "^Submit.*"            → Regex match using NSRegularExpression
-///    - position: {x: 100, y: 200, tol: 5} → Match element at Global Display Coordinates ±tolerance
+///    - position: {x: 100, y: 200, tolerance: 5} → Match element at Global Display Coordinates ±tolerance
 ///    - attributes: {"AXEnabled": "1"}     → Match custom accessibility attributes (all must match)
 ///
 /// 2. COMPOUND SELECTORS (fully implemented):
@@ -46,20 +46,20 @@ fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobu
 ///
 /// 4. VALIDATION RULES (enforced by SelectorParser):
 ///    - role: cannot be empty string
-///    - text_contains: cannot be empty string
+///    - text_substring: cannot be empty string
 ///    - text_regex: must be valid NSRegularExpression pattern
 ///    - position: tolerance cannot be negative
 ///    - attributes: must have at least one key-value pair
-///    - compound: must have at least one selector; NOT requires exactly one
+///    - compound: logical_operator is required; must have at least one selector; NOT requires exactly one
 ///
 /// 5. MATCHING SEMANTICS:
-///    - text/text_contains/text_regex: Check AXValue first, fall back to AXTitle
+///    - text/text_substring/text_regex: Check AXValue first, fall back to AXTitle
 ///    - role: Exact match against AXRole (e.g., "AXButton", "AXTextField")
 ///    - position: Element bounds must contain point (x,y) within tolerance
 ///    - attributes: All specified attributes must match element's accessibility attributes
 ///
 /// 6. PERFORMANCE CONSIDERATIONS:
-///    - Simple selectors (role, text, text_contains, position) are optimized
+///    - Simple selectors (role, text, text_substring, position) are optimized
 ///    - Regex and attribute selectors require full tree traversal
 ///    - Compound selectors with AND can short-circuit on first failure
 ///
@@ -67,28 +67,24 @@ fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobu
 ///
 ///   // Find button with text "Submit"
 ///   { role: "AXButton", text: "Submit" }  // INVALID: can't mix criteria in oneof
-///   { compound: { operator: AND, selectors: [
+///   { compound: { logical_operator: OPERATOR_AND, selectors: [
 ///       { role: "AXButton" },
 ///       { text: "Submit" }
 ///   ]}}
 ///
 ///   // Find any button OR link
-///   { compound: { operator: OR, selectors: [
+///   { compound: { logical_operator: OPERATOR_OR, selectors: [
 ///       { role: "AXButton" },
 ///       { role: "AXLink" }
 ///   ]}}
 ///
 ///   // Find elements NOT containing "Error"
-///   { compound: { operator: NOT, selectors: [
-///       { text_contains: "Error" }
+///   { compound: { logical_operator: OPERATOR_NOT, selectors: [
+///       { text_substring: "Error" }
 ///   ]}}
 ///
 ///   // Find element at screen position (100, 200) with 10px tolerance
 ///   { position: { x: 100, y: 200, tolerance: 10 }}
-///
-/// FILES:
-///   - Implementation: Server/Sources/ExactMacServer/SelectorParser.swift
-///   - Matching logic: Server/Sources/ExactMacServer/ElementLocator.swift
 public nonisolated struct Exactmac_Type_ElementSelector: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -116,12 +112,12 @@ public nonisolated struct Exactmac_Type_ElementSelector: Sendable {
   }
 
   /// Select by text containing a substring.
-  public var textContains: String {
+  public var textSubstring: String {
     get {
-      if case .textContains(let v)? = criteria {return v}
+      if case .textSubstring(let v)? = criteria {return v}
       return String()
     }
-    set {criteria = .textContains(newValue)}
+    set {criteria = .textSubstring(newValue)}
   }
 
   /// Select by text matching a regular expression.
@@ -169,7 +165,7 @@ public nonisolated struct Exactmac_Type_ElementSelector: Sendable {
     /// Select by text content (exact match).
     case text(String)
     /// Select by text containing a substring.
-    case textContains(String)
+    case textSubstring(String)
     /// Select by text matching a regular expression.
     case textRegex(String)
     /// Select by position on screen.
@@ -244,8 +240,10 @@ public nonisolated struct Exactmac_Type_CompoundSelector: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Operator for combining selectors.
-  public var `operator`: Exactmac_Type_CompoundSelector.Operator = .unspecified
+  /// Logical operator for combining selectors. The field is named
+  /// logical_operator to avoid the common language keyword `operator`; the
+  /// enum type remains Operator.
+  public var logicalOperator: Exactmac_Type_CompoundSelector.Operator = .unspecified
 
   /// Selectors to combine.
   public var selectors: [Exactmac_Type_ElementSelector] = []
@@ -312,7 +310,7 @@ fileprivate nonisolated let _protobuf_package = "exactmac.type"
 
 nonisolated extension Exactmac_Type_ElementSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ElementSelector"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}role\0\u{1}text\0\u{3}text_contains\0\u{3}text_regex\0\u{1}position\0\u{1}attributes\0\u{1}compound\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}role\0\u{1}text\0\u{3}text_substring\0\u{3}text_regex\0\u{1}position\0\u{1}attributes\0\u{1}compound\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -341,7 +339,7 @@ nonisolated extension Exactmac_Type_ElementSelector: SwiftProtobuf.Message, Swif
         try decoder.decodeSingularStringField(value: &v)
         if let v = v {
           if self.criteria != nil {try decoder.handleConflictingOneOf()}
-          self.criteria = .textContains(v)
+          self.criteria = .textSubstring(v)
         }
       }()
       case 4: try {
@@ -410,8 +408,8 @@ nonisolated extension Exactmac_Type_ElementSelector: SwiftProtobuf.Message, Swif
       guard case .text(let v)? = self.criteria else { preconditionFailure() }
       try visitor.visitSingularStringField(value: v, fieldNumber: 2)
     }()
-    case .textContains?: try {
-      guard case .textContains(let v)? = self.criteria else { preconditionFailure() }
+    case .textSubstring?: try {
+      guard case .textSubstring(let v)? = self.criteria else { preconditionFailure() }
       try visitor.visitSingularStringField(value: v, fieldNumber: 3)
     }()
     case .textRegex?: try {
@@ -518,7 +516,7 @@ nonisolated extension Exactmac_Type_AttributeSelector: SwiftProtobuf.Message, Sw
 
 nonisolated extension Exactmac_Type_CompoundSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CompoundSelector"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}operator\0\u{1}selectors\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}logical_operator\0\u{1}selectors\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -526,7 +524,7 @@ nonisolated extension Exactmac_Type_CompoundSelector: SwiftProtobuf.Message, Swi
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularEnumField(value: &self.`operator`) }()
+      case 1: try { try decoder.decodeSingularEnumField(value: &self.logicalOperator) }()
       case 2: try { try decoder.decodeRepeatedMessageField(value: &self.selectors) }()
       default: break
       }
@@ -534,8 +532,8 @@ nonisolated extension Exactmac_Type_CompoundSelector: SwiftProtobuf.Message, Swi
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.`operator` != .unspecified {
-      try visitor.visitSingularEnumField(value: self.`operator`, fieldNumber: 1)
+    if self.logicalOperator != .unspecified {
+      try visitor.visitSingularEnumField(value: self.logicalOperator, fieldNumber: 1)
     }
     if !self.selectors.isEmpty {
       try visitor.visitRepeatedMessageField(value: self.selectors, fieldNumber: 2)
@@ -544,7 +542,7 @@ nonisolated extension Exactmac_Type_CompoundSelector: SwiftProtobuf.Message, Swi
   }
 
   public static func ==(lhs: Exactmac_Type_CompoundSelector, rhs: Exactmac_Type_CompoundSelector) -> Bool {
-    if lhs.`operator` != rhs.`operator` {return false}
+    if lhs.logicalOperator != rhs.logicalOperator {return false}
     if lhs.selectors != rhs.selectors {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true

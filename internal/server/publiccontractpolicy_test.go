@@ -10,9 +10,13 @@ import (
 	"strings"
 	"testing"
 
+	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protodesc"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -54,18 +58,18 @@ var expectedPublicQueryDocumentation = map[string][]string{
 }
 
 var publicPaginationInputs = map[string]string{
-	"exactmac.v1.ExactMac.ListApplicationBundles":  "filter,order_by,view,page_size",
-	"exactmac.v1.ExactMac.ListApplications":        "filter,order_by,view,page_size",
-	"exactmac.v1.ExactMac.ListInputs":              "parent,filter,page_size",
-	"exactmac.v1.ExactMac.FindElements":            "parent,selector,visible_only,force_refresh,page_size",
-	"exactmac.v1.ExactMac.FindRegionElements":      "parent,region,selector,force_refresh,page_size",
-	"exactmac.v1.ExactMac.ListElements":            "parent,page_size",
+	"exactmac.v1.ExactMac.ListApplicationBundles":  "filter,order_by,view",
+	"exactmac.v1.ExactMac.ListApplications":        "filter,order_by,view",
+	"exactmac.v1.ExactMac.ListInputs":              "parent,filter",
+	"exactmac.v1.ExactMac.FindElements":            "parent,selector,visible_only,cache_bypass",
+	"exactmac.v1.ExactMac.FindRegionElements":      "parent,region,selector,cache_bypass",
+	"exactmac.v1.ExactMac.ListElements":            "parent",
 	"exactmac.v1.ExactMac.ListWindows":             "parent,filter,order_by",
-	"exactmac.v1.ExactMac.ListObservations":        "parent,page_size",
-	"exactmac.v1.ExactMac.ListSessions":            "page_size",
-	"exactmac.v1.ExactMac.ListMacros":              "page_size",
-	"exactmac.v1.ExactMac.ListDisplays":            "page_size",
-	"google.longrunning.Operations.ListOperations": "name,filter,return_partial_success,page_size",
+	"exactmac.v1.ExactMac.ListObservations":        "parent",
+	"exactmac.v1.ExactMac.ListSessions":            "",
+	"exactmac.v1.ExactMac.ListMacros":              "",
+	"exactmac.v1.ExactMac.ListDisplays":            "",
+	"google.longrunning.Operations.ListOperations": "name,filter,return_partial_success",
 }
 
 func TestPublicQueryPoliciesAreExactAndDocumented(t *testing.T) {
@@ -110,6 +114,119 @@ func TestPublicQueryPoliciesAreExactAndDocumented(t *testing.T) {
 				t.Errorf("%s documentation is missing exact query policy %q", message, snippet)
 			}
 		}
+	}
+}
+
+func TestGeneratedExactMacFileOptionsUseJavaOnly(t *testing.T) {
+	expected := map[string]struct {
+		javaPackage string
+		goPackage   string
+	}{
+		"exactmac.v1": {
+			javaPackage: "io.github.joeycumines.exactmac.v1",
+			goPackage:   "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpb",
+		},
+		"exactmac.type": {
+			javaPackage: "io.github.joeycumines.exactmac.type",
+			goPackage:   "github.com/joeycumines/ExactMac/gen/go/exactmac/type;exactmactypepb",
+		},
+	}
+	seen := make(map[string]int, len(expected))
+
+	protoregistry.GlobalFiles.RangeFiles(func(file protoreflect.FileDescriptor) bool {
+		pkg := string(file.Package())
+		want, ok := expected[pkg]
+		if !ok {
+			return true
+		}
+		seen[pkg]++
+
+		options, ok := file.Options().(*descriptorpb.FileOptions)
+		if !ok || options == nil {
+			t.Errorf("%s has no generated FileOptions", file.Path())
+			return true
+		}
+		if got := options.GetJavaPackage(); got != want.javaPackage {
+			t.Errorf("%s Java package = %q, want %q", file.Path(), got, want.javaPackage)
+		}
+		if got := options.GetGoPackage(); got != want.goPackage {
+			t.Errorf("%s Go package = %q, want %q", file.Path(), got, want.goPackage)
+		}
+		if !options.GetJavaMultipleFiles() {
+			t.Errorf("%s Java multiple_files is not true", file.Path())
+		}
+		if options.JavaOuterClassname == nil || options.GetJavaOuterClassname() == "" {
+			t.Errorf("%s Java outer classname is missing", file.Path())
+		}
+		if options.CsharpNamespace != nil {
+			t.Errorf("%s unexpectedly has a C# namespace option", file.Path())
+		}
+		if options.PhpNamespace != nil {
+			t.Errorf("%s unexpectedly has a PHP namespace option", file.Path())
+		}
+		if options.PhpMetadataNamespace != nil {
+			t.Errorf("%s unexpectedly has a PHP metadata namespace option", file.Path())
+		}
+		if options.RubyPackage != nil {
+			t.Errorf("%s unexpectedly has a Ruby package option", file.Path())
+		}
+		if options.ObjcClassPrefix != nil {
+			t.Errorf("%s unexpectedly has an Objective-C class prefix option", file.Path())
+		}
+		return true
+	})
+
+	if got := seen["exactmac.v1"]; got != 13 {
+		t.Errorf("generated exactmac.v1 descriptor count = %d, want 13", got)
+	}
+	if got := seen["exactmac.type"]; got != 3 {
+		t.Errorf("generated exactmac.type descriptor count = %d, want 3", got)
+	}
+}
+
+func TestGeneratedExactMacDescriptorsMatchSourceDescriptorSet(t *testing.T) {
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("cannot resolve descriptor-test source path")
+	}
+	descriptorPath := filepath.Join(
+		filepath.Dir(thisFile),
+		"..", "..", "Server", "Sources", "ExactMacServer", "DescriptorSets", "exactmac_descriptors.pb",
+	)
+	descriptorBytes, err := os.ReadFile(descriptorPath)
+	if err != nil {
+		t.Fatalf("read source descriptor set: %v", err)
+	}
+	var sourceSet descriptorpb.FileDescriptorSet
+	if err := proto.Unmarshal(descriptorBytes, &sourceSet); err != nil {
+		t.Fatalf("decode source descriptor set: %v", err)
+	}
+	sourceFiles := make(map[string]*descriptorpb.FileDescriptorProto, len(sourceSet.File))
+	for _, file := range sourceSet.File {
+		sourceFiles[file.GetName()] = file
+	}
+
+	seen := 0
+	protoregistry.GlobalFiles.RangeFiles(func(file protoreflect.FileDescriptor) bool {
+		if !strings.HasPrefix(string(file.Package()), "exactmac.") {
+			return true
+		}
+		seen++
+		source, ok := sourceFiles[file.Path()]
+		if !ok {
+			t.Errorf("generated descriptor %s is missing from source descriptor set", file.Path())
+			return true
+		}
+		source.SourceCodeInfo = nil
+		generated := protodesc.ToFileDescriptorProto(file)
+		generated.SourceCodeInfo = nil
+		if !proto.Equal(source, generated) {
+			t.Errorf("generated descriptor %s differs from source descriptor set", file.Path())
+		}
+		return true
+	})
+	if seen != 16 {
+		t.Errorf("generated ExactMac descriptor count = %d, want 16", seen)
 	}
 }
 
@@ -159,12 +276,11 @@ func publicQuerySemantics(rpc, path, paginationInputs string) string {
 	}
 	switch topLevel {
 	case "page_size":
-		if rpc == "exactmac.v1.ExactMac.ListWindows" {
-			return "bounded shared page-size policy excluded from page-token query binding and honored on continuation"
-		}
-		return "bounded shared page-size policy included in page-token query binding"
+		return "bounded shared page-size policy excluded from page-token query binding and honored on continuation"
+	case "skip":
+		return "non-negative pagination control excluded from query binding and added to the token position"
 	case "page_token":
-		return "opaque signed token bound to all semantic query inputs"
+		return "opaque authenticated-encrypted token bound to all non-pagination semantic query inputs"
 	}
 	if paginationInputs != "" && strings.Contains(","+paginationInputs+",", ","+topLevel+",") {
 		return "result-shaping input included in page-token query binding"
@@ -208,24 +324,73 @@ func TestInputResourceDescriptorSupportsApplicationAndDesktopWildcard(t *testing
 	}
 }
 
-func TestPaginationPoliciesCoverEveryCollectionAndListWindowsExcludesPageSize(t *testing.T) {
-	rpcRows, _ := derivePublicContractLedger(t)
-	collectionCount := 0
-	for _, row := range rpcRows {
-		if row.paginationInputs != "" {
-			collectionCount++
-		}
-	}
-	if collectionCount != len(publicPaginationInputs) {
+func TestPaginationPoliciesCoverEveryCollectionAndExcludePageSize(t *testing.T) {
+	_, pageCollections := descriptorPublicContractCounts(t)
+	if pageCollections != len(publicPaginationInputs) {
 		t.Fatalf(
 			"descriptor-derived collection count = %d, policy count = %d",
-			collectionCount,
+			pageCollections,
 			len(publicPaginationInputs),
 		)
 	}
 	inputs := publicPaginationInputs["exactmac.v1.ExactMac.ListWindows"]
 	if strings.Contains(","+inputs+",", ",page_size,") {
 		t.Errorf("ListWindows token inputs = %q, page_size must be honored rather than query-bound", inputs)
+	}
+	for method, inputs := range publicPaginationInputs {
+		hasPageSize := strings.Contains(","+inputs+",", ",page_size,")
+		hasSkip := strings.Contains(","+inputs+",", ",skip,")
+		if hasPageSize || hasSkip {
+			t.Errorf("%s token inputs = %q, pagination controls must be excluded from query binding", method, inputs)
+		}
+	}
+}
+
+func TestPaginationPoliciesCoverAllNonPaginationRequestFields(t *testing.T) {
+	services := []protoreflect.ServiceDescriptor{
+		pb.File_exactmac_v1_exact_mac_proto.Services().ByName("ExactMac"),
+		longrunningpb.File_google_longrunning_operations_proto.Services().ByName("Operations"),
+	}
+	methods := make(map[string]protoreflect.MethodDescriptor)
+	for _, service := range services {
+		if service == nil {
+			t.Fatal("public contract descriptor is missing a required service")
+		}
+		for index := 0; index < service.Methods().Len(); index++ {
+			method := service.Methods().Get(index)
+			methods[string(method.FullName())] = method
+		}
+	}
+
+	for fullName, policy := range publicPaginationInputs {
+		t.Run(fullName, func(t *testing.T) {
+			method, ok := methods[fullName]
+			if !ok {
+				t.Fatalf("pagination policy references missing RPC %s", fullName)
+			}
+
+			var fields []string
+			for index := 0; index < method.Input().Fields().Len(); index++ {
+				name := string(method.Input().Fields().Get(index).Name())
+				if name != "page_size" && name != "page_token" && name != "skip" {
+					fields = append(fields, name)
+				}
+			}
+			sort.Strings(fields)
+
+			var declared []string
+			if policy != "" {
+				declared = strings.Split(policy, ",")
+				sort.Strings(declared)
+			}
+			if strings.Join(fields, ",") != strings.Join(declared, ",") {
+				t.Errorf(
+					"non-pagination fields = %q, policy = %q; all semantic request fields must be bound",
+					fields,
+					declared,
+				)
+			}
+		})
 	}
 }
 
@@ -238,21 +403,8 @@ func TestWriteClipboardClearExistingIsRemovedAndReserved(t *testing.T) {
 		t.Fatalf("clear_existing remains live at field %d", field.Number())
 	}
 
-	reservedName := false
-	for index := 0; index < message.ReservedNames().Len(); index++ {
-		reservedName = reservedName || message.ReservedNames().Get(index) == "clear_existing"
-	}
-	if !reservedName {
-		t.Error("WriteClipboardRequest must reserve removed name clear_existing")
-	}
-
-	reservedNumber := false
-	for index := 0; index < message.ReservedRanges().Len(); index++ {
-		reserved := message.ReservedRanges().Get(index)
-		reservedNumber = reservedNumber || reserved[0] <= 2 && 2 < reserved[1]
-	}
-	if !reservedNumber {
-		t.Error("WriteClipboardRequest must reserve removed field number 2")
+	if message.ReservedNames().Len() != 0 || message.ReservedRanges().Len() != 0 {
+		t.Error("WriteClipboardRequest must not retain reservations after the final declaration-order contract")
 	}
 
 	policies, err := loadExplicitPublicFieldDispositions()

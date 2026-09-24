@@ -39,6 +39,7 @@ extension ExactMacService {
         let filterClauses = try parseWindowFilter(req.filter)
         let ordering = try parseWindowOrdering(req.orderBy)
         let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let skip = try RequestNumericValidation.skip(req.skip)
         let application = try await resolveApplicationResource(fromName: req.parent)
         let queryBinding = ParsingHelpers.pageTokenQuery(
             method: "ListWindows",
@@ -63,6 +64,7 @@ extension ExactMacService {
             page = try await windowRegistry.firstWindowPage(
                 bindings: orderedWindowInfos,
                 pageSize: pageSize,
+                skip: skip,
                 queryBinding: queryBinding,
                 applicationName: application.name,
                 pid: application.pid,
@@ -73,6 +75,7 @@ extension ExactMacService {
             page = try await windowRegistry.continuationWindowPage(
                 token: req.pageToken,
                 pageSize: pageSize,
+                skip: skip,
                 queryBinding: queryBinding,
                 applicationName: application.name,
                 pid: application.pid,
@@ -629,8 +632,8 @@ extension ExactMacService {
         )
         let format = encoding.format
         let quality = encoding.quality
-        let includeShadow = req.includeShadow
-        let includeOCR = req.includeOcrText
+        let includeShadow = req.shadowEnabled
+        let includeOCR = req.ocrEnabled
         _ = try parseWindowResourceName(req.window)
         return try await captureWorkOwner.withCapture(cancellation: context.cancellation) { [self] in
             let resource = try await resolveWindowResource(req.window)

@@ -26,16 +26,16 @@ func (s *MCPServer) handleScreenshot(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
-		Display string   `json:"display"`
-		Window  string   `json:"window"`
-		X       *float64 `json:"x"`
-		Y       *float64 `json:"y"`
-		Width   *float64 `json:"width"`
-		Height  *float64 `json:"height"`
-		Format  string   `json:"format"`
-		Quality *int32   `json:"quality"`
-		OCR     bool     `json:"ocr"`
-		Shadow  *bool    `json:"include_shadow"`
+		Display       string   `json:"display"`
+		Window        string   `json:"window"`
+		X             *float64 `json:"x"`
+		Y             *float64 `json:"y"`
+		Width         *float64 `json:"width"`
+		Height        *float64 `json:"height"`
+		Format        string   `json:"format"`
+		Quality       *int32   `json:"quality"`
+		OCREnabled    bool     `json:"ocr_enabled"`
+		ShadowEnabled *bool    `json:"shadow_enabled"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -62,11 +62,11 @@ func (s *MCPServer) handleScreenshot(call *ToolCall) (*ToolResult, error) {
 		if _, err := parseCUAWindowResource(params.Window); err != nil {
 			return errorResult(err.Error()), nil
 		}
-		includeShadow := params.Shadow != nil && *params.Shadow
-		return s.captureWindowScreenshot(ctx, params.Window, format, quality, includeShadow, params.OCR)
+		includeShadow := params.ShadowEnabled != nil && *params.ShadowEnabled
+		return s.captureWindowScreenshot(ctx, params.Window, format, quality, includeShadow, params.OCREnabled)
 	}
-	if params.Shadow != nil {
-		return errorResult("include_shadow requires window"), nil
+	if params.ShadowEnabled != nil {
+		return errorResult("shadow_enabled requires window"), nil
 	}
 	if hasRegion {
 		if !hasCompleteRegion {
@@ -81,10 +81,10 @@ func (s *MCPServer) handleScreenshot(call *ToolCall) (*ToolResult, error) {
 			*params.Height,
 			format,
 			quality,
-			params.OCR,
+			params.OCREnabled,
 		)
 	}
-	return s.captureDisplayScreenshot(ctx, params.Display, format, quality, params.OCR)
+	return s.captureDisplayScreenshot(ctx, params.Display, format, quality, params.OCREnabled)
 }
 
 func (s *MCPServer) captureWindowScreenshot(
@@ -96,11 +96,11 @@ func (s *MCPServer) captureWindowScreenshot(
 	includeOCR bool,
 ) (*ToolResult, error) {
 	resp, err := s.client.CaptureWindowScreenshot(ctx, &pb.CaptureWindowScreenshotRequest{
-		Window:         window,
-		Format:         format,
-		Quality:        quality,
-		IncludeShadow:  includeShadow,
-		IncludeOcrText: includeOCR,
+		Window:        window,
+		Format:        format,
+		Quality:       quality,
+		ShadowEnabled: includeShadow,
+		OcrEnabled:    includeOCR,
 	})
 	if err != nil {
 		return grpcErrorResult(err, "screenshot"), nil
@@ -168,11 +168,11 @@ func (s *MCPServer) captureRegionScreenshot(
 		Height: height,
 	}
 	resp, err := s.client.CaptureRegionScreenshot(ctx, &pb.CaptureRegionScreenshotRequest{
-		Region:         requestedRegion,
-		Format:         format,
-		Quality:        quality,
-		IncludeOcrText: includeOCR,
-		Display:        display,
+		Region:     requestedRegion,
+		Format:     format,
+		Quality:    quality,
+		OcrEnabled: includeOCR,
+		Display:    display,
 	})
 	if err != nil {
 		return grpcErrorResult(err, "screenshot"), nil
@@ -212,10 +212,10 @@ func (s *MCPServer) captureDisplayScreenshot(
 	includeOCR bool,
 ) (*ToolResult, error) {
 	resp, err := s.client.CaptureScreenshot(ctx, &pb.CaptureScreenshotRequest{
-		Format:         format,
-		Quality:        quality,
-		Display:        display,
-		IncludeOcrText: includeOCR,
+		Format:     format,
+		Quality:    quality,
+		Display:    display,
+		OcrEnabled: includeOCR,
 	})
 	if err != nil {
 		return grpcErrorResult(err, "screenshot"), nil

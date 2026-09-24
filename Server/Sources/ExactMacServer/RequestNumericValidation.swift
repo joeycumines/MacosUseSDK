@@ -56,6 +56,21 @@ enum RequestNumericValidation {
         return value == 0 ? defaultValue : min(Int(value), maximum)
     }
 
+    static func skip(
+        _ value: Int32,
+        field: String = "skip",
+    ) throws -> Int {
+        guard value >= 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "\(field) must not be negative",
+                reason: "INVALID_SKIP",
+                field: field,
+                value: String(value),
+            )
+        }
+        return Int(value)
+    }
+
     static func imageQuality(
         _ value: Int32,
         default defaultValue: Int32 = 85,

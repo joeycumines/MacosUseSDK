@@ -518,6 +518,11 @@ struct ScreenshotCapture {
         )
         config.width = dimensions.width
         config.height = dimensions.height
+        // Keep the capture alpha-capable on every path. PNG and TIFF preserve
+        // that alpha; JPEG encoding necessarily produces an opaque result.
+        // Do not tie transparency to window-shadow selection: shadows and
+        // alpha are separate image properties.
+        config.shouldBeOpaque = false
 
         // Use SCScreenshotManager for single-frame captures (macOS 14+).
         // This replaces the SCStream + CaptureDelegate + continuation pattern,
@@ -619,7 +624,10 @@ struct ScreenshotCapture {
     }
 
     /// Encode a CGImage to the requested format.
-    private static func encodeImage(
+    ///
+    /// PNG and TIFF retain the source alpha channel. JPEG has no alpha
+    /// channel, so its encoded pixels are necessarily opaque.
+    static func encodeImage(
         _ cgImage: CGImage,
         format: Exactmac_V1_ImageFormat,
         quality: Int32,

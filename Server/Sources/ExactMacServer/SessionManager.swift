@@ -120,21 +120,23 @@ actor SessionManager {
     }
 
     /// List all sessions with pagination
-    func listSessions(pageSize: Int, pageToken: String?) async throws -> (
+    func listSessions(
+        pageSize: Int,
+        pageToken: String?,
+        skip: Int = 0,
+    ) async throws -> (
         sessions: [Exactmac_V1_Session], nextPageToken: String?,
     ) {
         let effectivePageSize = pageSize > 0 ? pageSize : 50
-        let queryBinding = ParsingHelpers.pageTokenQuery(
-            method: "ListSessions",
-            parameters: [("page_size", String(effectivePageSize))],
-        )
-        let offset = try ParsingHelpers.pageOffset(
+        let queryBinding = ParsingHelpers.pageTokenQuery(method: "ListSessions")
+        let cursor = try ParsingHelpers.pageCursor(
             token: pageToken ?? "",
+            skip: skip,
             queryBinding: queryBinding,
         )
         let allSessions = sessions.values.map(\.session).sorted { $0.name < $1.name }
         let range = try ParsingHelpers.pageRange(
-            offset: offset,
+            cursor: cursor,
             pageSize: effectivePageSize,
             totalCount: allSessions.count,
         )
@@ -423,7 +425,7 @@ actor SessionManager {
             $0.session = state.session
             $0.applications = state.applications
             $0.observations = state.observations
-            $0.history = state.operations
+            $0.operationRecords = state.operations
         }
     }
 

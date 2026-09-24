@@ -221,7 +221,7 @@ final class ParsingHelpersTests: XCTestCase {
         }
     }
 
-    func testQueryBoundPageTokenRejectsMutationAndLegacyFormats() throws {
+    func testQueryBoundPageTokenRejectsMutationAndLegacyPlaintextFormats() throws {
         let query = ParsingHelpers.pageTokenQuery(method: "ListDisplays")
         let token = ParsingHelpers.encodePageToken(offset: 50, queryBinding: query)
         var mutatedBytes = Array(token.utf8)
@@ -236,6 +236,8 @@ final class ParsingHelpersTests: XCTestCase {
             Data("offset:-1".utf8).base64EncodedString(),
             Data("offset:abc".utf8).base64EncodedString(),
             Data("offset50".utf8).base64EncodedString(),
+            token + "=",
+            token + "==",
         ]
         for invalidToken in invalidTokens {
             XCTAssertThrowsError(
@@ -243,6 +245,100 @@ final class ParsingHelpersTests: XCTestCase {
             ) { error in
                 XCTAssertEqual((error as? RPCError)?.code, .invalidArgument)
             }
+        }
+    }
+
+    func testPageTokenDoesNotExposeItsPayload() throws {
+        let query = ParsingHelpers.pageTokenQuery(
+            method: "ListApplications",
+            parameters: [("parent", "applications/123")],
+        )
+        let token = ParsingHelpers.encodePageToken(offset: 50, queryBinding: query)
+
+        XCTAssertFalse(token.contains("+"))
+        XCTAssertFalse(token.contains("/"))
+        XCTAssertFalse(token.contains("="))
+
+        var normalized = token
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        let remainder = normalized.count % 4
+        if remainder != 0 {
+            normalized += String(repeating: "=", count: 4 - remainder)
+        }
+        let decoded = try XCTUnwrap(Data(base64Encoded: normalized))
+        let decodedText = String(data: decoded, encoding: .utf8) ?? ""
+        XCTAssertFalse(decodedText.contains("v2:"))
+        XCTAssertFalse(decodedText.contains(query))
+        XCTAssertFalse(decodedText.contains("offset"))
+    }
+
+    func testPageCursorAddsSkipToTokenPosition() throws {
+        let query = ParsingHelpers.pageTokenQuery(method: "ListApplications")
+        let token = ParsingHelpers.encodePageToken(offset: 50, queryBinding: query)
+
+        let cursor = try ParsingHelpers.pageCursor(
+            token: token,
+            skip: 30,
+            queryBinding: query,
+        )
+        XCTAssertEqual(cursor.tokenOffset, 50)
+        XCTAssertEqual(cursor.offset, 80)
+        XCTAssertEqual(
+            try ParsingHelpers.pageRange(cursor: cursor, pageSize: 2, totalCount: 100),
+            80 ..< 82,
+        )
+    }
+
+    func testPageCursorAppliesSkipToAnUnpagedRequest() throws {
+        let query = ParsingHelpers.pageTokenQuery(method: "ListApplications")
+        let cursor = try ParsingHelpers.pageCursor(token: "", skip: 30, queryBinding: query)
+
+        XCTAssertEqual(cursor.tokenOffset, 0)
+        XCTAssertEqual(cursor.offset, 30)
+        XCTAssertEqual(
+            try ParsingHelpers.pageRange(cursor: cursor, pageSize: 2, totalCount: 100),
+            30 ..< 32,
+        )
+    }
+
+    func testPageCursorAllowsOutOfRangeSkipButRejectsStaleToken() throws {
+        let query = ParsingHelpers.pageTokenQuery(method: "ListApplications")
+        let skipped = try ParsingHelpers.pageCursor(
+            token: "",
+            skip: Int(Int32.max),
+            queryBinding: query,
+        )
+        XCTAssertEqual(
+            try ParsingHelpers.pageRange(cursor: skipped, pageSize: 2, totalCount: 5),
+            5 ..< 5,
+        )
+
+        let staleToken = ParsingHelpers.encodePageToken(offset: 6, queryBinding: query)
+        let stale = try ParsingHelpers.pageCursor(
+            token: staleToken,
+            skip: 0,
+            queryBinding: query,
+        )
+        XCTAssertThrowsError(
+            try ParsingHelpers.pageRange(cursor: stale, pageSize: 1, totalCount: 5),
+        ) { error in
+            XCTAssertEqual((error as? RPCError)?.code, .invalidArgument)
+        }
+    }
+
+    func testPageCursorRejectsTokenOffsetPlusSkipOverflow() throws {
+        let query = ParsingHelpers.pageTokenQuery(method: "ListApplications")
+        let token = ParsingHelpers.encodePageToken(offset: Int.max, queryBinding: query)
+
+        XCTAssertThrowsError(
+            try ParsingHelpers.pageCursor(token: token, skip: 1, queryBinding: query),
+        ) { error in
+            guard let rpcError = error as? RPCError else {
+                XCTFail("Expected RPCError")
+                return
+            }
+            XCTAssertEqual(rpcError.code, .invalidArgument)
         }
     }
 
@@ -256,6 +352,60 @@ final class ParsingHelpersTests: XCTestCase {
             parameters: [("parent", "a"), ("filter", "b|filter=c")],
         )
         XCTAssertNotEqual(first, second)
+    }
+
+    func testSelectorQueryIdentitySortsAttributeMapKeys() throws {
+        let first = Exactmac_Type_ElementSelector.with {
+            $0.attributes = Exactmac_Type_AttributeSelector.with {
+                $0.attributes = ["z": "last", "a": "first", "m": "middle"]
+            }
+        }
+        let second = Exactmac_Type_ElementSelector.with {
+            $0.attributes = Exactmac_Type_AttributeSelector.with {
+                $0.attributes = ["m": "middle", "z": "last", "a": "first"]
+            }
+        }
+        let different = Exactmac_Type_ElementSelector.with {
+            $0.attributes = Exactmac_Type_AttributeSelector.with {
+                $0.attributes = ["z": "last", "a": "changed", "m": "middle"]
+            }
+        }
+
+        XCTAssertEqual(
+            ParsingHelpers.selectorQueryIdentity(first),
+            ParsingHelpers.selectorQueryIdentity(second),
+        )
+        let token = ParsingHelpers.encodePageToken(
+            offset: 1,
+            queryBinding: ParsingHelpers.selectorQueryIdentity(first),
+        )
+        let cursor = try ParsingHelpers.pageCursor(
+            token: token,
+            skip: 0,
+            queryBinding: ParsingHelpers.selectorQueryIdentity(second),
+        )
+        XCTAssertEqual(cursor.offset, 1)
+        XCTAssertNotEqual(
+            ParsingHelpers.selectorQueryIdentity(first),
+            ParsingHelpers.selectorQueryIdentity(different),
+        )
+    }
+
+    func testSelectorQueryIdentityPreservesPositionPresence() {
+        let absent = Exactmac_Type_ElementSelector.with {
+            $0.position = Exactmac_Type_PositionSelector.with { $0.tolerance = 3 }
+        }
+        let present = Exactmac_Type_ElementSelector.with {
+            $0.position = Exactmac_Type_PositionSelector.with {
+                $0.x = 0
+                $0.tolerance = 3
+            }
+        }
+
+        XCTAssertNotEqual(
+            ParsingHelpers.selectorQueryIdentity(absent),
+            ParsingHelpers.selectorQueryIdentity(present),
+        )
     }
 
     func testPageRangeRejectsOffsetOutsideCurrentCollection() {

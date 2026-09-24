@@ -8,7 +8,7 @@
 // 	protoc        (unknown)
 // source: exactmac/v1/display.proto
 
-package exactmacv1
+package exactmacpb
 
 import (
 	_type "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
@@ -41,7 +41,7 @@ type Display struct {
 	// See exactmac.type.Point message documentation for detailed coordinate system explanation.
 	VisibleFrame *_type.Region `protobuf:"bytes,4,opt,name=visible_frame,json=visibleFrame,proto3" json:"visible_frame,omitempty"`
 	// True if this is the main (primary) display.
-	IsMain bool `protobuf:"varint,5,opt,name=is_main,json=isMain,proto3" json:"is_main,omitempty"`
+	Main bool `protobuf:"varint,5,opt,name=main,proto3" json:"main,omitempty"`
 	// Scale factor (backingScaleFactor). For Retina displays this is typically 2.0.
 	Scale         float64 `protobuf:"fixed64,6,opt,name=scale,proto3" json:"scale,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -106,9 +106,9 @@ func (x *Display) GetVisibleFrame() *_type.Region {
 	return nil
 }
 
-func (x *Display) GetIsMain() bool {
+func (x *Display) GetMain() bool {
 	if x != nil {
-		return x.IsMain
+		return x.Main
 	}
 	return false
 }
@@ -125,10 +125,15 @@ type ListDisplaysRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Maximum number of displays to return.
 	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// Page token from a previous ListDisplays call.
-	// This token is opaque and its structure must not be relied upon by clients.
-	// Only its presence or absence should be used to determine pagination state.
-	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Page token from a previous call. The token is bound to the other semantic
+	// query inputs, not page_size or skip; clients may change either when continuing.
+	// Its structure is opaque and must not be relied upon by clients.
+	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Number of individual resources to skip before returning this page.
+	// A continuation adds this value to the position encoded by page_token.
+	// If the requested position is beyond the collection, return an empty page
+	// without a next_page_token.
+	Skip          int32 `protobuf:"varint,3,opt,name=skip,proto3" json:"skip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -175,6 +180,13 @@ func (x *ListDisplaysRequest) GetPageToken() string {
 		return x.PageToken
 	}
 	return ""
+}
+
+func (x *ListDisplaysRequest) GetSkip() int32 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
 }
 
 // Request to get a specific display.
@@ -387,20 +399,21 @@ var File_exactmac_v1_display_proto protoreflect.FileDescriptor
 
 const file_exactmac_v1_display_proto_rawDesc = "" +
 	"\n" +
-	"\x19exactmac/v1/display.proto\x12\vexactmac.v1\x1a\x1cexactmac/type/geometry.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xb0\x02\n" +
+	"\x19exactmac/v1/display.proto\x12\vexactmac.v1\x1a\x1cexactmac/type/geometry.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xab\x02\n" +
 	"\aDisplay\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\"\n" +
 	"\n" +
 	"display_id\x18\x02 \x01(\x03B\x03\xe0A\x03R\tdisplayId\x120\n" +
 	"\x05frame\x18\x03 \x01(\v2\x15.exactmac.type.RegionB\x03\xe0A\x03R\x05frame\x12?\n" +
-	"\rvisible_frame\x18\x04 \x01(\v2\x15.exactmac.type.RegionB\x03\xe0A\x03R\fvisibleFrame\x12\x1c\n" +
-	"\ais_main\x18\x05 \x01(\bB\x03\xe0A\x03R\x06isMain\x12\x19\n" +
+	"\rvisible_frame\x18\x04 \x01(\v2\x15.exactmac.type.RegionB\x03\xe0A\x03R\fvisibleFrame\x12\x17\n" +
+	"\x04main\x18\x05 \x01(\bB\x03\xe0A\x03R\x04main\x12\x19\n" +
 	"\x05scale\x18\x06 \x01(\x01B\x03\xe0A\x03R\x05scale:<\xeaA9\n" +
-	"\x10exactmac/Display\x12\x12displays/{display}*\bdisplays2\adisplay\"[\n" +
+	"\x10exactmac/Display\x12\x12displays/{display}*\bdisplays2\adisplay\"t\n" +
 	"\x13ListDisplaysRequest\x12 \n" +
 	"\tpage_size\x18\x01 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\"A\n" +
+	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\x12\x17\n" +
+	"\x04skip\x18\x03 \x01(\x05B\x03\xe0A\x01R\x04skip\"A\n" +
 	"\x11GetDisplayRequest\x12,\n" +
 	"\x04name\x18\x01 \x01(\tB\x18\xe0A\x02\xfaA\x12\n" +
 	"\x10exactmac/DisplayR\x04name\"z\n" +
@@ -412,8 +425,8 @@ const file_exactmac_v1_display_proto_rawDesc = "" +
 	"\x01x\x18\x01 \x01(\x01B\x03\xe0A\x03R\x01x\x12\x11\n" +
 	"\x01y\x18\x02 \x01(\x01B\x03\xe0A\x03R\x01y\x122\n" +
 	"\adisplay\x18\x03 \x01(\tB\x18\xe0A\x03\xfaA\x12\n" +
-	"\x10exactmac/DisplayR\adisplayB\xbd\x01\n" +
-	"!io.github.joeycumines.exactmac.v1B\fDisplayProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1\xa2\x02\x03EXX\xaa\x02\vExactmac.V1\xca\x02\vExactmac\\V1\xe2\x02\x17Exactmac\\V1\\GPBMetadata\xea\x02\fExactmac::V1b\x06proto3"
+	"\x10exactmac/DisplayR\adisplayBr\n" +
+	"!io.github.joeycumines.exactmac.v1B\fDisplayProtoP\x01Z=github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpbb\x06proto3"
 
 var (
 	file_exactmac_v1_display_proto_rawDescOnce sync.Once

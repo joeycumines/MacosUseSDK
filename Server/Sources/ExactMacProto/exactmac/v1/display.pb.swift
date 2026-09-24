@@ -59,7 +59,7 @@ public nonisolated struct Exactmac_V1_Display: Sendable {
   public mutating func clearVisibleFrame() {self._visibleFrame = nil}
 
   /// True if this is the main (primary) display.
-  public var isMain: Bool = false
+  public var main: Bool = false
 
   /// Scale factor (backingScaleFactor). For Retina displays this is typically 2.0.
   public var scale: Double = 0
@@ -81,10 +81,16 @@ public nonisolated struct Exactmac_V1_ListDisplaysRequest: Sendable {
   /// Maximum number of displays to return.
   public var pageSize: Int32 = 0
 
-  /// Page token from a previous ListDisplays call.
-  /// This token is opaque and its structure must not be relied upon by clients.
-  /// Only its presence or absence should be used to determine pagination state.
+  /// Page token from a previous call. The token is bound to the other semantic
+  /// query inputs, not page_size or skip; clients may change either when continuing.
+  /// Its structure is opaque and must not be relied upon by clients.
   public var pageToken: String = String()
+
+  /// Number of individual resources to skip before returning this page.
+  /// A continuation adds this value to the position encoded by page_token.
+  /// If the requested position is beyond the collection, return an empty page
+  /// without a next_page_token.
+  public var skip: Int32 = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -163,7 +169,7 @@ fileprivate nonisolated let _protobuf_package = "exactmac.v1"
 
 nonisolated extension Exactmac_V1_Display: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Display"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}display_id\0\u{1}frame\0\u{3}visible_frame\0\u{3}is_main\0\u{1}scale\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}display_id\0\u{1}frame\0\u{3}visible_frame\0\u{1}main\0\u{1}scale\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -175,7 +181,7 @@ nonisolated extension Exactmac_V1_Display: SwiftProtobuf.Message, SwiftProtobuf.
       case 2: try { try decoder.decodeSingularInt64Field(value: &self.displayID) }()
       case 3: try { try decoder.decodeSingularMessageField(value: &self._frame) }()
       case 4: try { try decoder.decodeSingularMessageField(value: &self._visibleFrame) }()
-      case 5: try { try decoder.decodeSingularBoolField(value: &self.isMain) }()
+      case 5: try { try decoder.decodeSingularBoolField(value: &self.main) }()
       case 6: try { try decoder.decodeSingularDoubleField(value: &self.scale) }()
       default: break
       }
@@ -199,8 +205,8 @@ nonisolated extension Exactmac_V1_Display: SwiftProtobuf.Message, SwiftProtobuf.
     try { if let v = self._visibleFrame {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
     } }()
-    if self.isMain != false {
-      try visitor.visitSingularBoolField(value: self.isMain, fieldNumber: 5)
+    if self.main != false {
+      try visitor.visitSingularBoolField(value: self.main, fieldNumber: 5)
     }
     if self.scale.bitPattern != 0 {
       try visitor.visitSingularDoubleField(value: self.scale, fieldNumber: 6)
@@ -213,7 +219,7 @@ nonisolated extension Exactmac_V1_Display: SwiftProtobuf.Message, SwiftProtobuf.
     if lhs.displayID != rhs.displayID {return false}
     if lhs._frame != rhs._frame {return false}
     if lhs._visibleFrame != rhs._visibleFrame {return false}
-    if lhs.isMain != rhs.isMain {return false}
+    if lhs.main != rhs.main {return false}
     if lhs.scale != rhs.scale {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -222,7 +228,7 @@ nonisolated extension Exactmac_V1_Display: SwiftProtobuf.Message, SwiftProtobuf.
 
 nonisolated extension Exactmac_V1_ListDisplaysRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListDisplaysRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{1}skip\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -232,6 +238,7 @@ nonisolated extension Exactmac_V1_ListDisplaysRequest: SwiftProtobuf.Message, Sw
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.skip) }()
       default: break
       }
     }
@@ -244,12 +251,16 @@ nonisolated extension Exactmac_V1_ListDisplaysRequest: SwiftProtobuf.Message, Sw
     if !self.pageToken.isEmpty {
       try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 2)
     }
+    if self.skip != 0 {
+      try visitor.visitSingularInt32Field(value: self.skip, fieldNumber: 3)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Exactmac_V1_ListDisplaysRequest, rhs: Exactmac_V1_ListDisplaysRequest) -> Bool {
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
+    if lhs.skip != rhs.skip {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

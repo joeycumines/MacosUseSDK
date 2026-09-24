@@ -69,12 +69,13 @@ The API is built around a hierarchy of resources that represent the state and ca
 
 7.  **Clipboard** (`clipboard`)
 
-      * Singleton resource representing the system clipboard.
-      * Supports rich content types (Text, RTF, HTML, Images, Files).
+       * Singleton resource representing the system clipboard.
+       * Supports rich content types (Text, RTF, HTML, Images, Files).
+       * `clipboardHistory` exposes the addressable history subresource.
 
-8.  **Scripting Dictionary** (`scriptingDictionaries/{name}`)
+8.  **Scripting Dictionary Catalog** (`scriptingDictionaryCatalog`)
 
-      * Represents the AppleScript/JXA capabilities and terminology available for specific applications.
+       * Singleton aggregate describing the AppleScript/JXA capabilities and terminology available to ExactMac.
 
 ### Window Design Pattern (Data Authority)
 
@@ -170,7 +171,10 @@ The API exposes extensive custom methods categorized by capability:
 
   * `CaptureScreenshot` (Full screen)
   * `CaptureWindowScreenshot`, `CaptureElementScreenshot`, `CaptureRegionScreenshot`
-  * Supports OCR text extraction and various image formats.
+  * Supports OCR text extraction and PNG, JPEG, and TIFF image formats.
+  * PNG and TIFF preserve source alpha when ScreenCaptureKit supplies an alpha
+    channel. JPEG has no alpha representation, so source alpha is discarded and
+    the encoded result is opaque. Window-shadow selection does not control alpha.
 
 **Observation & Streaming:**
 
@@ -195,18 +199,22 @@ set for every resource.
 
 ### Pagination (AIP-158)
 
-List methods support pagination via `page_size` and `page_token`.
+All hand-authored List/Find requests expose optional `page_size`, `page_token`, and `skip` fields. `skip` counts individual resources: a first request with `skip=30` starts at the 31st resource, and a continuation adds its `skip` to the position represented by `page_token`. `page_size` and `skip` may change between continuation requests; other semantic query inputs must match. A request that is known to skip past the collection returns an empty page without `next_page_token`. Page tokens are opaque and URL-safe; clients must not parse them.
+
+The registered `google.longrunning.Operations.ListOperations` RPC uses the external Google contract and is not extended with ExactMac's `skip` field.
 
 ## File Options
 
-All proto files include mandatory options per AIP-191:
+The authored protos retain the Java options required by Google's API linter and the repository-owned Go package mapping:
 
 ```protobuf
-option go_package = "github.com/joeycumines/ExactMac/gen/go/...";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpb";
 option java_multiple_files = true;
-option java_outer_classname = "...Proto";
-option java_package = "io.github.joeycumines.exactmac...";
+option java_outer_classname = "ExactMacProto";
+option java_package = "io.github.joeycumines.exactmac.v1";
 ```
+
+C#, PHP, PHP metadata, Ruby, and Objective-C file options are intentionally absent. Clients using those ecosystems may choose names appropriate to their own registries and generators. The checked-in Go import paths retain the physical `gen/go/exactmac/v1` and `gen/go/exactmac/type` directories; the generated package clauses use the `exactmacpb` and `exactmactypepb` suffixes. The compound-name omission is a local packaging decision, not a claim that every AIP-191 ecosystem option is present.
 
 ## Code Generation
 
@@ -223,7 +231,7 @@ gmake generate
 
 ## Linting
 
-The API is validated with `buf lint` and `api-linter`.
+`buf lint` validates the checked-in ExactMac protos. The repository's Google API-linter wrapper and `google-api-linter.yaml` remain unchanged and currently do not provide ExactMac API coverage; descriptor-driven contract tests cover the public shape. Run the repository lint target with:
 
 ```sh
 gmake lint

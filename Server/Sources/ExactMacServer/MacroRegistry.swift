@@ -62,19 +62,21 @@ public actor MacroRegistry {
     }
 
     /// List all macros (with pagination support)
-    public func listMacros(pageSize: Int, pageToken: String?) throws -> ([Exactmac_V1_Macro], String?) {
+    public func listMacros(
+        pageSize: Int,
+        pageToken: String?,
+        skip: Int = 0,
+    ) throws -> ([Exactmac_V1_Macro], String?) {
         let effectivePageSize = pageSize > 0 ? pageSize : 50
-        let queryBinding = ParsingHelpers.pageTokenQuery(
-            method: "ListMacros",
-            parameters: [("page_size", String(effectivePageSize))],
-        )
-        let offset = try ParsingHelpers.pageOffset(
+        let queryBinding = ParsingHelpers.pageTokenQuery(method: "ListMacros")
+        let cursor = try ParsingHelpers.pageCursor(
             token: pageToken ?? "",
+            skip: skip,
             queryBinding: queryBinding,
         )
         let allMacros = Array(macros.values).sorted { $0.name < $1.name }
         let range = try ParsingHelpers.pageRange(
-            offset: offset,
+            cursor: cursor,
             pageSize: effectivePageSize,
             totalCount: allMacros.count,
         )

@@ -153,14 +153,14 @@ extension ExactMacService {
     ) throws -> Exactmac_V1_InputAction? {
         switch action {
         case let .click(point):
-            return .with { $0.click = mouseClick(point: point, button: .left, clickCount: 1) }
+            return .with { $0.mouseClick = mouseClick(point: point, button: .left, clickCount: 1) }
         case let .doubleClick(point):
-            return .with { $0.click = mouseClick(point: point, button: .left, clickCount: 2) }
+            return .with { $0.mouseClick = mouseClick(point: point, button: .left, clickCount: 2) }
         case let .rightClick(point):
-            return .with { $0.click = mouseClick(point: point, button: .right, clickCount: 1) }
+            return .with { $0.mouseClick = mouseClick(point: point, button: .right, clickCount: 1) }
         case let .clickSequence(point, button, clickCount, modifiers):
             return .with {
-                $0.click = mouseClick(
+                $0.mouseClick = mouseClick(
                     point: point,
                     button: protoMouseButton(button),
                     clickCount: clickCount,
@@ -170,21 +170,21 @@ extension ExactMacService {
         case let .typeText(text, charDelay):
             guard !text.isEmpty else { return nil }
             return .with {
-                $0.typeText = .with {
+                $0.textInput = Exactmac_V1_TextInput.with {
                     $0.text = text
                     $0.charDelay = charDelay
                 }
             }
         case let .press(keyName, flags):
             return .with {
-                $0.pressKey = .with {
+                $0.keyPress = Exactmac_V1_KeyPress.with {
                     $0.key = keyName
                     $0.modifiers = protoModifiers(flags)
                 }
             }
         case let .pressHold(keyName, flags, duration):
             return .with {
-                $0.pressKey = .with {
+                $0.keyPress = Exactmac_V1_KeyPress.with {
                     $0.key = keyName
                     $0.modifiers = protoModifiers(flags)
                     $0.holdDuration = duration

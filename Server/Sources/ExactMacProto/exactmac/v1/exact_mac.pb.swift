@@ -255,8 +255,9 @@ public nonisolated struct Exactmac_V1_ListApplicationBundlesRequest: Sendable {
   /// negative values are invalid and values above 1000 are clamped to 1000.
   public var pageSize: Int32 = 0
 
-  /// Opaque token from a previous request with identical semantic query inputs,
-  /// including the effective page size after defaulting and clamping.
+  /// Opaque token from a previous request with identical non-pagination query
+  /// inputs. The page size may change on a continuation request; clients must
+  /// treat the token as opaque.
   public var pageToken: String = String()
 
   /// Ordering specification. Supported fields are name, display_name,
@@ -269,6 +270,12 @@ public nonisolated struct Exactmac_V1_ListApplicationBundlesRequest: Sendable {
 
   /// Amount of metadata to return. Unspecified defaults to BASIC.
   public var view: Exactmac_V1_ApplicationView = .unspecified
+
+  /// Number of individual resources to skip before returning this page.
+  /// A continuation adds this value to the position encoded by page_token.
+  /// If the requested position is beyond the collection, return an empty page
+  /// without a next_page_token.
+  public var skip: Int32 = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -368,9 +375,9 @@ public nonisolated struct Exactmac_V1_ListApplicationsRequest: Sendable {
   /// Maximum number of applications to return.
   public var pageSize: Int32 = 0
 
-  /// Page token from a previous ListApplications call.
-  /// This token is opaque and its structure must not be relied upon by clients.
-  /// Only its presence or absence should be used to determine pagination state.
+  /// Page token from a previous call. The token is bound to the other semantic
+  /// query inputs, not page_size or skip; clients may change either when continuing.
+  /// Its structure is opaque and must not be relied upon by clients.
   public var pageToken: String = String()
 
   /// Ordering specification. Supported fields are name, pid, display_name,
@@ -383,6 +390,12 @@ public nonisolated struct Exactmac_V1_ListApplicationsRequest: Sendable {
 
   /// Amount of metadata to return. Unspecified defaults to BASIC.
   public var view: Exactmac_V1_ApplicationView = .unspecified
+
+  /// Number of individual resources to skip before returning this page.
+  /// A continuation adds this value to the position encoded by page_token.
+  /// If the requested position is beyond the collection, return an empty page
+  /// without a next_page_token.
+  public var skip: Int32 = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -551,14 +564,20 @@ public nonisolated struct Exactmac_V1_ListInputsRequest: Sendable {
   /// Maximum number of inputs to return.
   public var pageSize: Int32 = 0
 
-  /// Page token from a previous ListInputs call.
-  /// This token is opaque and its structure must not be relied upon by clients.
-  /// Only its presence or absence should be used to determine pagination state.
+  /// Page token from a previous call. The token is bound to the other semantic
+  /// query inputs, not page_size or skip; clients may change either when continuing.
+  /// Its structure is opaque and must not be relied upon by clients.
   public var pageToken: String = String()
 
   /// Filter inputs by state. Valid values: PENDING, EXECUTING, COMPLETED,
   /// FAILED, CANCELLED.
   public var filter: String = String()
+
+  /// Number of individual resources to skip before returning this page.
+  /// A continuation adds this value to the position encoded by page_token.
+  /// If the requested position is beyond the collection, return an empty page
+  /// without a next_page_token.
+  public var skip: Int32 = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -608,7 +627,7 @@ public nonisolated struct Exactmac_V1_TraverseAccessibilityResponse: Sendable {
   // methods supported on all messages.
 
   /// Name of the application.
-  public var app: String = String()
+  public var application: String = String()
 
   /// Elements found in the traversal.
   public var elements: [Exactmac_V1_Element] = []
@@ -667,14 +686,14 @@ public nonisolated struct Exactmac_V1_WatchAccessibilityResponse: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Elements added since last update.
-  public var added: [Exactmac_V1_Element] = []
+  /// Elements added since the last update.
+  public var addedElements: [Exactmac_V1_Element] = []
 
-  /// Elements removed since last update.
-  public var removed: [Exactmac_V1_Element] = []
+  /// Elements removed since the last update.
+  public var removedElements: [Exactmac_V1_Element] = []
 
-  /// Elements modified since last update.
-  public var modified: [Exactmac_V1_ModifiedElement] = []
+  /// Elements modified since the last update.
+  public var modifiedElements: [Exactmac_V1_ModifiedElement] = []
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -744,9 +763,9 @@ public nonisolated struct Exactmac_V1_FindElementsRequest: Sendable {
   /// Maximum number of elements to return.
   public var pageSize: Int32 = 0
 
-  /// Page token from a previous FindElements call.
-  /// This token is opaque and its structure must not be relied upon by clients.
-  /// Only its presence or absence should be used to determine pagination state.
+  /// Page token from a previous call. The token is bound to the other semantic
+  /// query inputs, not page_size or skip; clients may change either when continuing.
+  /// Its structure is opaque and must not be relied upon by clients.
   public var pageToken: String = String()
 
   /// Whether to search only visible elements.
@@ -762,7 +781,13 @@ public nonisolated struct Exactmac_V1_FindElementsRequest: Sendable {
   /// Element IDs returned by this call are guaranteed fresh; any callers
   /// holding previously-issued element IDs must re-resolve them with
   /// get_element or a subsequent find_elements.
-  public var forceRefresh: Bool = false
+  public var cacheBypass: Bool = false
+
+  /// Number of individual resources to skip before returning this page.
+  /// A continuation adds this value to the position encoded by page_token.
+  /// If the requested position is beyond the collection, return an empty page
+  /// without a next_page_token.
+  public var skip: Int32 = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -824,9 +849,9 @@ public nonisolated struct Exactmac_V1_FindRegionElementsRequest: Sendable {
   /// Maximum number of elements to return.
   public var pageSize: Int32 = 0
 
-  /// Page token from a previous call.
-  /// This token is opaque and its structure must not be relied upon by clients.
-  /// Only its presence or absence should be used to determine pagination state.
+  /// Page token from a previous call. The token is bound to the other semantic
+  /// query inputs, not page_size or skip; clients may change either when continuing.
+  /// Its structure is opaque and must not be relied upon by clients.
   public var pageToken: String = String()
 
   /// If true, the server discards any cached element data for the target
@@ -839,7 +864,13 @@ public nonisolated struct Exactmac_V1_FindRegionElementsRequest: Sendable {
   /// state. Element IDs returned by this call are guaranteed fresh; any
   /// callers holding previously-issued element IDs must re-resolve them
   /// with get_element or a subsequent find_region_elements.
-  public var forceRefresh: Bool = false
+  public var cacheBypass: Bool = false
+
+  /// Number of individual resources to skip before returning this page.
+  /// A continuation adds this value to the position encoded by page_token.
+  /// If the requested position is beyond the collection, return an empty page
+  /// without a next_page_token.
+  public var skip: Int32 = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -896,9 +927,16 @@ public nonisolated struct Exactmac_V1_ListElementsRequest: Sendable {
   /// above 1000 are coerced to 1000; negative values are invalid.
   public var pageSize: Int32 = 0
 
-  /// Opaque token from a previous ListElements request. The parent must match
-  /// the request that produced the token.
+  /// Page token from a previous call. The token is bound to the other semantic
+  /// query inputs, not page_size or skip; clients may change either when continuing.
+  /// Its structure is opaque and must not be relied upon by clients.
   public var pageToken: String = String()
+
+  /// Number of individual resources to skip before returning this page.
+  /// A continuation adds this value to the position encoded by page_token.
+  /// If the requested position is beyond the collection, return an empty page
+  /// without a next_page_token.
+  public var skip: Int32 = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -1464,21 +1502,21 @@ public nonisolated struct Exactmac_V1_StateCondition: Sendable {
   }
 
   /// Wait for element text to match.
-  public var textEquals: String {
+  public var text: String {
     get {
-      if case .textEquals(let v)? = condition {return v}
+      if case .text(let v)? = condition {return v}
       return String()
     }
-    set {condition = .textEquals(newValue)}
+    set {condition = .text(newValue)}
   }
 
-  /// Wait for element text to contain substring.
-  public var textContains: String {
+  /// Wait for element text to contain a substring.
+  public var textSubstring: String {
     get {
-      if case .textContains(let v)? = condition {return v}
+      if case .textSubstring(let v)? = condition {return v}
       return String()
     }
-    set {condition = .textContains(newValue)}
+    set {condition = .textSubstring(newValue)}
   }
 
   /// Wait for element to have specific attribute value.
@@ -1499,9 +1537,9 @@ public nonisolated struct Exactmac_V1_StateCondition: Sendable {
     /// Wait for element to be focused.
     case focused(Bool)
     /// Wait for element text to match.
-    case textEquals(String)
-    /// Wait for element text to contain substring.
-    case textContains(String)
+    case text(String)
+    /// Wait for element text to contain a substring.
+    case textSubstring(String)
     /// Wait for element to have specific attribute value.
     case attribute(Exactmac_V1_AttributeCondition)
 
@@ -1602,9 +1640,9 @@ public nonisolated struct Exactmac_V1_ListWindowsRequest: Sendable {
   /// that produced the token.
   public var pageSize: Int32 = 0
 
-  /// Page token from a previous ListWindows call.
-  /// This token is opaque and its structure must not be relied upon by clients.
-  /// Only its presence or absence should be used to determine pagination state.
+  /// Page token from a previous call. The token is bound to the other semantic
+  /// query inputs, not page_size or skip; clients may change either when continuing.
+  /// Its structure is opaque and must not be relied upon by clients.
   public var pageToken: String = String()
 
   /// Ordering specification. Supported fields are name, title, and layer in a
@@ -1616,6 +1654,12 @@ public nonisolated struct Exactmac_V1_ListWindowsRequest: Sendable {
   /// equality with the * wildcard and visible=true/false;
   /// multiple conditions use whitespace or AND semantics.
   public var filter: String = String()
+
+  /// Number of individual resources to skip before returning this page.
+  /// A continuation adds this value to the position encoded by page_token.
+  /// If the requested position is beyond the collection, return an empty page
+  /// without a next_page_token.
+  public var skip: Int32 = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -1858,10 +1902,16 @@ public nonisolated struct Exactmac_V1_ListObservationsRequest: Sendable {
   /// Maximum number of observations to return.
   public var pageSize: Int32 = 0
 
-  /// Page token from a previous ListObservations call.
-  /// This token is opaque and its structure must not be relied upon by clients.
-  /// Only its presence or absence should be used to determine pagination state.
+  /// Page token from a previous call. The token is bound to the other semantic
+  /// query inputs, not page_size or skip; clients may change either when continuing.
+  /// Its structure is opaque and must not be relied upon by clients.
   public var pageToken: String = String()
+
+  /// Number of individual resources to skip before returning this page.
+  /// A continuation adds this value to the position encoded by page_token.
+  /// If the requested position is beyond the collection, return an empty page
+  /// without a next_page_token.
+  public var skip: Int32 = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -1987,10 +2037,16 @@ public nonisolated struct Exactmac_V1_ListSessionsRequest: Sendable {
   /// Maximum number of sessions to return.
   public var pageSize: Int32 = 0
 
-  /// Page token from a previous ListSessions call.
-  /// This token is opaque and its structure must not be relied upon by clients.
-  /// Only its presence or absence should be used to determine pagination state.
+  /// Page token from a previous call. The token is bound to the other semantic
+  /// query inputs, not page_size or skip; clients may change either when continuing.
+  /// Its structure is opaque and must not be relied upon by clients.
   public var pageToken: String = String()
+
+  /// Number of individual resources to skip before returning this page.
+  /// A continuation adds this value to the position encoded by page_token.
+  /// If the requested position is beyond the collection, return an empty page
+  /// without a next_page_token.
+  public var skip: Int32 = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -2082,10 +2138,16 @@ public nonisolated struct Exactmac_V1_ListMacrosRequest: Sendable {
   /// Maximum number of macros to return.
   public var pageSize: Int32 = 0
 
-  /// Page token from a previous ListMacros call.
-  /// This token is opaque and its structure must not be relied upon by clients.
-  /// Only its presence or absence should be used to determine pagination state.
+  /// Page token from a previous call. The token is bound to the other semantic
+  /// query inputs, not page_size or skip; clients may change either when continuing.
+  /// Its structure is opaque and must not be relied upon by clients.
   public var pageToken: String = String()
+
+  /// Number of individual resources to skip before returning this page.
+  /// A continuation adds this value to the position encoded by page_token.
+  /// If the requested position is beyond the collection, return an empty page
+  /// without a next_page_token.
+  public var skip: Int32 = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -2221,7 +2283,7 @@ public nonisolated struct Exactmac_V1_ExecuteMacroResponse: Sendable {
   public var success: Bool = false
 
   /// Number of actions executed.
-  public var actionsExecuted: Int32 = 0
+  public var executedActionCount: Int32 = 0
 
   /// Execution duration.
   public var executionDuration: SwiftProtobuf.Google_Protobuf_Duration {
@@ -2236,8 +2298,8 @@ public nonisolated struct Exactmac_V1_ExecuteMacroResponse: Sendable {
   /// Error message if failed.
   public var error: String = String()
 
-  /// Execution log (if recording was enabled).
-  public var log: [Exactmac_V1_ExecutionLogEntry] = []
+  /// Execution log entries.
+  public var logEntries: [Exactmac_V1_ExecutionLogEntry] = []
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -2256,7 +2318,7 @@ public nonisolated struct Exactmac_V1_ExecuteMacroMetadata: Sendable {
   public var macro: String = String()
 
   /// Current action index.
-  public var currentAction: Int32 = 0
+  public var currentActionIndex: Int32 = 0
 
   /// Total actions in macro.
   public var totalActions: Int32 = 0
@@ -2433,8 +2495,8 @@ public nonisolated struct Exactmac_V1_CaptureScreenshotRequest: Sendable {
   /// effective default quality of 85.
   public var quality: Int32 = 0
 
-  /// Whether to include OCR text extraction.
-  public var includeOcrText: Bool = false
+  /// Whether to enable OCR text extraction.
+  public var ocrEnabled: Bool = false
 
   /// Exact display resource to capture. If omitted, captures the main display.
   public var display: String = String()
@@ -2450,7 +2512,8 @@ public nonisolated struct Exactmac_V1_CaptureScreenshotResponse: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Image data (encoded according to format).
+  /// Image data (encoded according to format). PNG and TIFF preserve source
+  /// alpha when present; JPEG discards alpha because JPEG is opaque-only.
   public var imageData: Data = Data()
 
   /// Image format used.
@@ -2534,10 +2597,10 @@ public nonisolated struct Exactmac_V1_CaptureWindowScreenshotRequest: Sendable {
   public var quality: Int32 = 0
 
   /// Whether to include window shadow.
-  public var includeShadow: Bool = false
+  public var shadowEnabled: Bool = false
 
   /// Whether to include OCR text extraction.
-  public var includeOcrText: Bool = false
+  public var ocrEnabled: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -2550,7 +2613,8 @@ public nonisolated struct Exactmac_V1_CaptureWindowScreenshotResponse: @unchecke
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Image data (encoded according to format).
+  /// Image data (encoded according to format). PNG and TIFF preserve source
+  /// alpha when present; JPEG discards alpha because JPEG is opaque-only.
   public var imageData: Data {
     get {_storage._imageData}
     set {_uniqueStorage()._imageData = newValue}
@@ -2685,7 +2749,7 @@ public nonisolated struct Exactmac_V1_CaptureElementScreenshotRequest: Sendable 
   public var padding: Int32 = 0
 
   /// Whether to include OCR text extraction.
-  public var includeOcrText: Bool = false
+  public var ocrEnabled: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -2698,7 +2762,8 @@ public nonisolated struct Exactmac_V1_CaptureElementScreenshotResponse: @uncheck
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Image data (encoded according to format).
+  /// Image data (encoded according to format). PNG and TIFF preserve source
+  /// alpha when present; JPEG discards alpha because JPEG is opaque-only.
   public var imageData: Data {
     get {_storage._imageData}
     set {_uniqueStorage()._imageData = newValue}
@@ -2846,8 +2911,8 @@ public nonisolated struct Exactmac_V1_CaptureRegionScreenshotRequest: Sendable {
   /// effective default quality of 85.
   public var quality: Int32 = 0
 
-  /// Whether to include OCR text extraction.
-  public var includeOcrText: Bool = false
+  /// Whether to enable OCR text extraction.
+  public var ocrEnabled: Bool = false
 
   /// Exact display resource containing the region. If omitted, the display is
   /// inferred from the region in Global Display Coordinates (top-left origin).
@@ -2866,7 +2931,8 @@ public nonisolated struct Exactmac_V1_CaptureRegionScreenshotResponse: Sendable 
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Image data (encoded according to format).
+  /// Image data (encoded according to format). PNG and TIFF preserve source
+  /// alpha when present; JPEG discards alpha because JPEG is opaque-only.
   public var imageData: Data = Data()
 
   /// Image format used.
@@ -3035,7 +3101,7 @@ public nonisolated struct Exactmac_V1_GetClipboardHistoryRequest: Sendable {
   // methods supported on all messages.
 
   /// The name of the clipboard history resource.
-  /// Format: clipboard/history (singleton)
+  /// Format: clipboardHistory (singleton)
   public var name: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -3065,7 +3131,7 @@ public nonisolated struct Exactmac_V1_AutomateOpenFileDialogRequest: Sendable {
   public var timeout: Double = 0
 
   /// Whether to allow multiple file selection.
-  public var allowMultiple: Bool = false
+  public var multipleSelection: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -3114,7 +3180,7 @@ public nonisolated struct Exactmac_V1_AutomateSaveFileDialogRequest: Sendable {
   public var timeout: Double = 0
 
   /// Whether to confirm overwrite.
-  public var confirmOverwrite: Bool = false
+  public var overwriteConfirmation: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -3161,7 +3227,7 @@ public nonisolated struct Exactmac_V1_ExecuteAppleScriptRequest: Sendable {
   public mutating func clearTimeout() {self._timeout = nil}
 
   /// Whether to compile the script (for validation).
-  public var compileOnly: Bool = false
+  public var validationOnly: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -3222,7 +3288,7 @@ public nonisolated struct Exactmac_V1_ExecuteJavaScriptRequest: Sendable {
   public mutating func clearTimeout() {self._timeout = nil}
 
   /// Whether to compile the script (for validation).
-  public var compileOnly: Bool = false
+  public var validationOnly: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -3279,7 +3345,7 @@ public nonisolated struct Exactmac_V1_ExecuteShellCommandRequest: Sendable {
   public var workingDirectory: String = String()
 
   /// Environment variables (key-value pairs).
-  public var environment: Dictionary<String,String> = [:]
+  public var environmentVariables: Dictionary<String,String> = [:]
 
   /// Timeout for command execution.
   public var timeout: SwiftProtobuf.Google_Protobuf_Duration {
@@ -3380,13 +3446,13 @@ public nonisolated struct Exactmac_V1_ValidateScriptResponse: Sendable {
 }
 
 /// Request to get available scripting dictionaries.
-public nonisolated struct Exactmac_V1_GetScriptingDictionariesRequest: Sendable {
+public nonisolated struct Exactmac_V1_GetScriptingDictionaryCatalogRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// The name of the scripting dictionaries resource.
-  /// Format: scriptingDictionaries (singleton)
+  /// The name of the scripting dictionary catalog resource.
+  /// Format: scriptingDictionaryCatalog (singleton)
   public var name: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -3451,7 +3517,7 @@ nonisolated extension Exactmac_V1_GetApplicationBundleRequest: SwiftProtobuf.Mes
 
 nonisolated extension Exactmac_V1_ListApplicationBundlesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListApplicationBundlesRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{3}order_by\0\u{1}filter\0\u{1}view\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{3}order_by\0\u{1}filter\0\u{1}view\0\u{1}skip\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3464,6 +3530,7 @@ nonisolated extension Exactmac_V1_ListApplicationBundlesRequest: SwiftProtobuf.M
       case 3: try { try decoder.decodeSingularStringField(value: &self.orderBy) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.filter) }()
       case 5: try { try decoder.decodeSingularEnumField(value: &self.view) }()
+      case 6: try { try decoder.decodeSingularInt32Field(value: &self.skip) }()
       default: break
       }
     }
@@ -3485,6 +3552,9 @@ nonisolated extension Exactmac_V1_ListApplicationBundlesRequest: SwiftProtobuf.M
     if self.view != .unspecified {
       try visitor.visitSingularEnumField(value: self.view, fieldNumber: 5)
     }
+    if self.skip != 0 {
+      try visitor.visitSingularInt32Field(value: self.skip, fieldNumber: 6)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -3494,6 +3564,7 @@ nonisolated extension Exactmac_V1_ListApplicationBundlesRequest: SwiftProtobuf.M
     if lhs.orderBy != rhs.orderBy {return false}
     if lhs.filter != rhs.filter {return false}
     if lhs.view != rhs.view {return false}
+    if lhs.skip != rhs.skip {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -3615,7 +3686,7 @@ nonisolated extension Exactmac_V1_OpenApplicationResponse: SwiftProtobuf.Message
 
 nonisolated extension Exactmac_V1_GetApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetApplicationRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{2}\u{2}view\0\u{b}read_mask\0\u{c}\u{2}\u{1}")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}view\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3624,7 +3695,7 @@ nonisolated extension Exactmac_V1_GetApplicationRequest: SwiftProtobuf.Message, 
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      case 3: try { try decoder.decodeSingularEnumField(value: &self.view) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.view) }()
       default: break
       }
     }
@@ -3635,7 +3706,7 @@ nonisolated extension Exactmac_V1_GetApplicationRequest: SwiftProtobuf.Message, 
       try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
     if self.view != .unspecified {
-      try visitor.visitSingularEnumField(value: self.view, fieldNumber: 3)
+      try visitor.visitSingularEnumField(value: self.view, fieldNumber: 2)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -3650,7 +3721,7 @@ nonisolated extension Exactmac_V1_GetApplicationRequest: SwiftProtobuf.Message, 
 
 nonisolated extension Exactmac_V1_ListApplicationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListApplicationsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{3}order_by\0\u{1}filter\0\u{1}view\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{3}order_by\0\u{1}filter\0\u{1}view\0\u{1}skip\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3663,6 +3734,7 @@ nonisolated extension Exactmac_V1_ListApplicationsRequest: SwiftProtobuf.Message
       case 3: try { try decoder.decodeSingularStringField(value: &self.orderBy) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.filter) }()
       case 5: try { try decoder.decodeSingularEnumField(value: &self.view) }()
+      case 6: try { try decoder.decodeSingularInt32Field(value: &self.skip) }()
       default: break
       }
     }
@@ -3684,6 +3756,9 @@ nonisolated extension Exactmac_V1_ListApplicationsRequest: SwiftProtobuf.Message
     if self.view != .unspecified {
       try visitor.visitSingularEnumField(value: self.view, fieldNumber: 5)
     }
+    if self.skip != 0 {
+      try visitor.visitSingularInt32Field(value: self.skip, fieldNumber: 6)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -3693,6 +3768,7 @@ nonisolated extension Exactmac_V1_ListApplicationsRequest: SwiftProtobuf.Message
     if lhs.orderBy != rhs.orderBy {return false}
     if lhs.filter != rhs.filter {return false}
     if lhs.view != rhs.view {return false}
+    if lhs.skip != rhs.skip {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -3952,7 +4028,7 @@ nonisolated extension Exactmac_V1_GetInputRequest: SwiftProtobuf.Message, SwiftP
 
 nonisolated extension Exactmac_V1_ListInputsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListInputsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0\u{1}filter\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0\u{1}filter\0\u{1}skip\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3964,6 +4040,7 @@ nonisolated extension Exactmac_V1_ListInputsRequest: SwiftProtobuf.Message, Swif
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.filter) }()
+      case 5: try { try decoder.decodeSingularInt32Field(value: &self.skip) }()
       default: break
       }
     }
@@ -3982,6 +4059,9 @@ nonisolated extension Exactmac_V1_ListInputsRequest: SwiftProtobuf.Message, Swif
     if !self.filter.isEmpty {
       try visitor.visitSingularStringField(value: self.filter, fieldNumber: 4)
     }
+    if self.skip != 0 {
+      try visitor.visitSingularInt32Field(value: self.skip, fieldNumber: 5)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -3990,6 +4070,7 @@ nonisolated extension Exactmac_V1_ListInputsRequest: SwiftProtobuf.Message, Swif
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
     if lhs.filter != rhs.filter {return false}
+    if lhs.skip != rhs.skip {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -4032,7 +4113,7 @@ nonisolated extension Exactmac_V1_ListInputsResponse: SwiftProtobuf.Message, Swi
 
 nonisolated extension Exactmac_V1_TraverseAccessibilityRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".TraverseAccessibilityRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}visible_only\0\u{b}activate\0\u{c}\u{3}\u{1}")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}visible_only\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -4067,7 +4148,7 @@ nonisolated extension Exactmac_V1_TraverseAccessibilityRequest: SwiftProtobuf.Me
 
 nonisolated extension Exactmac_V1_TraverseAccessibilityResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".TraverseAccessibilityResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}app\0\u{1}elements\0\u{1}stats\0\u{3}processing_time\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{1}elements\0\u{1}stats\0\u{3}processing_time\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -4075,7 +4156,7 @@ nonisolated extension Exactmac_V1_TraverseAccessibilityResponse: SwiftProtobuf.M
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.app) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.application) }()
       case 2: try { try decoder.decodeRepeatedMessageField(value: &self.elements) }()
       case 3: try { try decoder.decodeSingularMessageField(value: &self._stats) }()
       case 4: try { try decoder.decodeSingularMessageField(value: &self._processingTime) }()
@@ -4089,8 +4170,8 @@ nonisolated extension Exactmac_V1_TraverseAccessibilityResponse: SwiftProtobuf.M
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.app.isEmpty {
-      try visitor.visitSingularStringField(value: self.app, fieldNumber: 1)
+    if !self.application.isEmpty {
+      try visitor.visitSingularStringField(value: self.application, fieldNumber: 1)
     }
     if !self.elements.isEmpty {
       try visitor.visitRepeatedMessageField(value: self.elements, fieldNumber: 2)
@@ -4105,7 +4186,7 @@ nonisolated extension Exactmac_V1_TraverseAccessibilityResponse: SwiftProtobuf.M
   }
 
   public static func ==(lhs: Exactmac_V1_TraverseAccessibilityResponse, rhs: Exactmac_V1_TraverseAccessibilityResponse) -> Bool {
-    if lhs.app != rhs.app {return false}
+    if lhs.application != rhs.application {return false}
     if lhs.elements != rhs.elements {return false}
     if lhs._stats != rhs._stats {return false}
     if lhs._processingTime != rhs._processingTime {return false}
@@ -4156,7 +4237,7 @@ nonisolated extension Exactmac_V1_WatchAccessibilityRequest: SwiftProtobuf.Messa
 
 nonisolated extension Exactmac_V1_WatchAccessibilityResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WatchAccessibilityResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}added\0\u{1}removed\0\u{1}modified\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}added_elements\0\u{3}removed_elements\0\u{3}modified_elements\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -4164,31 +4245,31 @@ nonisolated extension Exactmac_V1_WatchAccessibilityResponse: SwiftProtobuf.Mess
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.added) }()
-      case 2: try { try decoder.decodeRepeatedMessageField(value: &self.removed) }()
-      case 3: try { try decoder.decodeRepeatedMessageField(value: &self.modified) }()
+      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.addedElements) }()
+      case 2: try { try decoder.decodeRepeatedMessageField(value: &self.removedElements) }()
+      case 3: try { try decoder.decodeRepeatedMessageField(value: &self.modifiedElements) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.added.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.added, fieldNumber: 1)
+    if !self.addedElements.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.addedElements, fieldNumber: 1)
     }
-    if !self.removed.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.removed, fieldNumber: 2)
+    if !self.removedElements.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.removedElements, fieldNumber: 2)
     }
-    if !self.modified.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.modified, fieldNumber: 3)
+    if !self.modifiedElements.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.modifiedElements, fieldNumber: 3)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Exactmac_V1_WatchAccessibilityResponse, rhs: Exactmac_V1_WatchAccessibilityResponse) -> Bool {
-    if lhs.added != rhs.added {return false}
-    if lhs.removed != rhs.removed {return false}
-    if lhs.modified != rhs.modified {return false}
+    if lhs.addedElements != rhs.addedElements {return false}
+    if lhs.removedElements != rhs.removedElements {return false}
+    if lhs.modifiedElements != rhs.modifiedElements {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -4280,7 +4361,7 @@ nonisolated extension Exactmac_V1_ModifiedElement: SwiftProtobuf.Message, SwiftP
 
 nonisolated extension Exactmac_V1_FindElementsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".FindElementsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}selector\0\u{3}page_size\0\u{3}page_token\0\u{3}visible_only\0\u{3}force_refresh\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}selector\0\u{3}page_size\0\u{3}page_token\0\u{3}visible_only\0\u{3}cache_bypass\0\u{1}skip\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -4293,7 +4374,8 @@ nonisolated extension Exactmac_V1_FindElementsRequest: SwiftProtobuf.Message, Sw
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
       case 5: try { try decoder.decodeSingularBoolField(value: &self.visibleOnly) }()
-      case 6: try { try decoder.decodeSingularBoolField(value: &self.forceRefresh) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.cacheBypass) }()
+      case 7: try { try decoder.decodeSingularInt32Field(value: &self.skip) }()
       default: break
       }
     }
@@ -4319,8 +4401,11 @@ nonisolated extension Exactmac_V1_FindElementsRequest: SwiftProtobuf.Message, Sw
     if self.visibleOnly != false {
       try visitor.visitSingularBoolField(value: self.visibleOnly, fieldNumber: 5)
     }
-    if self.forceRefresh != false {
-      try visitor.visitSingularBoolField(value: self.forceRefresh, fieldNumber: 6)
+    if self.cacheBypass != false {
+      try visitor.visitSingularBoolField(value: self.cacheBypass, fieldNumber: 6)
+    }
+    if self.skip != 0 {
+      try visitor.visitSingularInt32Field(value: self.skip, fieldNumber: 7)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -4331,7 +4416,8 @@ nonisolated extension Exactmac_V1_FindElementsRequest: SwiftProtobuf.Message, Sw
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
     if lhs.visibleOnly != rhs.visibleOnly {return false}
-    if lhs.forceRefresh != rhs.forceRefresh {return false}
+    if lhs.cacheBypass != rhs.cacheBypass {return false}
+    if lhs.skip != rhs.skip {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -4374,7 +4460,7 @@ nonisolated extension Exactmac_V1_FindElementsResponse: SwiftProtobuf.Message, S
 
 nonisolated extension Exactmac_V1_FindRegionElementsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".FindRegionElementsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}region\0\u{1}selector\0\u{3}page_size\0\u{3}page_token\0\u{3}force_refresh\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}region\0\u{1}selector\0\u{3}page_size\0\u{3}page_token\0\u{3}cache_bypass\0\u{1}skip\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -4387,7 +4473,8 @@ nonisolated extension Exactmac_V1_FindRegionElementsRequest: SwiftProtobuf.Messa
       case 3: try { try decoder.decodeSingularMessageField(value: &self._selector) }()
       case 4: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 5: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
-      case 6: try { try decoder.decodeSingularBoolField(value: &self.forceRefresh) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.cacheBypass) }()
+      case 7: try { try decoder.decodeSingularInt32Field(value: &self.skip) }()
       default: break
       }
     }
@@ -4413,8 +4500,11 @@ nonisolated extension Exactmac_V1_FindRegionElementsRequest: SwiftProtobuf.Messa
     if !self.pageToken.isEmpty {
       try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 5)
     }
-    if self.forceRefresh != false {
-      try visitor.visitSingularBoolField(value: self.forceRefresh, fieldNumber: 6)
+    if self.cacheBypass != false {
+      try visitor.visitSingularBoolField(value: self.cacheBypass, fieldNumber: 6)
+    }
+    if self.skip != 0 {
+      try visitor.visitSingularInt32Field(value: self.skip, fieldNumber: 7)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -4425,7 +4515,8 @@ nonisolated extension Exactmac_V1_FindRegionElementsRequest: SwiftProtobuf.Messa
     if lhs._selector != rhs._selector {return false}
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
-    if lhs.forceRefresh != rhs.forceRefresh {return false}
+    if lhs.cacheBypass != rhs.cacheBypass {return false}
+    if lhs.skip != rhs.skip {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -4498,7 +4589,7 @@ nonisolated extension Exactmac_V1_GetElementRequest: SwiftProtobuf.Message, Swif
 
 nonisolated extension Exactmac_V1_ListElementsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListElementsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0\u{1}skip\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -4509,6 +4600,7 @@ nonisolated extension Exactmac_V1_ListElementsRequest: SwiftProtobuf.Message, Sw
       case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.skip) }()
       default: break
       }
     }
@@ -4524,6 +4616,9 @@ nonisolated extension Exactmac_V1_ListElementsRequest: SwiftProtobuf.Message, Sw
     if !self.pageToken.isEmpty {
       try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 3)
     }
+    if self.skip != 0 {
+      try visitor.visitSingularInt32Field(value: self.skip, fieldNumber: 4)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -4531,6 +4626,7 @@ nonisolated extension Exactmac_V1_ListElementsRequest: SwiftProtobuf.Message, Sw
     if lhs.parent != rhs.parent {return false}
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
+    if lhs.skip != rhs.skip {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -5198,7 +5294,7 @@ nonisolated extension Exactmac_V1_WaitElementStateRequest: SwiftProtobuf.Message
 
 nonisolated extension Exactmac_V1_StateCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".StateCondition"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}enabled\0\u{1}focused\0\u{3}text_equals\0\u{3}text_contains\0\u{1}attribute\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}enabled\0\u{1}focused\0\u{1}text\0\u{3}text_substring\0\u{1}attribute\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -5227,7 +5323,7 @@ nonisolated extension Exactmac_V1_StateCondition: SwiftProtobuf.Message, SwiftPr
         try decoder.decodeSingularStringField(value: &v)
         if let v = v {
           if self.condition != nil {try decoder.handleConflictingOneOf()}
-          self.condition = .textEquals(v)
+          self.condition = .text(v)
         }
       }()
       case 4: try {
@@ -5235,7 +5331,7 @@ nonisolated extension Exactmac_V1_StateCondition: SwiftProtobuf.Message, SwiftPr
         try decoder.decodeSingularStringField(value: &v)
         if let v = v {
           if self.condition != nil {try decoder.handleConflictingOneOf()}
-          self.condition = .textContains(v)
+          self.condition = .textSubstring(v)
         }
       }()
       case 5: try {
@@ -5270,12 +5366,12 @@ nonisolated extension Exactmac_V1_StateCondition: SwiftProtobuf.Message, SwiftPr
       guard case .focused(let v)? = self.condition else { preconditionFailure() }
       try visitor.visitSingularBoolField(value: v, fieldNumber: 2)
     }()
-    case .textEquals?: try {
-      guard case .textEquals(let v)? = self.condition else { preconditionFailure() }
+    case .text?: try {
+      guard case .text(let v)? = self.condition else { preconditionFailure() }
       try visitor.visitSingularStringField(value: v, fieldNumber: 3)
     }()
-    case .textContains?: try {
-      guard case .textContains(let v)? = self.condition else { preconditionFailure() }
+    case .textSubstring?: try {
+      guard case .textSubstring(let v)? = self.condition else { preconditionFailure() }
       try visitor.visitSingularStringField(value: v, fieldNumber: 4)
     }()
     case .attribute?: try {
@@ -5408,7 +5504,7 @@ nonisolated extension Exactmac_V1_GetWindowRequest: SwiftProtobuf.Message, Swift
 
 nonisolated extension Exactmac_V1_ListWindowsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListWindowsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0\u{3}order_by\0\u{1}filter\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0\u{3}order_by\0\u{1}filter\0\u{1}skip\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -5421,6 +5517,7 @@ nonisolated extension Exactmac_V1_ListWindowsRequest: SwiftProtobuf.Message, Swi
       case 3: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.orderBy) }()
       case 5: try { try decoder.decodeSingularStringField(value: &self.filter) }()
+      case 6: try { try decoder.decodeSingularInt32Field(value: &self.skip) }()
       default: break
       }
     }
@@ -5442,6 +5539,9 @@ nonisolated extension Exactmac_V1_ListWindowsRequest: SwiftProtobuf.Message, Swi
     if !self.filter.isEmpty {
       try visitor.visitSingularStringField(value: self.filter, fieldNumber: 5)
     }
+    if self.skip != 0 {
+      try visitor.visitSingularInt32Field(value: self.skip, fieldNumber: 6)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -5451,6 +5551,7 @@ nonisolated extension Exactmac_V1_ListWindowsRequest: SwiftProtobuf.Message, Swi
     if lhs.pageToken != rhs.pageToken {return false}
     if lhs.orderBy != rhs.orderBy {return false}
     if lhs.filter != rhs.filter {return false}
+    if lhs.skip != rhs.skip {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -5871,7 +5972,7 @@ nonisolated extension Exactmac_V1_GetObservationRequest: SwiftProtobuf.Message, 
 
 nonisolated extension Exactmac_V1_ListObservationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListObservationsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0\u{1}skip\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -5882,6 +5983,7 @@ nonisolated extension Exactmac_V1_ListObservationsRequest: SwiftProtobuf.Message
       case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.skip) }()
       default: break
       }
     }
@@ -5897,6 +5999,9 @@ nonisolated extension Exactmac_V1_ListObservationsRequest: SwiftProtobuf.Message
     if !self.pageToken.isEmpty {
       try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 3)
     }
+    if self.skip != 0 {
+      try visitor.visitSingularInt32Field(value: self.skip, fieldNumber: 4)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -5904,6 +6009,7 @@ nonisolated extension Exactmac_V1_ListObservationsRequest: SwiftProtobuf.Message
     if lhs.parent != rhs.parent {return false}
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
+    if lhs.skip != rhs.skip {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -6109,7 +6215,7 @@ nonisolated extension Exactmac_V1_GetSessionRequest: SwiftProtobuf.Message, Swif
 
 nonisolated extension Exactmac_V1_ListSessionsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListSessionsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{1}skip\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -6119,6 +6225,7 @@ nonisolated extension Exactmac_V1_ListSessionsRequest: SwiftProtobuf.Message, Sw
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.skip) }()
       default: break
       }
     }
@@ -6131,12 +6238,16 @@ nonisolated extension Exactmac_V1_ListSessionsRequest: SwiftProtobuf.Message, Sw
     if !self.pageToken.isEmpty {
       try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 2)
     }
+    if self.skip != 0 {
+      try visitor.visitSingularInt32Field(value: self.skip, fieldNumber: 3)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Exactmac_V1_ListSessionsRequest, rhs: Exactmac_V1_ListSessionsRequest) -> Bool {
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
+    if lhs.skip != rhs.skip {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -6283,7 +6394,7 @@ nonisolated extension Exactmac_V1_GetMacroRequest: SwiftProtobuf.Message, SwiftP
 
 nonisolated extension Exactmac_V1_ListMacrosRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListMacrosRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{1}skip\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -6293,6 +6404,7 @@ nonisolated extension Exactmac_V1_ListMacrosRequest: SwiftProtobuf.Message, Swif
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.skip) }()
       default: break
       }
     }
@@ -6305,12 +6417,16 @@ nonisolated extension Exactmac_V1_ListMacrosRequest: SwiftProtobuf.Message, Swif
     if !self.pageToken.isEmpty {
       try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 2)
     }
+    if self.skip != 0 {
+      try visitor.visitSingularInt32Field(value: self.skip, fieldNumber: 3)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Exactmac_V1_ListMacrosRequest, rhs: Exactmac_V1_ListMacrosRequest) -> Bool {
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
+    if lhs.skip != rhs.skip {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -6476,7 +6592,7 @@ nonisolated extension Exactmac_V1_ExecuteMacroRequest: SwiftProtobuf.Message, Sw
 
 nonisolated extension Exactmac_V1_ExecutionOptions: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecutionOptions"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\u{3}timeout\0\u{b}speed\0\u{b}continue_on_error\0\u{b}record_execution\0\u{c}\u{1}\u{1}\u{c}\u{2}\u{1}\u{c}\u{4}\u{1}")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}timeout\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -6484,7 +6600,7 @@ nonisolated extension Exactmac_V1_ExecutionOptions: SwiftProtobuf.Message, Swift
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
+      case 1: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
       default: break
       }
     }
@@ -6492,7 +6608,7 @@ nonisolated extension Exactmac_V1_ExecutionOptions: SwiftProtobuf.Message, Swift
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.timeout.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 3)
+      try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -6506,7 +6622,7 @@ nonisolated extension Exactmac_V1_ExecutionOptions: SwiftProtobuf.Message, Swift
 
 nonisolated extension Exactmac_V1_ExecuteMacroResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteMacroResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}actions_executed\0\u{3}execution_duration\0\u{1}error\0\u{1}log\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}executed_action_count\0\u{3}execution_duration\0\u{1}error\0\u{3}log_entries\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -6515,10 +6631,10 @@ nonisolated extension Exactmac_V1_ExecuteMacroResponse: SwiftProtobuf.Message, S
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      case 2: try { try decoder.decodeSingularInt32Field(value: &self.actionsExecuted) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.executedActionCount) }()
       case 3: try { try decoder.decodeSingularMessageField(value: &self._executionDuration) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.error) }()
-      case 5: try { try decoder.decodeRepeatedMessageField(value: &self.log) }()
+      case 5: try { try decoder.decodeRepeatedMessageField(value: &self.logEntries) }()
       default: break
       }
     }
@@ -6532,8 +6648,8 @@ nonisolated extension Exactmac_V1_ExecuteMacroResponse: SwiftProtobuf.Message, S
     if self.success != false {
       try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
     }
-    if self.actionsExecuted != 0 {
-      try visitor.visitSingularInt32Field(value: self.actionsExecuted, fieldNumber: 2)
+    if self.executedActionCount != 0 {
+      try visitor.visitSingularInt32Field(value: self.executedActionCount, fieldNumber: 2)
     }
     try { if let v = self._executionDuration {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
@@ -6541,18 +6657,18 @@ nonisolated extension Exactmac_V1_ExecuteMacroResponse: SwiftProtobuf.Message, S
     if !self.error.isEmpty {
       try visitor.visitSingularStringField(value: self.error, fieldNumber: 4)
     }
-    if !self.log.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.log, fieldNumber: 5)
+    if !self.logEntries.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.logEntries, fieldNumber: 5)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Exactmac_V1_ExecuteMacroResponse, rhs: Exactmac_V1_ExecuteMacroResponse) -> Bool {
     if lhs.success != rhs.success {return false}
-    if lhs.actionsExecuted != rhs.actionsExecuted {return false}
+    if lhs.executedActionCount != rhs.executedActionCount {return false}
     if lhs._executionDuration != rhs._executionDuration {return false}
     if lhs.error != rhs.error {return false}
-    if lhs.log != rhs.log {return false}
+    if lhs.logEntries != rhs.logEntries {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -6560,7 +6676,7 @@ nonisolated extension Exactmac_V1_ExecuteMacroResponse: SwiftProtobuf.Message, S
 
 nonisolated extension Exactmac_V1_ExecuteMacroMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteMacroMetadata"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}macro\0\u{3}current_action\0\u{3}total_actions\0\u{3}elapsed_duration\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}macro\0\u{3}current_action_index\0\u{3}total_actions\0\u{3}elapsed_duration\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -6569,7 +6685,7 @@ nonisolated extension Exactmac_V1_ExecuteMacroMetadata: SwiftProtobuf.Message, S
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.macro) }()
-      case 2: try { try decoder.decodeSingularInt32Field(value: &self.currentAction) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.currentActionIndex) }()
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.totalActions) }()
       case 4: try { try decoder.decodeSingularMessageField(value: &self._elapsedDuration) }()
       default: break
@@ -6585,8 +6701,8 @@ nonisolated extension Exactmac_V1_ExecuteMacroMetadata: SwiftProtobuf.Message, S
     if !self.macro.isEmpty {
       try visitor.visitSingularStringField(value: self.macro, fieldNumber: 1)
     }
-    if self.currentAction != 0 {
-      try visitor.visitSingularInt32Field(value: self.currentAction, fieldNumber: 2)
+    if self.currentActionIndex != 0 {
+      try visitor.visitSingularInt32Field(value: self.currentActionIndex, fieldNumber: 2)
     }
     if self.totalActions != 0 {
       try visitor.visitSingularInt32Field(value: self.totalActions, fieldNumber: 3)
@@ -6599,7 +6715,7 @@ nonisolated extension Exactmac_V1_ExecuteMacroMetadata: SwiftProtobuf.Message, S
 
   public static func ==(lhs: Exactmac_V1_ExecuteMacroMetadata, rhs: Exactmac_V1_ExecuteMacroMetadata) -> Bool {
     if lhs.macro != rhs.macro {return false}
-    if lhs.currentAction != rhs.currentAction {return false}
+    if lhs.currentActionIndex != rhs.currentActionIndex {return false}
     if lhs.totalActions != rhs.totalActions {return false}
     if lhs._elapsedDuration != rhs._elapsedDuration {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -6802,7 +6918,7 @@ nonisolated extension Exactmac_V1_GetSessionSnapshotRequest: SwiftProtobuf.Messa
 
 nonisolated extension Exactmac_V1_CaptureScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureScreenshotRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}format\0\u{1}quality\0\u{4}\u{2}include_ocr_text\0\u{1}display\0\u{c}\u{3}\u{1}")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}format\0\u{1}quality\0\u{3}ocr_enabled\0\u{1}display\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -6812,8 +6928,8 @@ nonisolated extension Exactmac_V1_CaptureScreenshotRequest: SwiftProtobuf.Messag
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularEnumField(value: &self.format) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.quality) }()
-      case 4: try { try decoder.decodeSingularBoolField(value: &self.includeOcrText) }()
-      case 5: try { try decoder.decodeSingularStringField(value: &self.display) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.ocrEnabled) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.display) }()
       default: break
       }
     }
@@ -6826,11 +6942,11 @@ nonisolated extension Exactmac_V1_CaptureScreenshotRequest: SwiftProtobuf.Messag
     if self.quality != 0 {
       try visitor.visitSingularInt32Field(value: self.quality, fieldNumber: 2)
     }
-    if self.includeOcrText != false {
-      try visitor.visitSingularBoolField(value: self.includeOcrText, fieldNumber: 4)
+    if self.ocrEnabled != false {
+      try visitor.visitSingularBoolField(value: self.ocrEnabled, fieldNumber: 3)
     }
     if !self.display.isEmpty {
-      try visitor.visitSingularStringField(value: self.display, fieldNumber: 5)
+      try visitor.visitSingularStringField(value: self.display, fieldNumber: 4)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -6838,7 +6954,7 @@ nonisolated extension Exactmac_V1_CaptureScreenshotRequest: SwiftProtobuf.Messag
   public static func ==(lhs: Exactmac_V1_CaptureScreenshotRequest, rhs: Exactmac_V1_CaptureScreenshotRequest) -> Bool {
     if lhs.format != rhs.format {return false}
     if lhs.quality != rhs.quality {return false}
-    if lhs.includeOcrText != rhs.includeOcrText {return false}
+    if lhs.ocrEnabled != rhs.ocrEnabled {return false}
     if lhs.display != rhs.display {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -6847,7 +6963,7 @@ nonisolated extension Exactmac_V1_CaptureScreenshotRequest: SwiftProtobuf.Messag
 
 nonisolated extension Exactmac_V1_CaptureScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureScreenshotResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{3}ocr_text\0\u{1}display\0\u{1}region\0\u{1}scale\0\u{3}ocr_error\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{3}ocr_text\0\u{3}ocr_error\0\u{1}display\0\u{1}region\0\u{1}scale\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -6867,10 +6983,7 @@ nonisolated extension Exactmac_V1_CaptureScreenshotResponse: SwiftProtobuf.Messa
           self.ocrResult = .ocrText(v)
         }
       }()
-      case 6: try { try decoder.decodeSingularStringField(value: &self.display) }()
-      case 7: try { try decoder.decodeSingularMessageField(value: &self._region) }()
-      case 8: try { try decoder.decodeSingularDoubleField(value: &self.scale) }()
-      case 9: try {
+      case 6: try {
         var v: Google_Rpc_Status?
         var hadOneofValue = false
         if let current = self.ocrResult {
@@ -6883,6 +6996,9 @@ nonisolated extension Exactmac_V1_CaptureScreenshotResponse: SwiftProtobuf.Messa
           self.ocrResult = .ocrError(v)
         }
       }()
+      case 7: try { try decoder.decodeSingularStringField(value: &self.display) }()
+      case 8: try { try decoder.decodeSingularMessageField(value: &self._region) }()
+      case 9: try { try decoder.decodeSingularDoubleField(value: &self.scale) }()
       default: break
       }
     }
@@ -6905,21 +7021,26 @@ nonisolated extension Exactmac_V1_CaptureScreenshotResponse: SwiftProtobuf.Messa
     if self.height != 0 {
       try visitor.visitSingularInt32Field(value: self.height, fieldNumber: 4)
     }
-    try { if case .ocrText(let v)? = self.ocrResult {
+    switch self.ocrResult {
+    case .ocrText?: try {
+      guard case .ocrText(let v)? = self.ocrResult else { preconditionFailure() }
       try visitor.visitSingularStringField(value: v, fieldNumber: 5)
-    } }()
+    }()
+    case .ocrError?: try {
+      guard case .ocrError(let v)? = self.ocrResult else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+    }()
+    case nil: break
+    }
     if !self.display.isEmpty {
-      try visitor.visitSingularStringField(value: self.display, fieldNumber: 6)
+      try visitor.visitSingularStringField(value: self.display, fieldNumber: 7)
     }
     try { if let v = self._region {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
     } }()
     if self.scale.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.scale, fieldNumber: 8)
+      try visitor.visitSingularDoubleField(value: self.scale, fieldNumber: 9)
     }
-    try { if case .ocrError(let v)? = self.ocrResult {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
-    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -6939,7 +7060,7 @@ nonisolated extension Exactmac_V1_CaptureScreenshotResponse: SwiftProtobuf.Messa
 
 nonisolated extension Exactmac_V1_CaptureWindowScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureWindowScreenshotRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}window\0\u{1}format\0\u{1}quality\0\u{3}include_shadow\0\u{3}include_ocr_text\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}window\0\u{1}format\0\u{1}quality\0\u{3}shadow_enabled\0\u{3}ocr_enabled\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -6950,8 +7071,8 @@ nonisolated extension Exactmac_V1_CaptureWindowScreenshotRequest: SwiftProtobuf.
       case 1: try { try decoder.decodeSingularStringField(value: &self.window) }()
       case 2: try { try decoder.decodeSingularEnumField(value: &self.format) }()
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.quality) }()
-      case 4: try { try decoder.decodeSingularBoolField(value: &self.includeShadow) }()
-      case 5: try { try decoder.decodeSingularBoolField(value: &self.includeOcrText) }()
+      case 4: try { try decoder.decodeSingularBoolField(value: &self.shadowEnabled) }()
+      case 5: try { try decoder.decodeSingularBoolField(value: &self.ocrEnabled) }()
       default: break
       }
     }
@@ -6967,11 +7088,11 @@ nonisolated extension Exactmac_V1_CaptureWindowScreenshotRequest: SwiftProtobuf.
     if self.quality != 0 {
       try visitor.visitSingularInt32Field(value: self.quality, fieldNumber: 3)
     }
-    if self.includeShadow != false {
-      try visitor.visitSingularBoolField(value: self.includeShadow, fieldNumber: 4)
+    if self.shadowEnabled != false {
+      try visitor.visitSingularBoolField(value: self.shadowEnabled, fieldNumber: 4)
     }
-    if self.includeOcrText != false {
-      try visitor.visitSingularBoolField(value: self.includeOcrText, fieldNumber: 5)
+    if self.ocrEnabled != false {
+      try visitor.visitSingularBoolField(value: self.ocrEnabled, fieldNumber: 5)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -6980,8 +7101,8 @@ nonisolated extension Exactmac_V1_CaptureWindowScreenshotRequest: SwiftProtobuf.
     if lhs.window != rhs.window {return false}
     if lhs.format != rhs.format {return false}
     if lhs.quality != rhs.quality {return false}
-    if lhs.includeShadow != rhs.includeShadow {return false}
-    if lhs.includeOcrText != rhs.includeOcrText {return false}
+    if lhs.shadowEnabled != rhs.shadowEnabled {return false}
+    if lhs.ocrEnabled != rhs.ocrEnabled {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -7157,7 +7278,7 @@ nonisolated extension Exactmac_V1_CaptureWindowScreenshotResponse: SwiftProtobuf
 
 nonisolated extension Exactmac_V1_CaptureElementScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureElementScreenshotRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}format\0\u{1}quality\0\u{1}padding\0\u{3}include_ocr_text\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}format\0\u{1}quality\0\u{1}padding\0\u{3}ocr_enabled\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -7170,7 +7291,7 @@ nonisolated extension Exactmac_V1_CaptureElementScreenshotRequest: SwiftProtobuf
       case 3: try { try decoder.decodeSingularEnumField(value: &self.format) }()
       case 4: try { try decoder.decodeSingularInt32Field(value: &self.quality) }()
       case 5: try { try decoder.decodeSingularInt32Field(value: &self.padding) }()
-      case 6: try { try decoder.decodeSingularBoolField(value: &self.includeOcrText) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.ocrEnabled) }()
       default: break
       }
     }
@@ -7192,8 +7313,8 @@ nonisolated extension Exactmac_V1_CaptureElementScreenshotRequest: SwiftProtobuf
     if self.padding != 0 {
       try visitor.visitSingularInt32Field(value: self.padding, fieldNumber: 5)
     }
-    if self.includeOcrText != false {
-      try visitor.visitSingularBoolField(value: self.includeOcrText, fieldNumber: 6)
+    if self.ocrEnabled != false {
+      try visitor.visitSingularBoolField(value: self.ocrEnabled, fieldNumber: 6)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -7204,7 +7325,7 @@ nonisolated extension Exactmac_V1_CaptureElementScreenshotRequest: SwiftProtobuf
     if lhs.format != rhs.format {return false}
     if lhs.quality != rhs.quality {return false}
     if lhs.padding != rhs.padding {return false}
-    if lhs.includeOcrText != rhs.includeOcrText {return false}
+    if lhs.ocrEnabled != rhs.ocrEnabled {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -7394,7 +7515,7 @@ nonisolated extension Exactmac_V1_CaptureElementScreenshotResponse: SwiftProtobu
 
 nonisolated extension Exactmac_V1_CaptureRegionScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureRegionScreenshotRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}region\0\u{1}format\0\u{1}quality\0\u{4}\u{2}include_ocr_text\0\u{1}display\0\u{c}\u{4}\u{1}")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}region\0\u{1}format\0\u{1}quality\0\u{3}ocr_enabled\0\u{1}display\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -7405,8 +7526,8 @@ nonisolated extension Exactmac_V1_CaptureRegionScreenshotRequest: SwiftProtobuf.
       case 1: try { try decoder.decodeSingularMessageField(value: &self._region) }()
       case 2: try { try decoder.decodeSingularEnumField(value: &self.format) }()
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.quality) }()
-      case 5: try { try decoder.decodeSingularBoolField(value: &self.includeOcrText) }()
-      case 6: try { try decoder.decodeSingularStringField(value: &self.display) }()
+      case 4: try { try decoder.decodeSingularBoolField(value: &self.ocrEnabled) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.display) }()
       default: break
       }
     }
@@ -7426,11 +7547,11 @@ nonisolated extension Exactmac_V1_CaptureRegionScreenshotRequest: SwiftProtobuf.
     if self.quality != 0 {
       try visitor.visitSingularInt32Field(value: self.quality, fieldNumber: 3)
     }
-    if self.includeOcrText != false {
-      try visitor.visitSingularBoolField(value: self.includeOcrText, fieldNumber: 5)
+    if self.ocrEnabled != false {
+      try visitor.visitSingularBoolField(value: self.ocrEnabled, fieldNumber: 4)
     }
     if !self.display.isEmpty {
-      try visitor.visitSingularStringField(value: self.display, fieldNumber: 6)
+      try visitor.visitSingularStringField(value: self.display, fieldNumber: 5)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -7439,7 +7560,7 @@ nonisolated extension Exactmac_V1_CaptureRegionScreenshotRequest: SwiftProtobuf.
     if lhs._region != rhs._region {return false}
     if lhs.format != rhs.format {return false}
     if lhs.quality != rhs.quality {return false}
-    if lhs.includeOcrText != rhs.includeOcrText {return false}
+    if lhs.ocrEnabled != rhs.ocrEnabled {return false}
     if lhs.display != rhs.display {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -7448,7 +7569,7 @@ nonisolated extension Exactmac_V1_CaptureRegionScreenshotRequest: SwiftProtobuf.
 
 nonisolated extension Exactmac_V1_CaptureRegionScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureRegionScreenshotResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{1}region\0\u{3}ocr_text\0\u{1}display\0\u{1}scale\0\u{3}ocr_error\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{1}region\0\u{3}ocr_text\0\u{3}ocr_error\0\u{1}display\0\u{1}scale\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -7469,9 +7590,7 @@ nonisolated extension Exactmac_V1_CaptureRegionScreenshotResponse: SwiftProtobuf
           self.ocrResult = .ocrText(v)
         }
       }()
-      case 7: try { try decoder.decodeSingularStringField(value: &self.display) }()
-      case 8: try { try decoder.decodeSingularDoubleField(value: &self.scale) }()
-      case 9: try {
+      case 7: try {
         var v: Google_Rpc_Status?
         var hadOneofValue = false
         if let current = self.ocrResult {
@@ -7484,6 +7603,8 @@ nonisolated extension Exactmac_V1_CaptureRegionScreenshotResponse: SwiftProtobuf
           self.ocrResult = .ocrError(v)
         }
       }()
+      case 8: try { try decoder.decodeSingularStringField(value: &self.display) }()
+      case 9: try { try decoder.decodeSingularDoubleField(value: &self.scale) }()
       default: break
       }
     }
@@ -7509,18 +7630,23 @@ nonisolated extension Exactmac_V1_CaptureRegionScreenshotResponse: SwiftProtobuf
     try { if let v = self._region {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
     } }()
-    try { if case .ocrText(let v)? = self.ocrResult {
+    switch self.ocrResult {
+    case .ocrText?: try {
+      guard case .ocrText(let v)? = self.ocrResult else { preconditionFailure() }
       try visitor.visitSingularStringField(value: v, fieldNumber: 6)
-    } }()
+    }()
+    case .ocrError?: try {
+      guard case .ocrError(let v)? = self.ocrResult else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+    }()
+    case nil: break
+    }
     if !self.display.isEmpty {
-      try visitor.visitSingularStringField(value: self.display, fieldNumber: 7)
+      try visitor.visitSingularStringField(value: self.display, fieldNumber: 8)
     }
     if self.scale.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.scale, fieldNumber: 8)
+      try visitor.visitSingularDoubleField(value: self.scale, fieldNumber: 9)
     }
-    try { if case .ocrError(let v)? = self.ocrResult {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
-    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -7570,7 +7696,7 @@ nonisolated extension Exactmac_V1_GetClipboardRequest: SwiftProtobuf.Message, Sw
 
 nonisolated extension Exactmac_V1_WriteClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WriteClipboardRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}content\0\u{b}clear_existing\0\u{c}\u{2}\u{1}")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}content\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -7721,7 +7847,7 @@ nonisolated extension Exactmac_V1_GetClipboardHistoryRequest: SwiftProtobuf.Mess
 
 nonisolated extension Exactmac_V1_AutomateOpenFileDialogRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AutomateOpenFileDialogRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_path\0\u{3}default_directory\0\u{3}file_filters\0\u{1}timeout\0\u{3}allow_multiple\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_path\0\u{3}default_directory\0\u{3}file_filters\0\u{1}timeout\0\u{3}multiple_selection\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -7734,7 +7860,7 @@ nonisolated extension Exactmac_V1_AutomateOpenFileDialogRequest: SwiftProtobuf.M
       case 3: try { try decoder.decodeSingularStringField(value: &self.defaultDirectory) }()
       case 4: try { try decoder.decodeRepeatedStringField(value: &self.fileFilters) }()
       case 5: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
-      case 6: try { try decoder.decodeSingularBoolField(value: &self.allowMultiple) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.multipleSelection) }()
       default: break
       }
     }
@@ -7756,8 +7882,8 @@ nonisolated extension Exactmac_V1_AutomateOpenFileDialogRequest: SwiftProtobuf.M
     if self.timeout.bitPattern != 0 {
       try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 5)
     }
-    if self.allowMultiple != false {
-      try visitor.visitSingularBoolField(value: self.allowMultiple, fieldNumber: 6)
+    if self.multipleSelection != false {
+      try visitor.visitSingularBoolField(value: self.multipleSelection, fieldNumber: 6)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -7768,7 +7894,7 @@ nonisolated extension Exactmac_V1_AutomateOpenFileDialogRequest: SwiftProtobuf.M
     if lhs.defaultDirectory != rhs.defaultDirectory {return false}
     if lhs.fileFilters != rhs.fileFilters {return false}
     if lhs.timeout != rhs.timeout {return false}
-    if lhs.allowMultiple != rhs.allowMultiple {return false}
+    if lhs.multipleSelection != rhs.multipleSelection {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -7816,7 +7942,7 @@ nonisolated extension Exactmac_V1_AutomateOpenFileDialogResponse: SwiftProtobuf.
 
 nonisolated extension Exactmac_V1_AutomateSaveFileDialogRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AutomateSaveFileDialogRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_path\0\u{3}default_directory\0\u{3}default_filename\0\u{1}timeout\0\u{3}confirm_overwrite\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_path\0\u{3}default_directory\0\u{3}default_filename\0\u{1}timeout\0\u{3}overwrite_confirmation\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -7829,7 +7955,7 @@ nonisolated extension Exactmac_V1_AutomateSaveFileDialogRequest: SwiftProtobuf.M
       case 3: try { try decoder.decodeSingularStringField(value: &self.defaultDirectory) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.defaultFilename) }()
       case 5: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
-      case 6: try { try decoder.decodeSingularBoolField(value: &self.confirmOverwrite) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.overwriteConfirmation) }()
       default: break
       }
     }
@@ -7851,8 +7977,8 @@ nonisolated extension Exactmac_V1_AutomateSaveFileDialogRequest: SwiftProtobuf.M
     if self.timeout.bitPattern != 0 {
       try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 5)
     }
-    if self.confirmOverwrite != false {
-      try visitor.visitSingularBoolField(value: self.confirmOverwrite, fieldNumber: 6)
+    if self.overwriteConfirmation != false {
+      try visitor.visitSingularBoolField(value: self.overwriteConfirmation, fieldNumber: 6)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -7863,7 +7989,7 @@ nonisolated extension Exactmac_V1_AutomateSaveFileDialogRequest: SwiftProtobuf.M
     if lhs.defaultDirectory != rhs.defaultDirectory {return false}
     if lhs.defaultFilename != rhs.defaultFilename {return false}
     if lhs.timeout != rhs.timeout {return false}
-    if lhs.confirmOverwrite != rhs.confirmOverwrite {return false}
+    if lhs.overwriteConfirmation != rhs.overwriteConfirmation {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -7911,7 +8037,7 @@ nonisolated extension Exactmac_V1_AutomateSaveFileDialogResponse: SwiftProtobuf.
 
 nonisolated extension Exactmac_V1_ExecuteAppleScriptRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteAppleScriptRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}script\0\u{1}timeout\0\u{3}compile_only\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}script\0\u{1}timeout\0\u{3}validation_only\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -7921,7 +8047,7 @@ nonisolated extension Exactmac_V1_ExecuteAppleScriptRequest: SwiftProtobuf.Messa
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.script) }()
       case 2: try { try decoder.decodeSingularMessageField(value: &self._timeout) }()
-      case 3: try { try decoder.decodeSingularBoolField(value: &self.compileOnly) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.validationOnly) }()
       default: break
       }
     }
@@ -7938,8 +8064,8 @@ nonisolated extension Exactmac_V1_ExecuteAppleScriptRequest: SwiftProtobuf.Messa
     try { if let v = self._timeout {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     } }()
-    if self.compileOnly != false {
-      try visitor.visitSingularBoolField(value: self.compileOnly, fieldNumber: 3)
+    if self.validationOnly != false {
+      try visitor.visitSingularBoolField(value: self.validationOnly, fieldNumber: 3)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -7947,7 +8073,7 @@ nonisolated extension Exactmac_V1_ExecuteAppleScriptRequest: SwiftProtobuf.Messa
   public static func ==(lhs: Exactmac_V1_ExecuteAppleScriptRequest, rhs: Exactmac_V1_ExecuteAppleScriptRequest) -> Bool {
     if lhs.script != rhs.script {return false}
     if lhs._timeout != rhs._timeout {return false}
-    if lhs.compileOnly != rhs.compileOnly {return false}
+    if lhs.validationOnly != rhs.validationOnly {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -8004,7 +8130,7 @@ nonisolated extension Exactmac_V1_ExecuteAppleScriptResponse: SwiftProtobuf.Mess
 
 nonisolated extension Exactmac_V1_ExecuteJavaScriptRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteJavaScriptRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}script\0\u{1}timeout\0\u{3}compile_only\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}script\0\u{1}timeout\0\u{3}validation_only\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -8014,7 +8140,7 @@ nonisolated extension Exactmac_V1_ExecuteJavaScriptRequest: SwiftProtobuf.Messag
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.script) }()
       case 2: try { try decoder.decodeSingularMessageField(value: &self._timeout) }()
-      case 3: try { try decoder.decodeSingularBoolField(value: &self.compileOnly) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.validationOnly) }()
       default: break
       }
     }
@@ -8031,8 +8157,8 @@ nonisolated extension Exactmac_V1_ExecuteJavaScriptRequest: SwiftProtobuf.Messag
     try { if let v = self._timeout {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     } }()
-    if self.compileOnly != false {
-      try visitor.visitSingularBoolField(value: self.compileOnly, fieldNumber: 3)
+    if self.validationOnly != false {
+      try visitor.visitSingularBoolField(value: self.validationOnly, fieldNumber: 3)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -8040,7 +8166,7 @@ nonisolated extension Exactmac_V1_ExecuteJavaScriptRequest: SwiftProtobuf.Messag
   public static func ==(lhs: Exactmac_V1_ExecuteJavaScriptRequest, rhs: Exactmac_V1_ExecuteJavaScriptRequest) -> Bool {
     if lhs.script != rhs.script {return false}
     if lhs._timeout != rhs._timeout {return false}
-    if lhs.compileOnly != rhs.compileOnly {return false}
+    if lhs.validationOnly != rhs.validationOnly {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -8097,7 +8223,7 @@ nonisolated extension Exactmac_V1_ExecuteJavaScriptResponse: SwiftProtobuf.Messa
 
 nonisolated extension Exactmac_V1_ExecuteShellCommandRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteShellCommandRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}command\0\u{1}args\0\u{3}working_directory\0\u{1}environment\0\u{1}timeout\0\u{1}stdin\0\u{1}shell\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}command\0\u{1}args\0\u{3}working_directory\0\u{3}environment_variables\0\u{1}timeout\0\u{1}stdin\0\u{1}shell\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -8108,7 +8234,7 @@ nonisolated extension Exactmac_V1_ExecuteShellCommandRequest: SwiftProtobuf.Mess
       case 1: try { try decoder.decodeSingularStringField(value: &self.command) }()
       case 2: try { try decoder.decodeRepeatedStringField(value: &self.args) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.workingDirectory) }()
-      case 4: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.environment) }()
+      case 4: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.environmentVariables) }()
       case 5: try { try decoder.decodeSingularMessageField(value: &self._timeout) }()
       case 6: try { try decoder.decodeSingularStringField(value: &self.stdin) }()
       case 7: try { try decoder.decodeSingularStringField(value: &self.shell) }()
@@ -8131,8 +8257,8 @@ nonisolated extension Exactmac_V1_ExecuteShellCommandRequest: SwiftProtobuf.Mess
     if !self.workingDirectory.isEmpty {
       try visitor.visitSingularStringField(value: self.workingDirectory, fieldNumber: 3)
     }
-    if !self.environment.isEmpty {
-      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: self.environment, fieldNumber: 4)
+    if !self.environmentVariables.isEmpty {
+      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: self.environmentVariables, fieldNumber: 4)
     }
     try { if let v = self._timeout {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
@@ -8150,7 +8276,7 @@ nonisolated extension Exactmac_V1_ExecuteShellCommandRequest: SwiftProtobuf.Mess
     if lhs.command != rhs.command {return false}
     if lhs.args != rhs.args {return false}
     if lhs.workingDirectory != rhs.workingDirectory {return false}
-    if lhs.environment != rhs.environment {return false}
+    if lhs.environmentVariables != rhs.environmentVariables {return false}
     if lhs._timeout != rhs._timeout {return false}
     if lhs.stdin != rhs.stdin {return false}
     if lhs.shell != rhs.shell {return false}
@@ -8293,8 +8419,8 @@ nonisolated extension Exactmac_V1_ValidateScriptResponse: SwiftProtobuf.Message,
   }
 }
 
-nonisolated extension Exactmac_V1_GetScriptingDictionariesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetScriptingDictionariesRequest"
+nonisolated extension Exactmac_V1_GetScriptingDictionaryCatalogRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetScriptingDictionaryCatalogRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -8316,7 +8442,7 @@ nonisolated extension Exactmac_V1_GetScriptingDictionariesRequest: SwiftProtobuf
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Exactmac_V1_GetScriptingDictionariesRequest, rhs: Exactmac_V1_GetScriptingDictionariesRequest) -> Bool {
+  public static func ==(lhs: Exactmac_V1_GetScriptingDictionaryCatalogRequest, rhs: Exactmac_V1_GetScriptingDictionaryCatalogRequest) -> Bool {
     if lhs.name != rhs.name {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true

@@ -1,6 +1,6 @@
 // Copyright 2025 Joseph Cumines
 //
-// Condition resource for defining criteria to trigger actions
+// Condition values for defining criteria to trigger actions
 
 // DO NOT EDIT.
 // swift-format-ignore-file

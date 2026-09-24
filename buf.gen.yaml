@@ -7,6 +7,11 @@ managed:
     - file_option: java_outer_classname
     - file_option: java_multiple_files
     - file_option: go_package
+    - file_option: csharp_namespace
+    - file_option: php_namespace
+    - file_option: php_metadata_namespace
+    - file_option: ruby_package
+    - file_option: objc_class_prefix
 inputs:
   - directory: proto
   - module: buf.build/googleapis/googleapis

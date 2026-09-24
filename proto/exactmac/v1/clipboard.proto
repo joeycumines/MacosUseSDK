@@ -10,7 +10,7 @@ import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacpb";
 option java_multiple_files = true;
 option java_outer_classname = "ClipboardProto";
 option java_package = "io.github.joeycumines.exactmac.v1";
@@ -42,22 +42,22 @@ message ClipboardContent {
   // The actual content (type-specific).
   oneof content {
     // Plain text content.
-    string text = 10;
+    string text = 2;
 
     // Rich Text Format (RTF) content.
-    bytes rtf = 11;
+    bytes rtf = 3;
 
     // HTML content.
-    string html = 12;
+    string html = 4;
 
     // Image data (PNG format).
-    bytes image = 13;
+    bytes image = 5;
 
     // File paths (for copied files).
-    FilePaths files = 14;
+    FilePaths files = 6;
 
     // URL content.
-    string url = 15;
+    string url = 7;
   }
 }
 
@@ -69,8 +69,18 @@ message FilePaths {
 
 // Clipboard history.
 message ClipboardHistory {
+  option (google.api.resource) = {
+    type: "exactmac/ClipboardHistory"
+    pattern: "clipboardHistory"
+    singular: "clipboardHistory"
+    plural: "clipboardHistories"
+  };
+
+  // Resource name for the singleton clipboard history.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
   // Historical clipboard entries (most recent first).
-  repeated ClipboardHistoryEntry entries = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  repeated ClipboardHistoryEntry entries = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // A clipboard history entry.

@@ -88,7 +88,7 @@ extension ExactMacService {
             name: observationName,
             type: req.observation.type,
             filter: filter,
-            activate: req.observation.activate,
+            activate: req.observation.activation,
         )
 
         // Create metadata
@@ -109,7 +109,7 @@ extension ExactMacService {
                         observation,
                         parent: req.parent,
                         pid: pid,
-                        activate: req.observation.activate,
+                        activate: req.observation.activation,
                     )
                     ownsObservation = true
 
@@ -207,15 +207,16 @@ extension ExactMacService {
         let req = request.message
         Self.logger.info("listObservations called")
         let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let skip = try RequestNumericValidation.skip(req.skip)
         let queryBinding = ParsingHelpers.pageTokenQuery(
             method: "ListObservations",
             parameters: [
                 ("parent", req.parent),
-                ("page_size", String(pageSize)),
             ],
         )
-        let offset = try ParsingHelpers.pageOffset(
+        let cursor = try ParsingHelpers.pageCursor(
             token: req.pageToken,
+            skip: skip,
             queryBinding: queryBinding,
         )
         _ = try await resolveApplicationPID(fromName: req.parent)
@@ -228,7 +229,7 @@ extension ExactMacService {
 
         let totalCount = sortedObservations.count
         let range = try ParsingHelpers.pageRange(
-            offset: offset,
+            cursor: cursor,
             pageSize: pageSize,
             totalCount: totalCount,
         )

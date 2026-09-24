@@ -6,7 +6,7 @@ import SwiftProtobuf
 import XCTest
 
 /// Unit tests for ScriptingMethods RPCs (executeAppleScript, executeJavaScript,
-/// executeShellCommand, validateScript, getScriptingDictionaries).
+/// executeShellCommand, validateScript, getScriptingDictionaryCatalog).
 final class ScriptingMethodsTests: XCTestCase {
     var service: ExactMacService!
     var stateStore: AppStateStore!
@@ -54,9 +54,9 @@ final class ScriptingMethodsTests: XCTestCase {
         GRPCCore.ServerRequest(metadata: GRPCCore.Metadata(), message: msg)
     }
 
-    private func makeGetScriptingDictionariesRequest(
-        _ msg: Exactmac_V1_GetScriptingDictionariesRequest,
-    ) -> GRPCCore.ServerRequest<Exactmac_V1_GetScriptingDictionariesRequest> {
+    private func makeGetScriptingDictionaryCatalogRequest(
+        _ msg: Exactmac_V1_GetScriptingDictionaryCatalogRequest,
+    ) -> GRPCCore.ServerRequest<Exactmac_V1_GetScriptingDictionaryCatalogRequest> {
         GRPCCore.ServerRequest(metadata: GRPCCore.Metadata(), message: msg)
     }
 
@@ -96,9 +96,9 @@ final class ScriptingMethodsTests: XCTestCase {
         )
     }
 
-    private func makeGetScriptingDictionariesContext() -> GRPCCore.ServerContext {
+    private func makeGetScriptingDictionaryCatalogContext() -> GRPCCore.ServerContext {
         GRPCCore.ServerContext(
-            descriptor: Exactmac_V1_ExactMac.Method.GetScriptingDictionaries.descriptor,
+            descriptor: Exactmac_V1_ExactMac.Method.GetScriptingDictionaryCatalog.descriptor,
             remotePeer: "in-process:tests",
             localPeer: "in-process:server",
             cancellation: GRPCCore.ServerContext.RPCCancellationHandle(),
@@ -177,7 +177,7 @@ final class ScriptingMethodsTests: XCTestCase {
     func testExecuteAppleScriptCompileOnlyMode() async throws {
         let request = Exactmac_V1_ExecuteAppleScriptRequest.with {
             $0.script = "display dialog \"test\""
-            $0.compileOnly = true
+            $0.validationOnly = true
         }
 
         let response = try await service.executeAppleScript(
@@ -290,7 +290,7 @@ final class ScriptingMethodsTests: XCTestCase {
     func testExecuteJavaScriptCompileOnlyMode() async throws {
         let request = Exactmac_V1_ExecuteJavaScriptRequest.with {
             $0.script = "var x = 42; x * 2"
-            $0.compileOnly = true
+            $0.validationOnly = true
         }
 
         let response = try await service.executeJavaScript(
@@ -401,7 +401,7 @@ final class ScriptingMethodsTests: XCTestCase {
 
         let request = Exactmac_V1_ExecuteShellCommandRequest.with {
             $0.command = "echo started > \"$MARKER\"; trap '' TERM; end=$((SECONDS + 2)); while (( SECONDS < end )); do :; done"
-            $0.environment = ["MARKER": marker.path]
+            $0.environmentVariables = ["MARKER": marker.path]
             $0.timeout = SwiftProtobuf.Google_Protobuf_Duration(seconds: 5)
         }
         let context = makeShellCommandContext()
@@ -486,7 +486,7 @@ final class ScriptingMethodsTests: XCTestCase {
     func testExecuteShellCommandWithEnvironment() async throws {
         let request = Exactmac_V1_ExecuteShellCommandRequest.with {
             $0.command = "echo $MY_VAR"
-            $0.environment = ["MY_VAR": "test_value"]
+            $0.environmentVariables = ["MY_VAR": "test_value"]
         }
 
         let response = try await service.executeShellCommand(
@@ -696,16 +696,16 @@ final class ScriptingMethodsTests: XCTestCase {
         }
     }
 
-    // MARK: - getScriptingDictionaries Tests
+    // MARK: - getScriptingDictionaryCatalog Tests
 
-    func testGetScriptingDictionariesReturnsSystemApps() async throws {
-        let request = Exactmac_V1_GetScriptingDictionariesRequest.with {
-            $0.name = "scriptingDictionaries"
+    func testGetScriptingDictionaryCatalogReturnsSystemApps() async throws {
+        let request = Exactmac_V1_GetScriptingDictionaryCatalogRequest.with {
+            $0.name = "scriptingDictionaryCatalog"
         }
 
-        let response = try await service.getScriptingDictionaries(
-            request: makeGetScriptingDictionariesRequest(request),
-            context: makeGetScriptingDictionariesContext(),
+        let response = try await service.getScriptingDictionaryCatalog(
+            request: makeGetScriptingDictionaryCatalogRequest(request),
+            context: makeGetScriptingDictionaryCatalogContext(),
         )
         let msg = try response.message
 
@@ -718,14 +718,14 @@ final class ScriptingMethodsTests: XCTestCase {
         XCTAssertTrue(bundleIDs.contains("com.apple.systemevents"), "Should include System Events")
     }
 
-    func testGetScriptingDictionariesIncludesAppleScriptSupport() async throws {
-        let request = Exactmac_V1_GetScriptingDictionariesRequest.with {
-            $0.name = "scriptingDictionaries"
+    func testGetScriptingDictionaryCatalogIncludesAppleScriptSupport() async throws {
+        let request = Exactmac_V1_GetScriptingDictionaryCatalogRequest.with {
+            $0.name = "scriptingDictionaryCatalog"
         }
 
-        let response = try await service.getScriptingDictionaries(
-            request: makeGetScriptingDictionariesRequest(request),
-            context: makeGetScriptingDictionariesContext(),
+        let response = try await service.getScriptingDictionaryCatalog(
+            request: makeGetScriptingDictionaryCatalogRequest(request),
+            context: makeGetScriptingDictionaryCatalogContext(),
         )
         let msg = try response.message
 
@@ -735,15 +735,15 @@ final class ScriptingMethodsTests: XCTestCase {
         }
     }
 
-    func testGetScriptingDictionariesInvalidName() async throws {
-        let request = Exactmac_V1_GetScriptingDictionariesRequest.with {
+    func testGetScriptingDictionaryCatalogInvalidName() async throws {
+        let request = Exactmac_V1_GetScriptingDictionaryCatalogRequest.with {
             $0.name = "invalid-name"
         }
 
         do {
-            _ = try await service.getScriptingDictionaries(
-                request: makeGetScriptingDictionariesRequest(request),
-                context: makeGetScriptingDictionariesContext(),
+            _ = try await service.getScriptingDictionaryCatalog(
+                request: makeGetScriptingDictionaryCatalogRequest(request),
+                context: makeGetScriptingDictionaryCatalogContext(),
             )
             XCTFail("Expected error for invalid resource name")
         } catch let error as RPCError {
@@ -751,7 +751,7 @@ final class ScriptingMethodsTests: XCTestCase {
         }
     }
 
-    func testGetScriptingDictionariesUsesSystemBundleID() async throws {
+    func testGetScriptingDictionaryCatalogUsesSystemBundleID() async throws {
         let store = AppStateStore()
         let pid: pid_t = 4242
         let app = Exactmac_V1_Application.with {
@@ -766,11 +766,11 @@ final class ScriptingMethodsTests: XCTestCase {
         let registry = WindowRegistry(system: mock)
         let provider = ExactMacService(stateStore: store, operationStore: OperationStore(), windowRegistry: registry, system: mock)
 
-        let req = Exactmac_V1_GetScriptingDictionariesRequest.with { $0.name = "scriptingDictionaries" }
+        let req = Exactmac_V1_GetScriptingDictionaryCatalogRequest.with { $0.name = "scriptingDictionaryCatalog" }
 
-        let response = try await provider.getScriptingDictionaries(
-            request: makeGetScriptingDictionariesRequest(req),
-            context: makeGetScriptingDictionariesContext(),
+        let response = try await provider.getScriptingDictionaryCatalog(
+            request: makeGetScriptingDictionaryCatalogRequest(req),
+            context: makeGetScriptingDictionaryCatalogContext(),
         )
 
         let msg = try response.message
@@ -780,14 +780,14 @@ final class ScriptingMethodsTests: XCTestCase {
         XCTAssertEqual(found?.application, "applications/\(pid)")
     }
 
-    func testGetScriptingDictionariesIncludesCommandsAndClasses() async throws {
-        let request = Exactmac_V1_GetScriptingDictionariesRequest.with {
-            $0.name = "scriptingDictionaries"
+    func testGetScriptingDictionaryCatalogIncludesCommandsAndClasses() async throws {
+        let request = Exactmac_V1_GetScriptingDictionaryCatalogRequest.with {
+            $0.name = "scriptingDictionaryCatalog"
         }
 
-        let response = try await service.getScriptingDictionaries(
-            request: makeGetScriptingDictionariesRequest(request),
-            context: makeGetScriptingDictionariesContext(),
+        let response = try await service.getScriptingDictionaryCatalog(
+            request: makeGetScriptingDictionaryCatalogRequest(request),
+            context: makeGetScriptingDictionaryCatalogContext(),
         )
         let msg = try response.message
 

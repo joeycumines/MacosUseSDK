@@ -42,7 +42,7 @@ func (s *MCPServer) getDisplayGroundingInfo() string {
 	for i, d := range resp.Displays {
 		// Use display ID or index as identifier
 		id := fmt.Sprintf("display-%d", i)
-		if d.IsMain {
+		if d.Main {
 			id = "main"
 		}
 
@@ -133,9 +133,9 @@ func (s *MCPServer) readResource(parent context.Context, uri string) (contents [
 		elements := make([]map[string]any, 0, len(resp.Elements))
 		for _, elem := range resp.Elements {
 			elemMap := map[string]any{
-				"id":   elem.GetElementId(),
-				"role": elem.GetRole(),
-				"path": elem.GetPath(),
+				"id":           elem.GetElementId(),
+				"role":         elem.GetRole(),
+				"path_indices": elem.GetPathIndices(),
 			}
 			if text := elem.GetText(); text != "" {
 				elemMap["text"] = text
@@ -233,7 +233,7 @@ func (s *MCPServer) listPrompts() []map[string]any {
 			"name":        "navigate_to_element",
 			"description": "Navigate to and click an accessibility element",
 			"arguments": []map[string]any{
-				{"name": "selector", "description": "One key:value selector, such as role:AXButton, text:Save, or text_contains:submit", "required": true},
+				{"name": "selector", "description": "One key:value selector, such as role:AXButton, text:Save, or text_substring:submit", "required": true},
 			},
 		},
 		{
