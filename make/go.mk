@@ -932,11 +932,11 @@ MAKEFILE_HELP_SCRIPT := eval "$$_MAKEFILE_HELP_SCRIPT"
 endif
 
 .PHONY: help
-help: ## Display this help.
+help: ## Display this help as the authoritative target catalog.
 	@export MAKEFILE_LIST=$(call escape_command_arg,$(MAKEFILE_LIST)); $(MAKEFILE_HELP_SCRIPT)
 
 .PHONY: h
-h: help ## Alias for help.
+h: help ## Alias for the authoritative target catalog.
 endif
 endif
 

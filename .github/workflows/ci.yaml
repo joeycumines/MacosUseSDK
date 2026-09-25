@@ -1,8 +1,8 @@
 name: CI
 on:
-  #push:
-  #  branches:
-  #    - main
+  push:
+    branches:
+      - main
   #pull_request:
   #  branches:
   #    - main
@@ -13,8 +13,7 @@ jobs:
   build:
     uses: ./.github/workflows/build.yaml
     secrets: inherit
-  # Integration tests run on self-hosted macOS runner with accessibility permissions
-  # Runs when explicitly triggered via workflow_dispatch
+  # Integration remains opt-in: it requires a permissioned self-hosted runner.
   #integration:
   #  if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
   #  needs: build

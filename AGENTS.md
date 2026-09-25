@@ -10,73 +10,9 @@ ExactMac is a macOS accessibility automation framework consisting of:
 - **Swift gRPC server**: Production server backing the CUA-aligned MCP tools for AI agent integration
 - **Go MCP server**: MCP proxy layer exposing functionality via Model Context Protocol
 
-## Common Commands
+## Build Interface
 
-N.B. Always use `gmake` (GNU Make installed via Homebrew, on macOS) for building and testing to ensure compliance with execution protocol constraints.
-
-### Building
-
-```bash
-# Full build (Swift + Go + Proto)
-gmake all
-```
-
-### Testing
-
-```bash
-# All tests (Go + Swift suites)
-gmake go.test swift.test
-
-# Swift unit tests only
-swift test
-swift test --filter TestClassName/testMethodName
-
-# Go unit tests only
-gmake go.test
-
-# Integration tests (requires macOS accessibility permissions)
-gmake go.test.integration GO_TEST_FLAGS="-integration"
-```
-
-### Code Generation
-
-```bash
-# Generate protobuf code
-gmake generate
-# or
-gmake buf.generate
-
-# Generate descriptor sets for reflection
-gmake buf.descriptor-sets
-```
-
-### Linting and Formatting
-
-```bash
-# Format all
-gmake fmt
-
-# Lint all
-gmake lint
-
-# Run all linters
-gmake lint
-
-# IMPORTANT: Use gmake for Go linters (not direct staticcheck invocation)
-gmake go.staticcheck # NOT: staticcheck ./...
-gmake go.vet # Runs go vet with proper flags
-```
-
-### Running the gRPC Server
-
-```bash
-cd Server && swift build -c release
-./.build/release/ExactMacServer
-
-# The Swift server accepts gRPC configuration only. Configure MCP HTTP
-# transport variables on cmd/exactmac (`exactmac mcp`), not on this executable.
-GRPC_LISTEN_ADDRESS=127.0.0.1 GRPC_PORT=50051 ./.build/release/ExactMacServer
-```
+`gmake help` is the authoritative catalog of available targets and their behavior. A bare `gmake` selects `check`: the complete `all` build/check path followed by permission-dependent macOS integration tests. Read the help output before choosing specialized targets; do not duplicate its recipes here.
 
 ## Key Directories
 

@@ -92,7 +92,8 @@ jobs:
           ./hack/google-api-linter.sh
       - name: Run a full build
         run: |-
-          gmake -j "$(sysctl -n hw.ncpu)"
+          # Hosted CI cannot run the permission-dependent default `check` target.
+          gmake -j "$(sysctl -n hw.ncpu)" all
       - name: Go unit test coverage
         run: |-
           echo "Running Go unit tests with coverage..." &&
